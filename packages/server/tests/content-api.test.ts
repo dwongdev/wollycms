@@ -176,9 +176,9 @@ describe('GET /api/content/media/:id/:variant', () => {
   });
 
   it('returns 404 for unavailable variant', async () => {
-    // Media record 4 (college-logo.png) has empty variants {},
+    // Media record 2 (test-logo.png) has empty variants {},
     // so requesting "thumbnail" should return VARIANT_NOT_FOUND.
-    const res = await get('/api/content/media/4/thumbnail');
+    const res = await get('/api/content/media/2/thumbnail');
     expect(res.status).toBe(404);
     const body = await res.json();
     expect(body.errors[0].code).toBe('VARIANT_NOT_FOUND');
@@ -223,7 +223,7 @@ describe('GET /api/content/schemas', () => {
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.data.contentTypes.length).toBe(3);
-    expect(body.data.blockTypes.length).toBe(8);
+    expect(body.data.blockTypes.length).toBe(9);
     expect(body.data.contentTypes[0]).toHaveProperty('fieldsSchema');
     expect(body.data.blockTypes[0]).toHaveProperty('fieldsSchema');
   });
