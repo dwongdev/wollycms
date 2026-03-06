@@ -135,10 +135,11 @@ npm run db:seed           # Populate sample data
 | [API Design](docs/architecture/api-design.md) | Content API and Admin API specifications |
 | [Astro Integration](docs/architecture/astro-integration.md) | `@spacelycms/astro` package design |
 | [Roadmap](docs/planning/roadmap.md) | Implementation phases and status |
+| [Deployment Guide](docs/guides/deployment.md) | Docker, manual deploy, backups, security |
 
 ## Status
 
-Phases 1-5a complete. See [Roadmap](docs/planning/roadmap.md) for details.
+Phases 1-5 complete. See [Roadmap](docs/planning/roadmap.md) for details.
 
 | Phase | Focus | Status |
 |---|---|---|
