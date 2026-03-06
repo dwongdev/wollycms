@@ -83,6 +83,33 @@ app.get('/', async (c) => {
   });
 });
 
+/** POST /bulk - Bulk operations on pages */
+app.post('/bulk', async (c) => {
+  const db = getDb();
+  const body = await c.req.json().catch(() => null);
+  const schema = z.object({
+    ids: z.array(z.number().int().positive()).min(1),
+    action: z.enum(['publish', 'unpublish', 'archive', 'delete']),
+  });
+  const parsed = schema.safeParse(body);
+  if (!parsed.success) return c.json({ errors: parsed.error.issues.map((i) => ({ code: 'VALIDATION', message: i.message })) }, 400);
+
+  const { ids, action } = parsed.data;
+  const now = new Date().toISOString();
+
+  if (action === 'delete') {
+    await db.delete(pageBlocks).where(inArray(pageBlocks.pageId, ids));
+    await db.delete(pages).where(inArray(pages.id, ids));
+  } else {
+    const statusMap = { publish: 'published', unpublish: 'draft', archive: 'archived' } as const;
+    const updates: Record<string, unknown> = { status: statusMap[action], updatedAt: now };
+    if (action === 'publish') updates.publishedAt = now;
+    await db.update(pages).set(updates).where(inArray(pages.id, ids));
+  }
+
+  return c.json({ data: { affected: ids.length, action } });
+});
+
 /** GET /:id - Get single page by ID with resolved blocks */
 app.get('/:id', async (c) => {
   const db = getDb();
@@ -295,6 +322,79 @@ app.delete('/:id/blocks/:pbId', async (c) => {
   }
 
   return c.json({ data: { deleted: true } });
+});
+
+/** POST /:id/duplicate - Duplicate a page with its inline blocks */
+app.post('/:id/duplicate', async (c) => {
+  const db = getDb();
+  const id = parseInt(c.req.param('id'), 10);
+  const payload = c.get('jwtPayload');
+  const now = new Date().toISOString();
+
+  const [source] = await db.select().from(pages).where(eq(pages.id, id)).limit(1);
+  if (!source) return c.json({ errors: [{ code: 'NOT_FOUND', message: 'Page not found' }] }, 404);
+
+  // Generate unique slug
+  let newSlug = `${source.slug}-copy`;
+  let suffix = 1;
+  while (true) {
+    const [dup] = await db.select({ id: pages.id }).from(pages).where(eq(pages.slug, newSlug)).limit(1);
+    if (!dup) break;
+    suffix++;
+    newSlug = `${source.slug}-copy-${suffix}`;
+  }
+
+  const [newPage] = await db.insert(pages).values({
+    typeId: source.typeId,
+    title: `${source.title} (Copy)`,
+    slug: newSlug,
+    status: 'draft' as const,
+    fields: source.fields,
+    createdAt: now,
+    updatedAt: now,
+    publishedAt: null,
+    createdBy: payload.sub,
+  }).returning();
+
+  // Duplicate block assignments
+  const pbRows = await db.select().from(pageBlocks)
+    .innerJoin(blocks, eq(pageBlocks.blockId, blocks.id))
+    .where(eq(pageBlocks.pageId, id))
+    .orderBy(asc(pageBlocks.region), asc(pageBlocks.position));
+
+  for (const pb of pbRows) {
+    if (pb.page_blocks.isShared) {
+      // Shared blocks: reference the same block
+      await db.insert(pageBlocks).values({
+        pageId: newPage.id,
+        blockId: pb.page_blocks.blockId,
+        region: pb.page_blocks.region,
+        position: pb.page_blocks.position,
+        isShared: true,
+        overrides: pb.page_blocks.overrides,
+      });
+    } else {
+      // Inline blocks: create a copy
+      const [newBlock] = await db.insert(blocks).values({
+        typeId: pb.blocks.typeId,
+        title: pb.blocks.title,
+        fields: pb.blocks.fields,
+        isReusable: false,
+        createdAt: now,
+        updatedAt: now,
+        createdBy: payload.sub,
+      }).returning();
+      await db.insert(pageBlocks).values({
+        pageId: newPage.id,
+        blockId: newBlock.id,
+        region: pb.page_blocks.region,
+        position: pb.page_blocks.position,
+        isShared: false,
+      });
+    }
+  }
+
+  return c.json({ data: newPage }, 201);
 });
 
 /** PUT /:id/blocks-order - Reorder all blocks in a region */

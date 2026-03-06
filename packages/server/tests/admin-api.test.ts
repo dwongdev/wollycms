@@ -170,6 +170,16 @@ describe('Admin Pages', () => {
     expect(res.status).toBe(200);
   });
 
+  it('POST /:id/duplicate creates a copy with blocks', async () => {
+    // Use a seeded page (home = id 1) that has blocks
+    const res = await json('/pages/1/duplicate', 'POST', {});
+    expect(res.status).toBe(201);
+    const body = await res.json();
+    expect(body.data.title).toContain('(Copy)');
+    expect(body.data.slug).toContain('-copy');
+    expect(body.data.status).toBe('draft');
+  });
+
   it('DELETE /:id deletes page', async () => {
     const res = await authed(`/pages/${testPageId}`, { method: 'DELETE' });
     expect(res.status).toBe(200);
