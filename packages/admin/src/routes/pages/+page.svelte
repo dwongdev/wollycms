@@ -7,6 +7,8 @@
   let error = $state('');
   let search = $state('');
   let statusFilter = $state('');
+  let typeFilter = $state('');
+  let sortBy = $state('updated_at:desc');
   let showCreate = $state(false);
   let contentTypes = $state<any[]>([]);
   let newPage = $state({ title: '', typeId: 0, status: 'draft' as string });
@@ -19,6 +21,8 @@
       const params = new URLSearchParams();
       if (search) params.set('search', search);
       if (statusFilter) params.set('status', statusFilter);
+      if (typeFilter) params.set('type', typeFilter);
+      if (sortBy) params.set('sort', sortBy);
       const res = await api.get<{ data: any[]; meta: any }>(`/pages?${params}`);
       pages = res.data;
       total = res.meta.total;
@@ -104,11 +108,25 @@
 
 <div class="card" style="margin-bottom: 1rem; display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
   <input class="form-control" placeholder="Search pages..." bind:value={search} oninput={() => load()} style="max-width: 300px;" />
+  <select class="form-control" bind:value={typeFilter} onchange={() => load()} style="max-width: 160px;">
+    <option value="">All types</option>
+    {#each contentTypes as ct}
+      <option value={ct.slug}>{ct.name}</option>
+    {/each}
+  </select>
   <select class="form-control" bind:value={statusFilter} onchange={() => load()} style="max-width: 160px;">
     <option value="">All statuses</option>
     <option value="published">Published</option>
     <option value="draft">Draft</option>
     <option value="archived">Archived</option>
+  </select>
+  <select class="form-control" bind:value={sortBy} onchange={() => load()} style="max-width: 180px;">
+    <option value="updated_at:desc">Last updated</option>
+    <option value="updated_at:asc">Oldest updated</option>
+    <option value="created_at:desc">Newest created</option>
+    <option value="created_at:asc">Oldest created</option>
+    <option value="title:asc">Title A-Z</option>
+    <option value="title:desc">Title Z-A</option>
   </select>
   {#if selected.size > 0}
     <span style="margin-left: auto; font-size: 0.85rem; color: var(--c-text-light);">{selected.size} selected</span>
@@ -123,7 +141,11 @@
     <thead>
       <tr>
         <th style="width: 32px;"><input type="checkbox" checked={allSelected} onchange={toggleAll} /></th>
-        <th>Title</th><th>Slug</th><th>Type</th><th>Status</th><th>Updated</th><th></th>
+        <th>Title</th><th>Slug</th><th>Type</th><th>Status</th>
+        <th style="cursor: pointer; user-select: none;" onclick={() => { sortBy = sortBy === 'updated_at:desc' ? 'updated_at:asc' : 'updated_at:desc'; load(); }}>
+          Updated {sortBy === 'updated_at:desc' ? '↓' : sortBy === 'updated_at:asc' ? '↑' : ''}
+        </th>
+        <th></th>
       </tr>
     </thead>
     <tbody>
