@@ -14,6 +14,7 @@ import usersRouter from './users.js';
 import dashboardRouter from './dashboard.js';
 import configRouter from './config.js';
 import exportImportRouter from './export-import.js';
+import presenceRouter from './presence.js';
 
 const app = new Hono();
 
@@ -36,5 +37,6 @@ app.route('/users', usersRouter);
 app.route('/dashboard', dashboardRouter);
 app.route('/config', configRouter);
 app.route('/', exportImportRouter);
+app.route('/presence', presenceRouter);
 
 export default app;

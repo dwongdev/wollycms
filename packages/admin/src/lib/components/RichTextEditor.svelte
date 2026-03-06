@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
-  import { Editor } from '@tiptap/core';
+  import { Editor, Extension } from '@tiptap/core';
+  import { Plugin, PluginKey } from '@tiptap/pm/state';
   import StarterKit from '@tiptap/starter-kit';
   import Link from '@tiptap/extension-link';
   import Underline from '@tiptap/extension-underline';
@@ -9,6 +10,8 @@
   import TableRow from '@tiptap/extension-table-row';
   import TableCell from '@tiptap/extension-table-cell';
   import TableHeader from '@tiptap/extension-table-header';
+  import Placeholder from '@tiptap/extension-placeholder';
+  import Dropcursor from '@tiptap/extension-dropcursor';
   import MediaPicker from './MediaPicker.svelte';
 
   let { content, onUpdate }: { content: any; onUpdate: (json: any) => void } = $props();
@@ -16,6 +19,55 @@
   let editorEl: HTMLDivElement | undefined = $state();
   let editor: Editor | undefined = $state();
   let showImagePicker = $state(false);
+  let showSlashMenu = $state(false);
+  let slashMenuPos = $state({ top: 0, left: 0 });
+  let slashFilter = $state('');
+  let slashSelectedIndex = $state(0);
+  let isInTable = $state(false);
+
+  const slashCommands = [
+    { label: 'Heading 2', description: 'Large section heading', command: 'h2' },
+    { label: 'Heading 3', description: 'Medium section heading', command: 'h3' },
+    { label: 'Heading 4', description: 'Small section heading', command: 'h4' },
+    { label: 'Bullet List', description: 'Unordered list', command: 'bullet' },
+    { label: 'Numbered List', description: 'Ordered list', command: 'ordered' },
+    { label: 'Blockquote', description: 'Quoted text block', command: 'quote' },
+    { label: 'Code Block', description: 'Preformatted code', command: 'code' },
+    { label: 'Horizontal Rule', description: 'Visual separator', command: 'hr' },
+    { label: 'Image', description: 'Insert from media library', command: 'image' },
+    { label: 'Table', description: '3x3 table', command: 'table' },
+    { label: 'Link', description: 'Insert hyperlink', command: 'link' },
+  ];
+
+  let filteredSlashCommands = $derived(
+    slashFilter
+      ? slashCommands.filter(c => c.label.toLowerCase().includes(slashFilter.toLowerCase()))
+      : slashCommands
+  );
+
+  // Paste cleanup: strip Word/Google Docs cruft
+  const PasteCleanup = Extension.create({
+    name: 'pasteCleanup',
+    addProseMirrorPlugins() {
+      return [new Plugin({
+        key: new PluginKey('pasteCleanup'),
+        props: {
+          transformPastedHTML(html: string) {
+            return html
+              .replace(/<!--\[if[^]*?endif\]-->/gi, '')
+              .replace(/<\/?o:[^>]*>/gi, '')
+              .replace(/<\/?v:[^>]*>/gi, '')
+              .replace(/<\/?w:[^>]*>/gi, '')
+              .replace(/\s*class="[^"]*"/gi, '')
+              .replace(/\s*style="[^"]*"/gi, '')
+              .replace(/<span[^>]*>\s*<\/span>/gi, '')
+              .replace(/mso-[^;"']*/gi, '')
+              .replace(/&nbsp;/gi, ' ');
+          },
+        },
+      })];
+    },
+  });
 
   onMount(() => {
     editor = new Editor({
@@ -29,23 +81,117 @@
         TableRow,
         TableCell,
         TableHeader,
+        Placeholder.configure({ placeholder: 'Type / for commands...' }),
+        Dropcursor.configure({ color: '#2563eb', width: 2 }),
+        PasteCleanup,
       ],
       content: content || '',
       onTransaction: () => {
-        // Force Svelte reactivity so toolbar active states update
         editor = editor;
+        // Track if cursor is in a table
+        isInTable = !!editor?.isActive('table');
       },
       onBlur: () => {
         if (editor) {
           onUpdate(editor.getJSON());
         }
+        // Delay hiding slash menu so clicks on it register
+        setTimeout(() => { showSlashMenu = false; }, 200);
       },
     });
+
+    // Listen for / key to trigger slash menu
+    editorEl!.addEventListener('keydown', handleSlashKey);
   });
 
   onDestroy(() => {
+    editorEl?.removeEventListener('keydown', handleSlashKey);
     editor?.destroy();
   });
+
+  function handleSlashKey(e: KeyboardEvent) {
+    if (showSlashMenu) {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        slashSelectedIndex = Math.min(slashSelectedIndex + 1, filteredSlashCommands.length - 1);
+        return;
+      }
+      if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        slashSelectedIndex = Math.max(slashSelectedIndex - 1, 0);
+        return;
+      }
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        executeSlashCommand(slashSelectedIndex);
+        return;
+      }
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        showSlashMenu = false;
+        return;
+      }
+      // Update filter for any other key
+      // The filter is updated by the input handler below
+      return;
+    }
+
+    if (e.key === '/' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      // Check if we're at the start of an empty block
+      if (!editor) return;
+      const { from } = editor.state.selection;
+      const textBefore = editor.state.doc.textBetween(
+        Math.max(0, from - 1), from, '\n'
+      );
+      // Only trigger at the start of a line or on empty content
+      if (textBefore === '' || textBefore === '\n') {
+        e.preventDefault();
+        openSlashMenu();
+      }
+    }
+  }
+
+  function openSlashMenu() {
+    if (!editor || !editorEl) return;
+    // Get cursor position for menu placement
+    const { view } = editor;
+    const coords = view.coordsAtPos(view.state.selection.from);
+    const editorRect = editorEl.getBoundingClientRect();
+    slashMenuPos = {
+      top: coords.bottom - editorRect.top + 4,
+      left: coords.left - editorRect.left,
+    };
+    slashFilter = '';
+    slashSelectedIndex = 0;
+    showSlashMenu = true;
+  }
+
+  function executeSlashCommand(index: number) {
+    const cmd = filteredSlashCommands[index];
+    if (!cmd || !editor) return;
+    showSlashMenu = false;
+
+    // Delete the "/" character if it was typed
+    const { from } = editor.state.selection;
+    const textBefore = editor.state.doc.textBetween(Math.max(0, from - 1), from);
+    if (textBefore === '/') {
+      editor.chain().focus().deleteRange({ from: from - 1, to: from }).run();
+    }
+
+    switch (cmd.command) {
+      case 'h2': editor.chain().focus().toggleHeading({ level: 2 }).run(); break;
+      case 'h3': editor.chain().focus().toggleHeading({ level: 3 }).run(); break;
+      case 'h4': editor.chain().focus().toggleHeading({ level: 4 }).run(); break;
+      case 'bullet': editor.chain().focus().toggleBulletList().run(); break;
+      case 'ordered': editor.chain().focus().toggleOrderedList().run(); break;
+      case 'quote': editor.chain().focus().toggleBlockquote().run(); break;
+      case 'code': editor.chain().focus().toggleCodeBlock().run(); break;
+      case 'hr': editor.chain().focus().setHorizontalRule().run(); break;
+      case 'image': showImagePicker = true; break;
+      case 'table': editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run(); break;
+      case 'link': toggleLink(); break;
+    }
+  }
 
   function toggleLink() {
     if (!editor) return;
@@ -129,7 +275,49 @@
       {/if}
     {/each}
   </div>
-  <div class="rte-editor" bind:this={editorEl}></div>
+
+  {#if isInTable}
+    <div class="rte-table-toolbar">
+      <span class="rte-table-label">Table:</span>
+      <button type="button" class="rte-btn-sm" onclick={() => editor?.chain().focus().addRowBefore().run()}>+ Row Above</button>
+      <button type="button" class="rte-btn-sm" onclick={() => editor?.chain().focus().addRowAfter().run()}>+ Row Below</button>
+      <button type="button" class="rte-btn-sm" onclick={() => editor?.chain().focus().addColumnBefore().run()}>+ Col Left</button>
+      <button type="button" class="rte-btn-sm" onclick={() => editor?.chain().focus().addColumnAfter().run()}>+ Col Right</button>
+      <span class="rte-divider"></span>
+      <button type="button" class="rte-btn-sm rte-btn-danger" onclick={() => editor?.chain().focus().deleteRow().run()}>Del Row</button>
+      <button type="button" class="rte-btn-sm rte-btn-danger" onclick={() => editor?.chain().focus().deleteColumn().run()}>Del Col</button>
+      <button type="button" class="rte-btn-sm rte-btn-danger" onclick={() => editor?.chain().focus().deleteTable().run()}>Del Table</button>
+      <span class="rte-divider"></span>
+      <button type="button" class="rte-btn-sm" onclick={() => editor?.chain().focus().toggleHeaderRow().run()}>Toggle Header</button>
+      <button type="button" class="rte-btn-sm" onclick={() => editor?.chain().focus().mergeCells().run()}>Merge</button>
+      <button type="button" class="rte-btn-sm" onclick={() => editor?.chain().focus().splitCell().run()}>Split</button>
+    </div>
+  {/if}
+
+  <div class="rte-editor-wrap">
+    <div class="rte-editor" bind:this={editorEl}></div>
+
+    {#if showSlashMenu}
+      <div class="slash-menu-container" style="top: {slashMenuPos.top}px; left: {slashMenuPos.left}px;">
+        <div class="slash-menu">
+          {#each filteredSlashCommands as cmd, i}
+            <button
+              class="slash-menu-item"
+              class:selected={i === slashSelectedIndex}
+              onmousedown={(e) => { e.preventDefault(); executeSlashCommand(i); }}
+              onmouseenter={() => { slashSelectedIndex = i; }}
+            >
+              <span class="slash-menu-label">{cmd.label}</span>
+              <span class="slash-menu-desc">{cmd.description}</span>
+            </button>
+          {/each}
+          {#if filteredSlashCommands.length === 0}
+            <div class="slash-menu-empty">No matching commands</div>
+          {/if}
+        </div>
+      </div>
+    {/if}
+  </div>
 </div>
 
 {#if showImagePicker}
@@ -163,6 +351,45 @@
     background: var(--c-bg, #f7f8fa);
     border-bottom: 1px solid var(--c-border, #e2e8f0);
   }
+
+  .rte-table-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 3px;
+    padding: 4px 8px;
+    background: #eff6ff;
+    border-bottom: 1px solid #bfdbfe;
+  }
+
+  .rte-table-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #2563eb;
+    margin-right: 4px;
+  }
+
+  .rte-btn-sm {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 24px;
+    padding: 0 6px;
+    font-size: 0.68rem;
+    font-weight: 500;
+    font-family: var(--font, system-ui);
+    color: var(--c-text, #2d3748);
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: background 0.12s;
+  }
+
+  .rte-btn-sm:hover { background: #f1f5f9; }
+
+  .rte-btn-danger { color: #dc2626; }
+  .rte-btn-danger:hover { background: #fef2f2; border-color: #fca5a5; }
 
   .rte-btn {
     display: inline-flex;
@@ -200,6 +427,10 @@
     margin: 0 4px;
   }
 
+  .rte-editor-wrap {
+    position: relative;
+  }
+
   .rte-editor {
     min-height: 200px;
     padding: 12px 16px;
@@ -209,10 +440,75 @@
     color: var(--c-text, #2d3748);
   }
 
+  /* Slash command menu */
+  .slash-menu-container {
+    position: absolute;
+    z-index: 50;
+  }
+
+  .slash-menu {
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    border: 1px solid var(--c-border, #e2e8f0);
+    border-radius: var(--radius, 6px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+    max-height: 240px;
+    overflow-y: auto;
+    min-width: 220px;
+    padding: 4px;
+  }
+
+  .slash-menu-item {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    padding: 0.4rem 0.6rem;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    text-align: left;
+    border-radius: 4px;
+    font-family: inherit;
+    transition: background 0.1s;
+  }
+
+  .slash-menu-item:hover,
+  .slash-menu-item.selected {
+    background: var(--c-bg-alt, #f1f5f9);
+  }
+
+  .slash-menu-label {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--c-text, #1e293b);
+  }
+
+  .slash-menu-desc {
+    font-size: 0.7rem;
+    color: var(--c-text-light, #94a3b8);
+  }
+
+  .slash-menu-empty {
+    padding: 0.5rem 0.6rem;
+    font-size: 0.8rem;
+    color: var(--c-text-light, #94a3b8);
+    text-align: center;
+  }
+
   /* TipTap ProseMirror element styles */
   .rte-editor :global(.ProseMirror) {
     outline: none;
     min-height: 200px;
+  }
+
+  .rte-editor :global(.ProseMirror p.is-editor-empty:first-child::before) {
+    content: attr(data-placeholder);
+    float: left;
+    color: var(--c-text-light, #94a3b8);
+    pointer-events: none;
+    height: 0;
+    font-style: italic;
   }
 
   .rte-editor :global(.ProseMirror p) {
@@ -279,5 +575,10 @@
   .rte-editor :global(.ProseMirror th) {
     background: var(--c-bg, #f7f8fa);
     font-weight: 600;
+  }
+
+  /* Dropcursor */
+  .rte-editor :global(.ProseMirror-dropcursor) {
+    border-color: #2563eb;
   }
 </style>

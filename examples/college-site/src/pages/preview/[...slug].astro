@@ -2,7 +2,7 @@
 export const prerender = false;
 
 import Layout from '../../layouts/Default.astro';
-import BlockRenderer from '@spacelycms/astro/components/BlockRenderer.astro';
+import PreviewBlockRenderer from '@spacelycms/astro/components/PreviewBlockRenderer.astro';
 import { spacely } from '../../lib/spacely';
 import * as blockComponents from '../../lib/blocks';
 
@@ -43,17 +43,17 @@ const hasSidebar = sidebarBlocks.length > 0;
   </div>
 
   {heroBlocks.length > 0 && (
-    <BlockRenderer blocks={heroBlocks} region="hero" components={blockComponents} />
+    <PreviewBlockRenderer blocks={heroBlocks} region="hero" components={blockComponents} />
   )}
 
   <div class:list={['container', 'page-layout', { 'has-sidebar': hasSidebar }]}>
     <article class="main-content">
-      <BlockRenderer blocks={contentBlocks} region="content" components={blockComponents} />
+      <PreviewBlockRenderer blocks={contentBlocks} region="content" components={blockComponents} />
     </article>
 
     {hasSidebar && (
       <aside class="sidebar">
-        <BlockRenderer blocks={sidebarBlocks} region="sidebar" components={blockComponents} />
+        <PreviewBlockRenderer blocks={sidebarBlocks} region="sidebar" components={blockComponents} />
       </aside>
     )}
   </div>
@@ -61,7 +61,7 @@ const hasSidebar = sidebarBlocks.length > 0;
   {featureBlocks.length > 0 && (
     <section class="features-region">
       <div class="container">
-        <BlockRenderer blocks={featureBlocks} region="features" components={blockComponents} />
+        <PreviewBlockRenderer blocks={featureBlocks} region="features" components={blockComponents} />
       </div>
     </section>
   )}
@@ -69,7 +69,7 @@ const hasSidebar = sidebarBlocks.length > 0;
   {bottomBlocks.length > 0 && (
     <section class="bottom-region">
       <div class="container">
-        <BlockRenderer blocks={bottomBlocks} region="bottom" components={blockComponents} />
+        <PreviewBlockRenderer blocks={bottomBlocks} region="bottom" components={blockComponents} />
       </div>
     </section>
   )}
@@ -93,12 +93,106 @@ const hasSidebar = sidebarBlocks.length > 0;
   body {
     padding-top: 2rem;
   }
+
+  /* Preview block hover/click overlays */
+  .spacely-block {
+    position: relative;
+    transition: outline 0.15s, outline-offset 0.15s;
+    outline: 2px solid transparent;
+    outline-offset: -2px;
+    cursor: pointer;
+  }
+
+  .spacely-block:hover {
+    outline-color: rgba(37, 99, 235, 0.4);
+  }
+
+  .spacely-block:hover::after {
+    content: attr(data-spacely-type) ' — ' attr(data-spacely-region);
+    position: absolute;
+    top: 0;
+    right: 0;
+    background: rgba(37, 99, 235, 0.85);
+    color: #fff;
+    font-size: 0.65rem;
+    font-weight: 600;
+    padding: 0.15rem 0.5rem;
+    border-radius: 0 0 0 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    pointer-events: none;
+    z-index: 100;
+  }
+
+  .spacely-block.spacely-selected {
+    outline-color: #2563eb;
+    outline-width: 3px;
+    outline-offset: -3px;
+  }
+
+  .spacely-block.spacely-selected::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(37, 99, 235, 0.04);
+    pointer-events: none;
+    z-index: 99;
+  }
 </style>
 
 <script is:inline>
-  window.addEventListener('message', (e) => {
-    if (e.data?.type === 'spacely:refresh') {
-      window.location.reload();
-    }
-  });
+  // Bidirectional PostMessage bridge for admin ↔ preview communication
+  (function() {
+    let selectedEl = null;
+
+    // Click handler — select block and notify admin
+    document.addEventListener('click', function(e) {
+      const blockEl = e.target.closest('.spacely-block');
+      if (!blockEl) return;
+
+      e.preventDefault();
+      e.stopPropagation();
+
+      // Deselect previous
+      if (selectedEl) selectedEl.classList.remove('spacely-selected');
+
+      // Select new
+      selectedEl = blockEl;
+      blockEl.classList.add('spacely-selected');
+
+      const pbId = blockEl.dataset.spacelyPb;
+      const region = blockEl.dataset.spacelyRegion;
+      const type = blockEl.dataset.spacelyType;
+
+      window.parent.postMessage({
+        type: 'spacely:select-block',
+        pbId: pbId,
+        region: region,
+        blockType: type,
+      }, '*');
+    });
+
+    // Listen for messages from admin
+    window.addEventListener('message', function(e) {
+      if (!e.data || !e.data.type) return;
+
+      if (e.data.type === 'spacely:refresh') {
+        window.location.reload();
+        return;
+      }
+
+      if (e.data.type === 'spacely:highlight-block') {
+        // Deselect previous
+        if (selectedEl) selectedEl.classList.remove('spacely-selected');
+
+        // Find and highlight the target block
+        const target = document.querySelector('[data-spacely-pb="' + e.data.pbId + '"]');
+        if (target) {
+          selectedEl = target;
+          target.classList.add('spacely-selected');
+          target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }
+    });
+  })();
 </script>

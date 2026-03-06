@@ -12,6 +12,7 @@
     activeRegion = $bindable('content'),
     error = $bindable(''),
     onReload,
+    onBlockExpand,
   }: {
     pageData: any;
     pageId: string;
@@ -20,6 +21,7 @@
     activeRegion: string;
     error: string;
     onReload: () => void;
+    onBlockExpand?: (pbId: string) => void;
   } = $props();
 
   let showAddBlock = $state(false);
@@ -68,9 +70,30 @@
 
   function toggleExpanded(pbId: number) {
     const next = new Set(expandedBlocks);
-    if (next.has(pbId)) next.delete(pbId);
-    else next.add(pbId);
+    if (next.has(pbId)) {
+      next.delete(pbId);
+    } else {
+      next.add(pbId);
+      onBlockExpand?.(`pb_${pbId}`);
+    }
     expandedBlocks = next;
+  }
+
+  /** Scroll to and expand a block by its content-API pb_id (e.g. "pb_42") */
+  export function scrollToBlock(pbIdStr: string) {
+    const numericId = parseInt(pbIdStr.replace('pb_', ''), 10);
+    if (isNaN(numericId)) return;
+
+    // Expand the block
+    const next = new Set(expandedBlocks);
+    next.add(numericId);
+    expandedBlocks = next;
+
+    // Scroll to it after DOM update
+    requestAnimationFrame(() => {
+      const el = document.querySelector(`[data-block-pb-id="${numericId}"]`);
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
   }
 
   /** Extract plain text from TipTap JSON */
@@ -332,6 +355,7 @@
                 class="block-card"
                 class:is-expanded={expandedBlocks.has(block.pb_id)}
                 class:just-dropped={justDroppedPbId === block.pb_id}
+                data-block-pb-id={block.pb_id}
                 ondragend={onDragEnd}
               >
                 <div class="block-card-header">

@@ -172,20 +172,25 @@ frontend. The Storyblok-like experience.
 - [x] Accordion plain-text body fix (handles both TipTap JSON and strings)
 - [x] College-site polish: multi-column footer, card grid "Explore" links,
   background-image cover on hero
-- [ ] Visual page editor (remaining):
-  - Drag-drop blocks between regions (visual)
-  - Inline block editing (click to edit in preview)
-  - Visual region indicators
-  - Hero styling polish (min-height, image sizing)
-- [ ] Advanced rich text:
-  - Slash commands (/ to insert block)
-  - Drag images into rich text
-  - Table editing
-  - Paste cleanup (Word, Google Docs)
+- [x] Visual page editor:
+  - [x] Multi-region editor (all regions visible simultaneously)
+  - [x] Cross-region drag-and-drop with drop indicators and flash animation
+  - [x] Collapsible block cards with position numbers and content preview
+  - [x] Color-coded region headers
+  - [x] RepeaterEditor component (visual sub-field editing, not raw JSON)
+  - [x] Null safety for block fields
+  - [x] Inline block editing (click block in preview to select/edit, bidirectional PostMessage bridge)
+  - [ ] Hero styling polish (min-height, image sizing) — deferred, site-specific
+- [x] Advanced rich text:
+  - [x] Slash commands (/ to insert headings, lists, tables, images, links)
+  - [x] Dropcursor for drag-and-drop content
+  - [x] Contextual table toolbar (add/delete rows/cols, merge/split, toggle header)
+  - [x] Paste cleanup (strips Word/Google Docs markup, mso styles, empty spans)
+  - [x] Placeholder text ("Type / for commands...")
 - [x] Content scheduling (completed in Phase 3)
 - [x] Revision history with rollback (completed in Phase 3)
 - [x] Revision diff view (side-by-side comparison with highlights)
-- [ ] Multi-user: real-time presence (who's editing what)
+- [x] Multi-user presence (heartbeat-based, shows who's editing each page)
 
 ### Demo
 
@@ -213,7 +218,9 @@ drag blocks around, edit inline, see changes live in the preview panel.
   - Generic CSV/JSON import
 - [ ] Backup/restore system
 - [ ] Performance optimization (query caching, batch API, edge caching)
-- [ ] Security audit
+- [ ] Security audit (full pass: OWASP top 10, input sanitization, CSRF, rate limiting)
+- [ ] Accessibility audit (WCAG AA: required alt text, heading order validation,
+      ARIA landmarks, color contrast, keyboard navigation, screen reader testing)
 - [ ] Comprehensive documentation site
 - [ ] Docker production deployment guide
 

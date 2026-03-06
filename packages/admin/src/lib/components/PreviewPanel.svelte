@@ -1,12 +1,15 @@
 <script lang="ts">
+  import { onMount, onDestroy } from 'svelte';
   import { getAuthToken } from '$lib/api.js';
 
   let {
     slug,
     visible = false,
+    onBlockSelect,
   }: {
     slug: string;
     visible: boolean;
+    onBlockSelect?: (pbId: string, region: string) => void;
   } = $props();
 
   let iframeEl = $state<HTMLIFrameElement | null>(null);
@@ -26,15 +29,37 @@
     }
   }
 
+  export function highlightBlock(pbId: string) {
+    if (iframeEl?.contentWindow) {
+      iframeEl.contentWindow.postMessage({ type: 'spacely:highlight-block', pbId }, '*');
+    }
+  }
+
   function onLoad() {
     loading = false;
   }
+
+  function handleMessage(e: MessageEvent) {
+    if (!e.data || !e.data.type) return;
+    if (e.data.type === 'spacely:select-block') {
+      onBlockSelect?.(e.data.pbId, e.data.region);
+    }
+  }
+
+  onMount(() => {
+    window.addEventListener('message', handleMessage);
+  });
+
+  onDestroy(() => {
+    window.removeEventListener('message', handleMessage);
+  });
 </script>
 
 {#if visible}
   <div class="preview-panel">
     <div class="preview-toolbar">
       <span class="preview-label">Live Preview</span>
+      <span class="preview-hint">Click any block to edit</span>
       <button class="btn btn-sm btn-outline" onclick={refresh} title="Refresh preview">
         &#x21bb; Refresh
       </button>
@@ -69,6 +94,7 @@
     background: var(--c-bg-subtle);
     border-bottom: 1px solid var(--c-border);
     flex-shrink: 0;
+    gap: 0.5rem;
   }
   .preview-label {
     font-size: 0.8rem;
@@ -76,6 +102,12 @@
     color: var(--c-text-light);
     text-transform: uppercase;
     letter-spacing: 0.04em;
+  }
+  .preview-hint {
+    font-size: 0.72rem;
+    color: var(--c-text-light);
+    opacity: 0.7;
+    flex: 1;
   }
   .preview-frame-wrap {
     flex: 1;

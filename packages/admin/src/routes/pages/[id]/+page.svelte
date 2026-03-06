@@ -6,6 +6,7 @@
   import PageEditorSidebar from '$lib/components/PageEditorSidebar.svelte';
   import BlockEditorRegion from '$lib/components/BlockEditorRegion.svelte';
   import PreviewPanel from '$lib/components/PreviewPanel.svelte';
+  import PresenceIndicator from '$lib/components/PresenceIndicator.svelte';
 
   let pageData = $state<any>(null);
   let contentType = $state<any>(null);
@@ -20,6 +21,7 @@
   let menuDetails = $state<Record<number, any>>({});
   let revisions = $state<any[]>([]);
   let previewPanel = $state<PreviewPanel | null>(null);
+  let blockEditor = $state<BlockEditorRegion | null>(null);
 
   const id = $derived($routePage.params.id);
 
@@ -115,6 +117,8 @@
     </div>
   </div>
 
+  <PresenceIndicator pageId={id} />
+
   {#if error}<div class="alert alert-error">{error}</div>{/if}
   {#if success}<div class="alert alert-success">{success}</div>{/if}
 
@@ -162,8 +166,9 @@
             {/if}
           </div>
 
-          <BlockEditorRegion {pageData} pageId={id} {contentType} {blockTypes}
-            bind:activeRegion bind:error onReload={load} />
+          <BlockEditorRegion bind:this={blockEditor} {pageData} pageId={id} {contentType} {blockTypes}
+            bind:activeRegion bind:error onReload={load}
+            onBlockExpand={(pbId) => { if (showPreview) previewPanel?.highlightBlock(pbId); }} />
         </div>
 
         <PageEditorSidebar
@@ -176,7 +181,8 @@
       </div>
     </div>
 
-    <PreviewPanel bind:this={previewPanel} slug={pageData.slug} visible={showPreview} />
+    <PreviewPanel bind:this={previewPanel} slug={pageData.slug} visible={showPreview}
+      onBlockSelect={(pbId, region) => { blockEditor?.scrollToBlock(pbId); }} />
   </div>
 {/if}
 
