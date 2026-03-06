@@ -78,7 +78,7 @@ docker compose up -d
 | Admin UI | SvelteKit 5 (SPA mode) |
 | Rich Text | TipTap (JSON storage) |
 | Media Processing | Sharp |
-| Testing | Vitest (97 tests, all passing) |
+| Testing | Vitest (105 tests, all passing) |
 | Runtime | Node.js 22 LTS |
 
 ## Project Structure
