@@ -333,6 +333,9 @@ missing alt text — everything feels snappy and intentional.
   - [x] Webhook secrets masked in API responses
   - [x] API keys hashed (SHA256), only prefix shown after creation
   - [x] JWT auth on all admin endpoints, rate limiting on login
+  - [x] MIME type allowlist for media uploads (blocks executables)
+  - [x] 50MB max upload size validation
+  - [x] Webhook error message sanitization (no internal details leaked)
 - [x] Accessibility improvements (WCAG AA):
   - [x] Skip-to-content link for keyboard navigation
   - [x] ARIA landmarks (nav, main, aside with labels)
@@ -351,6 +354,7 @@ missing alt text — everything feels snappy and intentional.
 - [x] Query caching (in-memory TTL cache for content API pages/menus,
       auto-invalidated on admin writes to pages, blocks, page-blocks, menus;
       cache stats in health endpoint)
+- [x] ETag support on content API (304 Not Modified for conditional requests)
 - [ ] CDN integration (deferred — cache invalidation on publish via webhook
       already possible using webhook system)
 
@@ -383,8 +387,8 @@ A developer should go from zero to running CMS in under 5 minutes.
 - [x] `spacely seed` — populate sample data
 - [x] `spacely start` — start production server
 - [x] `spacely export` — export all data as JSON
+- [x] `spacely import <file>` — import data from JSON backup
 - [x] `spacely health` — check server health
-- [ ] `npx spacely import` — import from JSON file
 
 ### 6c. Docker & Deployment -- PARTIAL
 
@@ -437,25 +441,27 @@ site in under 2 minutes.
 **Goal**: Feature parity with established CMS tools. These are the features
 that make teams choose SpacelyCMS over Strapi, Directus, or Storyblok.
 
-### 7a. Search
+### 7a. Search -- PARTIAL
 
 - [ ] Pagefind integration for SSG sites (auto-indexes Astro build output,
       client-side search UI component)
 - [ ] Meilisearch integration for SSR sites (server-side indexing, API
       endpoint for search queries)
-- [ ] Admin search (full-text search across all pages and blocks in the
-      admin UI)
+- [x] Admin search (global search across pages, blocks, media, menus;
+      Ctrl+K shortcut, debounced dropdown with grouped results)
 
-### 7b. SEO & Meta -- PARTIAL
+### 7b. SEO & Meta -- COMPLETE
 
 - [x] SEO fields on pages (meta title, meta description, OG image, robots,
       canonical URL — editable in admin sidebar, available in content API
       as `seo` object with character count hints)
 - [x] Sitemap generation (`/sitemap.xml` — auto-generated from published
       pages, excludes noindex pages, cached, invalidated on mutations)
-- [ ] OG image generation (auto-generate social sharing images from page
-      title + hero image)
-- [ ] Structured data / JSON-LD helpers (article, breadcrumb, organization)
+- [x] Structured data / JSON-LD helpers in @spacelycms/astro:
+      articleJsonLd, webPageJsonLd, breadcrumbJsonLd, organizationJsonLd,
+      getPageSeo, jsonLdScript
+- [ ] OG image generation (deferred — auto-generate social sharing images
+      from page title + hero image)
 
 ### 7c. Form Builder
 
@@ -502,8 +508,8 @@ all managed from the SpacelyCMS admin UI.
 - [ ] Email notifications (new content submitted, review requested,
       content approved/rejected)
 - [ ] Comments/annotations on pages (internal editorial notes)
-- [ ] Scheduled publishing automation (cron checks scheduledAt, auto-
-      publishes and fires webhooks)
+- [x] Scheduled publishing automation (60s interval checks scheduledAt,
+      auto-publishes draft pages, fires webhooks, invalidates cache)
 
 ### 8c. Migration Tools
 
@@ -541,8 +547,8 @@ new block type.
 | Phase 4.5 | Admin UI Polish | Complete (a-e) |
 | Phase 5 | Production Hardening | Complete (5a-5c) |
 | Phase 6 | Packaging & DX | In progress (build, CLI, Docker dev) |
-| Phase 7 | Content Features | Not started |
-| Phase 8 | Scale & Ecosystem | Not started |
+| Phase 7 | Content Features | In progress (SEO, search, JSON-LD) |
+| Phase 8 | Scale & Ecosystem | Partial (scheduled publishing) |
 
 **Phases 1-4** = The engine (done)
 **Phase 4.5** = Make it feel professional (UI/UX polish)

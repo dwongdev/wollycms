@@ -19,6 +19,9 @@ SpacelyCMS fills the gap between simple headless CMS tools (Strapi, Directus) th
 - **Webhooks** — HMAC-SHA256 signed webhooks for build triggers on content changes
 - **API Keys** — Long-lived tokens for build pipelines with permission scoping
 - **Audit Logging** — Track all content mutations with user, action, and IP
+- **SEO** — Meta title/description, OG image, canonical URL, robots, XML sitemap, JSON-LD helpers
+- **Global Search** — Ctrl+K to search across pages, blocks, media, and menus
+- **Scheduled Publishing** — Set a publish date and content goes live automatically
 - **Self-Hosted** — Runs anywhere Node.js runs. SQLite for dev, PostgreSQL support planned.
 
 ## Quick Start
@@ -63,6 +66,7 @@ docker compose up -d
 | `POST /api/content/batch` | Fetch multiple pages + menus in one request |
 | `GET /api/content/sitemap` | XML sitemap of published pages |
 | `GET /sitemap.xml` | Redirect to sitemap endpoint |
+| `GET /api/admin/search?q=` | Global search (pages, blocks, media, menus) |
 | `GET /api/health` | Health check (uptime, version) |
 
 ## Tech Stack
@@ -74,7 +78,7 @@ docker compose up -d
 | Admin UI | SvelteKit 5 (SPA mode) |
 | Rich Text | TipTap (JSON storage) |
 | Media Processing | Sharp |
-| Testing | Vitest (97 tests) |
+| Testing | Vitest (97 tests, all passing) |
 | Runtime | Node.js 22 LTS |
 
 ## Project Structure
@@ -143,8 +147,9 @@ Phases 1-5a complete. See [Roadmap](docs/planning/roadmap.md) for details.
 | Phase 4 | Visual Builder | Complete |
 | Phase 4.5 | Admin UI Polish | Complete |
 | Phase 5a | Production Infrastructure | Complete |
-| Phase 5b-c | Security/Performance | Partial |
-| Phase 6+ | Packaging & DX | Planned |
+| Phase 5b-c | Security/Performance | Complete |
+| Phase 6 | Packaging & DX | In Progress |
+| Phase 7 | Content Features | In Progress |
 
 ## License
 
