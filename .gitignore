@@ -1,0 +1,50 @@
+# Environment & Secrets
+.env
+.env.*
+.env.local
+!.env.example
+*.pem
+*.key
+credentials.json
+secrets.json
+
+# Dependencies
+node_modules/
+vendor/
+__pycache__/
+.venv/
+venv/
+
+# Build outputs
+dist/
+build/
+.next/
+out/
+.astro/
+
+# Data
+data/
+*.db
+*.sqlite
+*.sqlite3
+
+# Claude local files
+.claude/settings.local.json
+CLAUDE.local.md
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Uploads (managed by media system)
+uploads/
