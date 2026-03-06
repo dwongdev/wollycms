@@ -37,7 +37,6 @@ export function seedContentTypes(db: AppDatabase) {
         { name: 'hero_cta_url', label: 'Hero CTA URL', type: 'url' },
       ],
       regions: [
-        { name: 'hero', label: 'Hero' },
         { name: 'content', label: 'Content' },
         { name: 'features', label: 'Features' },
         { name: 'bottom', label: 'Bottom' },
@@ -52,9 +51,11 @@ export function seedContentTypes(db: AppDatabase) {
         { name: 'tagline', label: 'Tagline', type: 'text' },
         { name: 'hero_eyebrow', label: 'Hero Eyebrow', type: 'text' },
         { name: 'hero_description', label: 'Hero Description', type: 'text' },
+        { name: 'hero_image', label: 'Hero Image', type: 'media' },
+        { name: 'hero_cta_text', label: 'Hero CTA Text', type: 'text' },
+        { name: 'hero_cta_url', label: 'Hero CTA URL', type: 'url' },
       ],
       regions: [
-        { name: 'hero', label: 'Hero' },
         { name: 'content', label: 'Content' },
         { name: 'features', label: 'Features' },
         { name: 'bottom', label: 'Bottom' },

@@ -184,20 +184,22 @@
   .editor-layout {
     display: flex;
     gap: 0;
-    min-height: calc(100vh - 140px);
   }
   .editor-main {
     flex: 1;
     min-width: 0;
   }
+  .editor-layout.with-preview {
+    height: calc(100vh - 140px);
+  }
   .editor-layout.with-preview .editor-main {
     flex: 1;
     overflow-y: auto;
-    max-height: calc(100vh - 140px);
   }
   .editor-layout.with-preview :global(.preview-panel) {
     flex: 1;
     min-width: 400px;
     max-width: 50%;
+    height: 100%;
   }
 </style>

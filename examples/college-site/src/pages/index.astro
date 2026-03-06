@@ -12,18 +12,15 @@ const [mainMenu, footerMenu, config] = await Promise.all([
 ]);
 
 const regions = page.regions ?? {};
-const heroBlocks = regions.hero ?? [];
 const contentBlocks = regions.content ?? [];
 const featureBlocks = regions.features ?? [];
 const bottomBlocks = regions.bottom ?? [];
 
-// Extract hero data from blocks for the split layout
-const heroImage = heroBlocks.find((b: any) => b.block_type === 'image');
-const heroCta = heroBlocks.find((b: any) => b.block_type === 'cta_button');
-const heroImgSrc = heroImage?.fields?.image
-  ? (typeof heroImage.fields.image === 'number'
-    ? spacely.media.url(heroImage.fields.image, 'large')
-    : String(heroImage.fields.image))
+// Hero data from page fields
+const heroImgSrc = page.fields.hero_image
+  ? (typeof page.fields.hero_image === 'number'
+    ? spacely.media.url(page.fields.hero_image as number, 'large')
+    : String(page.fields.hero_image))
   : null;
 const hasHero = !!(page.fields.tagline || heroImgSrc);
 ---
@@ -42,23 +39,15 @@ const hasHero = !!(page.fields.tagline || heroImgSrc);
           {page.fields.hero_description && (
             <p class="hero-description">{page.fields.hero_description}</p>
           )}
-          {heroCta && (
-            <a
-              href={heroCta.fields.url}
-              class:list={['cta-button', `cta-${heroCta.fields.style ?? 'secondary'}`]}
-            >
-              {heroCta.fields.text}
+          {page.fields.hero_cta_text && page.fields.hero_cta_url && (
+            <a href={page.fields.hero_cta_url as string} class="cta-button cta-secondary">
+              {page.fields.hero_cta_text}
             </a>
           )}
         </div>
         {heroImgSrc && (
           <div class="hero-image-wrap">
-            <img
-              src={heroImgSrc}
-              alt={heroImage?.fields?.alt ?? ''}
-              class="hero-image"
-              loading="eager"
-            />
+            <img src={heroImgSrc} alt="" class="hero-image" loading="eager" />
           </div>
         )}
       </div>

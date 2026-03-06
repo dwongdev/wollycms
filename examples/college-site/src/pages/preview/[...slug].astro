@@ -15,7 +15,6 @@ if (!token || !slug) {
 
 const API_BASE = 'http://localhost:4321/api/content';
 
-// Fetch draft page from preview endpoint
 const pageRes = await fetch(`${API_BASE}/preview/pages/${slug}?token=${token}`);
 if (!pageRes.ok) {
   return new Response(`Page not found: ${slug}`, { status: 404 });
@@ -23,7 +22,6 @@ if (!pageRes.ok) {
 const pageJson = await pageRes.json();
 const page = pageJson.data;
 
-// Fetch menus and config (public endpoints, no auth needed)
 const [mainMenu, footerMenu, config] = await Promise.all([
   spacely.menus.get('main'),
   spacely.menus.get('footer'),
@@ -34,9 +32,14 @@ const regions = page.regions ?? {};
 const contentBlocks = regions.content ?? [];
 const sidebarBlocks = regions.sidebar ?? [];
 const bottomBlocks = regions.bottom ?? [];
-const heroBlocks = regions.hero ?? [];
 const featureBlocks = regions.features ?? [];
 const hasSidebar = sidebarBlocks.length > 0;
+
+const heroImgSrc = page.fields?.hero_image
+  ? (typeof page.fields.hero_image === 'number'
+    ? spacely.media.url(page.fields.hero_image, 'large')
+    : String(page.fields.hero_image))
+  : null;
 ---
 
 <Layout title={`[Preview] ${page.title}`} menu={mainMenu} footerMenu={footerMenu} config={config}>
@@ -44,13 +47,9 @@ const hasSidebar = sidebarBlocks.length > 0;
     Preview Mode — {page.status === 'draft' ? 'Draft' : page.status}
   </div>
 
-  <section class="hero-region hero-interior">
+  <section class="hero-region hero-interior" style={heroImgSrc ? `background-image: url(${heroImgSrc})` : undefined}>
     <div class="container">
-      {heroBlocks.length > 0 ? (
-        <BlockRenderer blocks={heroBlocks} region="hero" components={blockComponents} />
-      ) : (
-        <h1 class="hero-title">{page.title}</h1>
-      )}
+      <h1 class="hero-title">{page.title}</h1>
       {page.fields?.subtitle && <p class="hero-tagline">{page.fields.subtitle as string}</p>}
     </div>
   </section>
@@ -105,7 +104,6 @@ const hasSidebar = sidebarBlocks.length > 0;
 </style>
 
 <script is:inline>
-  // Listen for refresh messages from the admin editor
   window.addEventListener('message', (e) => {
     if (e.data?.type === 'spacely:refresh') {
       window.location.reload();
