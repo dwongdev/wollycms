@@ -79,6 +79,15 @@ export class SpacelyClient {
     },
   };
 
+  readonly search = {
+    query: async (q: string, options?: { type?: string; limit?: number }): Promise<{ data: Array<{ id: number; type: string; title: string; slug: string; description: string | null }>; meta: { total: number; query: string } }> => {
+      const params = new URLSearchParams({ q });
+      if (options?.type) params.set('type', options.type);
+      if (options?.limit) params.set('limit', String(options.limit));
+      return this.fetch(`/search?${params}`);
+    },
+  };
+
   readonly redirects = {
     list: async (): Promise<Redirect[]> => {
       const res = await this.fetch<ApiResponse<Redirect[]>>('/redirects');

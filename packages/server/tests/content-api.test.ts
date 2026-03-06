@@ -239,6 +239,31 @@ describe('GET /api/content/schemas', () => {
   });
 });
 
+// --- Content Search ---
+describe('GET /api/content/search', () => {
+  it('returns empty for short queries', async () => {
+    const res = await get('/api/content/search?q=a');
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.data).toEqual([]);
+  });
+
+  it('finds published pages by title', async () => {
+    const res = await get('/api/content/search?q=Home');
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.data.length).toBeGreaterThan(0);
+    expect(body.meta.query).toBe('Home');
+  });
+
+  it('respects limit parameter', async () => {
+    const res = await get('/api/content/search?q=page&limit=2');
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.data.length).toBeLessThanOrEqual(2);
+  });
+});
+
 // --- SEO ---
 describe('Content API SEO', () => {
   it('page response includes seo object', async () => {
