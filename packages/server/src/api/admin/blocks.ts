@@ -39,6 +39,7 @@ app.get('/', async (c) => {
       id: blocks.id, typeId: blocks.typeId, typeSlug: blockTypes.slug, typeName: blockTypes.name,
       title: blocks.title, fields: blocks.fields, isReusable: blocks.isReusable,
       createdAt: blocks.createdAt, updatedAt: blocks.updatedAt,
+      usageCount: sql<number>`(SELECT count(*) FROM page_blocks WHERE page_blocks.block_id = ${blocks.id})`,
     })
     .from(blocks)
     .innerJoin(blockTypes, eq(blocks.typeId, blockTypes.id))

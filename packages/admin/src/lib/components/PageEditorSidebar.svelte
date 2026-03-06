@@ -1,5 +1,6 @@
 <script lang="ts">
   import { api } from '$lib/api.js';
+  import RevisionDiff from './RevisionDiff.svelte';
 
   let {
     pageData,
@@ -30,6 +31,7 @@
   let menuAddParent = $state<number | null>(null);
   let showRevisions = $state(false);
   let revisionDetail = $state<any>(null);
+  let diffRevision = $state<any>(null);
 
   function flattenMenuItems(items: any[], depth = 0): any[] {
     const flat: any[] = [];
@@ -102,6 +104,29 @@
       const res = await api.get<{ data: any }>(`/pages/${id}/revisions/${revId}`);
       revisionDetail = res.data;
     } catch (err: any) { error = err.message; }
+  }
+
+  async function compareRevision(revId: number) {
+    try {
+      const res = await api.get<{ data: any }>(`/pages/${id}/revisions/${revId}`);
+      diffRevision = res.data;
+    } catch (err: any) { error = err.message; }
+  }
+
+  function getCurrentForDiff() {
+    const allBlocks: any[] = [];
+    for (const [region, blocks] of Object.entries(pageData.regions || {})) {
+      for (const b of blocks as any[]) {
+        allBlocks.push({ blockType: b.block_type, region, isShared: b.is_shared, title: b.title });
+      }
+    }
+    return {
+      title: pageData.title,
+      slug: pageData.slug,
+      status: pageData.status,
+      fields: pageData.fields || {},
+      blocks: allBlocks,
+    };
   }
 
   async function restoreRevision(revId: number) {
@@ -220,6 +245,7 @@
                 </div>
               </div>
               <div style="display: flex; gap: 0.25rem;">
+                <button class="btn btn-sm btn-outline" style="padding: 0.15rem 0.4rem; font-size: 0.7rem;" onclick={() => compareRevision(rev.id)}>Diff</button>
                 <button class="btn btn-sm btn-outline" style="padding: 0.15rem 0.4rem; font-size: 0.7rem;" onclick={() => viewRevision(rev.id)}>View</button>
                 <button class="btn btn-sm btn-primary" style="padding: 0.15rem 0.4rem; font-size: 0.7rem;" onclick={() => restoreRevision(rev.id)}>Restore</button>
               </div>
@@ -242,41 +268,28 @@
         <button class="btn-icon" onclick={() => revisionDetail = null}>&#10005;</button>
       </div>
       <div class="modal-body" style="max-height: 60vh; overflow-y: auto;">
-        <div class="form-group">
-          <label style="font-size: 0.8rem; font-weight: 600;">Title</label>
-          <p style="font-size: 0.9rem;">{revisionDetail.title}</p>
-        </div>
-        <div class="form-group">
-          <label style="font-size: 0.8rem; font-weight: 600;">Slug</label>
-          <p style="font-size: 0.9rem;">/{revisionDetail.slug}</p>
-        </div>
-        <div class="form-group">
-          <label style="font-size: 0.8rem; font-weight: 600;">Status</label>
-          <span class="badge badge-{revisionDetail.status}">{revisionDetail.status}</span>
-        </div>
+        <p style="font-size: 0.85rem;"><strong>Slug:</strong> /{revisionDetail.slug} &middot; <strong>Status:</strong> <span class="badge badge-{revisionDetail.status}">{revisionDetail.status}</span></p>
         {#if revisionDetail.fields && Object.keys(revisionDetail.fields).length > 0}
-          <div class="form-group">
-            <label style="font-size: 0.8rem; font-weight: 600;">Fields</label>
-            <pre style="font-size: 0.75rem; background: var(--c-bg-subtle); padding: 0.5rem; border-radius: 4px; overflow-x: auto;">{JSON.stringify(revisionDetail.fields, null, 2)}</pre>
-          </div>
+          <pre style="font-size: 0.75rem; background: var(--c-bg-subtle); padding: 0.5rem; border-radius: 4px; overflow-x: auto; margin: 0.5rem 0;">{JSON.stringify(revisionDetail.fields, null, 2)}</pre>
         {/if}
         {#if Array.isArray(revisionDetail.blocks) && revisionDetail.blocks.length > 0}
-          <div class="form-group">
-            <label style="font-size: 0.8rem; font-weight: 600;">Blocks ({revisionDetail.blocks.length})</label>
-            {#each revisionDetail.blocks as block}
-              <div style="padding: 0.4rem; margin-bottom: 0.25rem; background: var(--c-bg-subtle); border-radius: 4px; font-size: 0.8rem;">
-                <strong>{block.blockType}</strong> in {block.region}
-                {#if block.title} — {block.title}{/if}
-                {#if block.isShared}<span class="badge badge-published" style="font-size: 0.65rem; margin-left: 0.25rem;">shared</span>{/if}
-              </div>
-            {/each}
-          </div>
+          <p style="font-size: 0.8rem; font-weight: 600; margin: 0.5rem 0 0.25rem;">Blocks ({revisionDetail.blocks.length})</p>
+          {#each revisionDetail.blocks as block}
+            <div style="padding: 0.3rem 0.5rem; margin-bottom: 0.2rem; background: var(--c-bg-subtle); border-radius: 4px; font-size: 0.8rem;">
+              <strong>{block.blockType}</strong> in {block.region}{#if block.title} — {block.title}{/if}{#if block.isShared} <span class="badge badge-published" style="font-size: 0.65rem;">shared</span>{/if}
+            </div>
+          {/each}
         {/if}
         <div class="modal-footer">
           <button class="btn btn-outline" onclick={() => revisionDetail = null}>Close</button>
-          <button class="btn btn-primary" onclick={() => restoreRevision(revisionDetail.id)}>Restore This Revision</button>
+          <button class="btn btn-primary" onclick={() => restoreRevision(revisionDetail.id)}>Restore</button>
         </div>
       </div>
     </div>
   </div>
+{/if}
+
+{#if diffRevision}
+  <RevisionDiff current={getCurrentForDiff()} revision={diffRevision}
+    onClose={() => diffRevision = null} onRestore={restoreRevision} />
 {/if}
