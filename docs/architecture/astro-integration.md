@@ -358,11 +358,9 @@ export interface SecondaryPage {
   title: string;
   slug: string;
   status: 'draft' | 'published';
-  fields: {
-    subtitle?: string;
-    hero_image?: SpacelyMedia;
-  };
+  fields: Record<string, unknown>;
   regions: {
+    hero: SpacelyBlock[];
     content: SpacelyBlock[];
     sidebar: SpacelyBlock[];
     bottom: SpacelyBlock[];
@@ -405,31 +403,42 @@ export default defineConfig({
 
 ## Preview Mode (Draft Content)
 
-For editors to preview unpublished changes:
+For editors to preview unpublished changes. The preview route is SSR (not
+prerendered) and fetches from the authenticated preview API endpoint:
 
 ```astro
 ---
 // src/pages/preview/[...slug].astro
-import { spacely } from '@spacelycms/astro';
+export const prerender = false;
 
-// Verify preview token
+const { slug } = Astro.params;
 const token = Astro.url.searchParams.get('token');
-if (!spacely.preview.verifyToken(token)) {
-  return Astro.redirect('/404');
+
+if (!token || !slug) {
+  return new Response('Missing token or slug', { status: 400 });
 }
 
-// Fetch draft version of page
-const page = await spacely.pages.getBySlug(Astro.params.slug, {
-  status: 'any',
-  preview: true
-});
+const API_BASE = 'http://localhost:4321/api/content';
+const pageRes = await fetch(`${API_BASE}/preview/pages/${slug}?token=${token}`);
+if (!pageRes.ok) {
+  return new Response(`Page not found: ${slug}`, { status: 404 });
+}
+const page = (await pageRes.json()).data;
+
+const regions = page.regions ?? {};
+const heroBlocks = regions.hero ?? [];
+const contentBlocks = regions.content ?? [];
 ---
 
-<div class="preview-banner">Preview Mode — This page is not published</div>
+<div class="preview-banner">Preview Mode — {page.status}</div>
 <Layout>
-  <BlockRenderer blocks={page.regions.content} />
+  <BlockRenderer blocks={heroBlocks} region="hero" components={blockComponents} />
+  <BlockRenderer blocks={contentBlocks} region="content" components={blockComponents} />
 </Layout>
 ```
+
+The admin UI embeds this as an iframe with the JWT token passed as a query
+parameter. PostMessage is used to trigger a reload when the editor saves.
 
 ---
 
@@ -439,9 +448,11 @@ The integration works with all Astro output modes:
 
 | Mode | How It Works |
 |---|---|
-| `static` (SSG) | All pages pre-rendered at build time. CMS webhook triggers rebuild. |
-| `server` (SSR) | Pages fetched from CMS API on each request. Edge caching recommended. |
-| `hybrid` | Mix of SSG + SSR. Common pages static, dynamic pages SSR. |
+| `static` (default) | All pages pre-rendered at build time. CMS webhook triggers rebuild. Per-page SSR opt-in via `export const prerender = false`. |
+| `server` | Pages fetched from CMS API on each request. Edge caching recommended. |
+
+Note: Astro 5 removed `output: 'hybrid'`. The default `static` output now
+supports per-page SSR opt-in, which is used for the preview route.
 
 Compatible with all Astro adapters:
 - `@astrojs/cloudflare`

@@ -133,12 +133,11 @@ all content without touching code or APIs.
 - [x] Content scheduling (scheduledAt field, content API filters future pages)
 - [x] Export/import (full JSON backup, admin-only, deduplication on import)
 - [x] Redirects search filtering
-- [x] Tests: 93 tests (23 content API + 70 admin API), all passing
+- [x] Tests: 97 tests (27 content API + 70 admin API), all passing
 
 ### Known Limitations
 
 - RBAC: viewer role can read all admin data (no field-level restrictions)
-- No SSR preview mode demonstrated yet
 
 ### Demo
 
@@ -166,10 +165,18 @@ frontend. The Storyblok-like experience.
   - Move blocks between regions (dropdown)
   - Shared block picker (search/filter from library)
   - Usage count on blocks list
+- [x] Hero as composable block type (not page fields)
+  - Hero block with heading, subtitle, eyebrow, description, image, CTA, style
+  - Hero region on all content types
+  - Pages without heroes render no hero section; multiple heroes supported
+- [x] Accordion plain-text body fix (handles both TipTap JSON and strings)
+- [x] College-site polish: multi-column footer, card grid "Explore" links,
+  background-image cover on hero
 - [ ] Visual page editor (remaining):
   - Drag-drop blocks between regions (visual)
   - Inline block editing (click to edit in preview)
   - Visual region indicators
+  - Hero styling polish (min-height, image sizing)
 - [ ] Advanced rich text:
   - Slash commands (/ to insert block)
   - Drag images into rich text

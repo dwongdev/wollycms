@@ -144,25 +144,19 @@ Defines the structure of a page type. Each content type specifies:
 {
   "name": "Secondary Page",
   "slug": "secondary_page",
-  "fields_schema": [
-    {
-      "name": "subtitle",
-      "type": "text",
-      "required": false
-    },
-    {
-      "name": "hero_image",
-      "type": "media",
-      "required": false,
-      "settings": { "allowed_types": ["image/*"] }
-    }
-  ],
+  "fields_schema": [],
   "regions": [
+    { "name": "hero", "label": "Hero" },
     { "name": "content", "label": "Main Content", "allowed_types": ["*"] },
     { "name": "sidebar", "label": "Sidebar", "allowed_types": ["*"] },
     { "name": "bottom", "label": "Bottom Content", "allowed_types": ["*"] }
   ]
 }
+```
+
+Note: Hero content is managed through hero blocks placed in the `hero` region,
+not through page-level fields. This allows pages to have zero, one, or multiple
+hero blocks, and hero content is fully composable like any other block.
 ```
 
 ### block_types

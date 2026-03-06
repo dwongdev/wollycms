@@ -47,24 +47,27 @@ npm run test                                   # Run all tests
 npm run test --workspace=packages/server       # Server tests only
 ```
 
-## Phase 1 Status (Complete)
+## Current Status
 
-- Monorepo: npm workspaces (packages/server, packages/admin, packages/astro)
+- **Phases 1-3**: Complete (Data + API, Astro Integration, Admin UI)
+- **Phase 4**: In progress (Visual Page Builder + Live Preview)
+- Monorepo: npm workspaces (packages/server, packages/admin, packages/astro, examples/college-site)
 - Database: 13 tables with full Drizzle schema + indexes + migrations
-- Seed data: 8 pages, 8 block types, 3 content types, 3 menus, 2 taxonomies, 6 media records
-- Content API: 8 endpoints, all tested (22 tests passing)
+- Seed data: 8 pages, 10 block types (incl. hero), 3 content types, 3 menus, 2 taxonomies
+- Content API: 9 endpoints including preview (97 tests passing: 27 content + 70 admin)
 - Schema files use `.ts` imports (not `.js`) for drizzle-kit compatibility
 - App factory: `src/app.ts` (testable), `src/index.ts` (server entry)
 
 ## Architecture Key Points
 
 - Content is stored as structured JSON (not HTML)
-- Pages have named regions (main, sidebar, bottom) containing ordered blocks
+- Pages have named regions (hero, content, sidebar, bottom, features) containing ordered blocks
+- Hero content is a composable block type in the hero region (not page-level fields)
 - Blocks can be inline (page-specific) or shared/reusable (from block library)
 - TipTap rich text stored as JSON, rendered by Astro components
-- Content API is public/read-only; Admin API is authenticated
+- Content API is public/read-only; Admin API is authenticated; Preview API is token-authenticated
 - Media stored on local filesystem (dev) or S3-compatible (prod)
-- All API routes prefixed: `/api/content/*` (public) and `/api/admin/*` (auth)
+- API routes: `/api/content/*` (public), `/api/admin/*` (auth), `/api/content/preview/*` (token auth)
 
 ## Important Patterns
 

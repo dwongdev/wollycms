@@ -201,26 +201,27 @@ function resolveBlock(pageBlock) {
 
 These are the block types included by default. Sites can add custom types.
 
-| Block Type | Slug | Purpose |
-|---|---|---|
-| Rich Text | `rich_text` | Formatted text content (WYSIWYG) |
-| Image | `image` | Single image with caption and link |
-| Gallery | `gallery` | Image gallery/grid |
-| Video | `video` | Embedded or uploaded video |
-| Accordion | `accordion` | Expandable content sections |
-| Tabs | `tabs` | Tabbed content sections |
-| CTA Button | `cta_button` | Call-to-action button with link |
-| Card | `card` | Title + image + text + link |
-| Card Grid | `card_grid` | Grid of card items |
-| Contact List | `contact_list` | List of contact entries |
-| Location | `location` | Address, map, directions |
-| Link List | `link_list` | List of links (sidebar nav, resources) |
-| Embed | `embed` | External embed (YouTube, iframe, etc.) |
-| Code Block | `code_block` | Syntax-highlighted code |
-| Alert/Notice | `alert` | Highlighted notice or warning |
-| Divider | `divider` | Visual separator |
-| Spacer | `spacer` | Vertical spacing |
-| Content Listing | `content_listing` | Dynamic query: show N pages of type X |
+| Block Type | Slug | Purpose | Shipped |
+|---|---|---|---|
+| Hero | `hero` | Hero banner with heading, image, CTA, multiple styles | Yes |
+| Rich Text | `rich_text` | Formatted text content (WYSIWYG) | Yes |
+| Image | `image` | Single image with caption and link | Yes |
+| Video | `video` | Embedded or uploaded video | Yes |
+| Accordion | `accordion` | Expandable content sections | Yes |
+| CTA Button | `cta_button` | Call-to-action button with link | Yes |
+| Contact List | `contact_list` | List of contact entries | Yes |
+| Location | `location` | Address, map, directions | Yes |
+| Link List | `link_list` | List of links (sidebar nav, resources) | Yes |
+| Content Listing | `content_listing` | Dynamic query: show N pages of type X | Yes |
+| Gallery | `gallery` | Image gallery/grid | Planned |
+| Tabs | `tabs` | Tabbed content sections | Planned |
+| Card | `card` | Title + image + text + link | Planned |
+| Card Grid | `card_grid` | Grid of card items | Planned |
+| Embed | `embed` | External embed (YouTube, iframe, etc.) | Planned |
+| Code Block | `code_block` | Syntax-highlighted code | Planned |
+| Alert/Notice | `alert` | Highlighted notice or warning | Planned |
+| Divider | `divider` | Visual separator | Planned |
+| Spacer | `spacer` | Vertical spacing | Planned |
 
 ---
 

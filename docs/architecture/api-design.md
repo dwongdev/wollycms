@@ -45,22 +45,20 @@ GET /api/content/pages/:slug/blocks
   "title": "CITE Resource Wizard",
   "slug": "cite-resource-wizard",
   "status": "published",
-  "fields": {
-    "subtitle": "Center For Information Technology Excellence",
-    "hero_image": {
-      "id": 101,
-      "url": "/api/media/101/original",
-      "alt": "CITE datacenter lab",
-      "variants": {
-        "thumbnail": "/api/media/101/thumbnail",
-        "medium": "/api/media/101/medium",
-        "large": "/api/media/101/large"
-      },
-      "width": 1200,
-      "height": 400
-    }
-  },
+  "fields": {},
   "regions": {
+    "hero": [
+      {
+        "id": "pb_0",
+        "block_type": "hero",
+        "fields": {
+          "heading": "CITE Resource Wizard",
+          "subtitle": "Center For Information Technology Excellence",
+          "style": "interior",
+          "image": 101
+        }
+      }
+    ],
     "content": [
       {
         "id": "pb_1",
@@ -224,6 +222,17 @@ GET /api/content/config
 GET /api/content/schemas
   — Returns all content type and block type schemas
   — Used by @spacelycms/astro to generate TypeScript types
+```
+
+### Preview (Authenticated)
+
+```
+GET /api/content/preview/pages/:slug
+  ?token=JWT                          — JWT auth via query param
+  Authorization: Bearer JWT           — or via header
+
+  — Returns page data regardless of publish status (drafts included)
+  — Used by the Astro SSR preview route for live preview in admin editor
 ```
 
 ---
