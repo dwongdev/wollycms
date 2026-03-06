@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { api } from '$lib/api.js';
+  import { toast } from '$lib/toast.svelte.js';
   import RichTextEditor from '$lib/components/RichTextEditor.svelte';
   import MediaPicker from '$lib/components/MediaPicker.svelte';
 
@@ -8,7 +9,6 @@
   let blockTypes = $state<any[]>([]);
   let total = $state(0);
   let error = $state('');
-  let success = $state('');
   let search = $state('');
   let typeFilter = $state('');
   let showCreate = $state(false);
@@ -53,8 +53,7 @@
     try {
       await api.put(`/blocks/${editBlock.id}`, { title: editBlock.title, fields: editBlock.fields });
       editBlock = null;
-      success = 'Block saved.';
-      setTimeout(() => success = '', 3000);
+      toast.success('Block saved.');
       load();
     } catch (err: any) { error = err.message; }
   }
@@ -77,7 +76,6 @@
 </div>
 
 {#if error}<div class="alert alert-error">{error}</div>{/if}
-{#if success}<div class="alert alert-success">{success}</div>{/if}
 
 <div class="card" style="margin-bottom: 1rem; display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
   <input class="form-control" placeholder="Search blocks..." bind:value={search} oninput={() => load()} style="max-width: 300px;" />

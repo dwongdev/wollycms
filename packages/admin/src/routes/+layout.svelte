@@ -3,11 +3,18 @@
   import { page } from '$app/stores';
   import { goto } from '$app/navigation';
   import { getAuth } from '$lib/auth.svelte.js';
+  import ToastContainer from '$lib/components/ToastContainer.svelte';
+  import KeyboardShortcuts from '$lib/components/KeyboardShortcuts.svelte';
+  import {
+    LayoutDashboard, FileText, Blocks, Image, Menu, Tags,
+    CornerDownRight, ClipboardList, Square, Users, Settings,
+  } from 'lucide-svelte';
   import '../app.css';
 
   let { children } = $props();
   const auth = getAuth();
   const isLogin = $derived($page.url.pathname === '/login');
+  let showShortcuts = $state(false);
 
   onMount(async () => {
     await auth.load();
@@ -16,27 +23,68 @@
     }
   });
 
-  // Redirect on auth state changes
   $effect(() => {
     if (auth.loaded && !auth.user && !isLogin) {
       goto('/login');
     }
   });
 
-  const navItems = [
-    { href: '/', label: 'Dashboard', icon: '📊' },
-    { href: '/pages', label: 'Pages', icon: '📄' },
-    { href: '/blocks', label: 'Blocks', icon: '🧱' },
-    { href: '/media', label: 'Media', icon: '🖼️' },
-    { href: '/menus', label: 'Menus', icon: '☰' },
-    { href: '/taxonomies', label: 'Taxonomies', icon: '🏷️' },
-    { href: '/redirects', label: 'Redirects', icon: '↪️' },
-    { href: '/content-types', label: 'Content Types', icon: '📋' },
-    { href: '/block-types', label: 'Block Types', icon: '⬛' },
-    { href: '/users', label: 'Users', icon: '👤' },
-    { href: '/settings', label: 'Settings', icon: '⚙️' },
+  const navSections = [
+    {
+      items: [
+        { href: '/', label: 'Dashboard', icon: LayoutDashboard },
+      ],
+    },
+    {
+      label: 'Content',
+      items: [
+        { href: '/pages', label: 'Pages', icon: FileText },
+        { href: '/blocks', label: 'Blocks', icon: Blocks },
+        { href: '/media', label: 'Media', icon: Image },
+      ],
+    },
+    {
+      label: 'Structure',
+      items: [
+        { href: '/menus', label: 'Menus', icon: Menu },
+        { href: '/taxonomies', label: 'Taxonomies', icon: Tags },
+        { href: '/redirects', label: 'Redirects', icon: CornerDownRight },
+      ],
+    },
+    {
+      label: 'Schema',
+      items: [
+        { href: '/content-types', label: 'Content Types', icon: ClipboardList },
+        { href: '/block-types', label: 'Block Types', icon: Square },
+      ],
+    },
+    {
+      label: 'System',
+      items: [
+        { href: '/users', label: 'Users', icon: Users },
+        { href: '/settings', label: 'Settings', icon: Settings },
+      ],
+    },
   ];
+
+  function handleGlobalKeydown(e: KeyboardEvent) {
+    if (e.key === '?' && !isEditing(e)) {
+      e.preventDefault();
+      showShortcuts = !showShortcuts;
+    }
+    if (e.key === 'Escape' && showShortcuts) {
+      showShortcuts = false;
+    }
+  }
+
+  function isEditing(e: KeyboardEvent): boolean {
+    const target = e.target as HTMLElement;
+    return target.tagName === 'INPUT' || target.tagName === 'TEXTAREA'
+      || target.tagName === 'SELECT' || target.isContentEditable;
+  }
 </script>
+
+<svelte:window onkeydown={handleGlobalKeydown} />
 
 {#if !auth.loaded}
   <div class="loading">Loading...</div>
@@ -49,15 +97,21 @@
         <a href="/" class="logo">SpacelyCMS</a>
       </div>
       <nav class="sidebar-nav">
-        {#each navItems as item}
-          <a
-            href={item.href}
-            class="nav-item"
-            class:active={$page.url.pathname === item.href || ($page.url.pathname.startsWith(item.href + '/') && item.href !== '/')}
-          >
-            <span class="nav-icon">{item.icon}</span>
-            {item.label}
-          </a>
+        {#each navSections as section}
+          {#if section.label}
+            <div class="nav-section-label">{section.label}</div>
+          {/if}
+          {#each section.items as item}
+            <a
+              href={item.href}
+              class="nav-item"
+              class:active={$page.url.pathname === item.href || ($page.url.pathname.startsWith(item.href + '/') && item.href !== '/')}
+              title={item.label}
+            >
+              <span class="nav-icon"><item.icon size={18} /></span>
+              <span class="nav-label">{item.label}</span>
+            </a>
+          {/each}
         {/each}
       </nav>
       <div class="sidebar-footer">
@@ -65,7 +119,12 @@
           <span class="user-name">{auth.user.name}</span>
           <span class="user-role">{auth.user.role}</span>
         </div>
-        <button class="btn-logout" onclick={() => auth.logout()}>Logout</button>
+        <div class="sidebar-footer-actions">
+          <button class="btn-shortcut-hint" onclick={() => showShortcuts = true} title="Keyboard shortcuts">
+            <kbd>?</kbd>
+          </button>
+          <button class="btn-logout" onclick={() => auth.logout()}>Logout</button>
+        </div>
       </div>
     </aside>
     <main class="main-content">
@@ -73,3 +132,6 @@
     </main>
   </div>
 {/if}
+
+<ToastContainer />
+<KeyboardShortcuts visible={showShortcuts} onClose={() => showShortcuts = false} />

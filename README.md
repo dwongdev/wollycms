@@ -18,7 +18,7 @@ SpacelyCMS fills the gap between simple headless CMS tools (Strapi, Directus) th
 
 ## Status
 
-**Phase 1 complete** — Data foundation and Content API are working. See [Roadmap](docs/planning/roadmap.md) for details.
+**Phases 1-4 complete** — Headless CMS with content API, Astro integration, admin UI, and visual page builder are all working. Phase 5 (production hardening) is next. See [Roadmap](docs/planning/roadmap.md) for details.
 
 ## Quick Start
 
@@ -52,6 +52,7 @@ npm run dev
 | [Block System](docs/architecture/block-system.md) | Composable block/region architecture |
 | [API Design](docs/architecture/api-design.md) | Content API and Admin API specifications |
 | [Astro Integration](docs/architecture/astro-integration.md) | `@spacelycms/astro` package design |
+| [Deployment Scenarios](docs/architecture/deployment-scenarios.md) | Blog, college, media site examples |
 | [Requirements](docs/planning/requirements.md) | Functional and non-functional requirements |
 | [Roadmap](docs/planning/roadmap.md) | Phased implementation plan |
 | [Tech Stack](docs/planning/tech-stack.md) | Technology choices and rationale |

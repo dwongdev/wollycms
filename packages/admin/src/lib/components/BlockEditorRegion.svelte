@@ -1,5 +1,6 @@
 <script lang="ts">
   import { api } from '$lib/api.js';
+  import { toast } from '$lib/toast.svelte.js';
   import RichTextEditor from './RichTextEditor.svelte';
   import MediaPicker from './MediaPicker.svelte';
   import RepeaterEditor from './RepeaterEditor.svelte';
@@ -287,10 +288,15 @@
       const block = regionBlocks.find((b: any) => b.pb_id === pbId);
       if (!block) continue;
       block.fields[fieldName] = value;
-      if (block.is_shared) {
-        await api.put(`/pages/${pageId}/blocks/${pbId}`, { overrides: { [fieldName]: value } });
-      } else {
-        await api.put(`/blocks/${blockId}`, { fields: block.fields });
+      try {
+        if (block.is_shared) {
+          await api.put(`/pages/${pageId}/blocks/${pbId}`, { overrides: { [fieldName]: value } });
+        } else {
+          await api.put(`/blocks/${blockId}`, { fields: block.fields });
+        }
+        toast.success('Block saved.');
+      } catch (err: any) {
+        toast.error(err.message);
       }
       return;
     }

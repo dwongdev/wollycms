@@ -49,8 +49,8 @@ npm run test --workspace=packages/server       # Server tests only
 
 ## Current Status
 
-- **Phases 1-3**: Complete (Data + API, Astro Integration, Admin UI)
-- **Phase 4**: In progress (Visual Page Builder + Live Preview)
+- **Phases 1-4**: Complete (Data + API, Astro Integration, Admin UI, Visual Page Builder + Live Preview)
+- **Phase 5**: Not started (Production Hardening + Migration Tools)
 - Monorepo: npm workspaces (packages/server, packages/admin, packages/astro, examples/college-site)
 - Database: 13 tables with full Drizzle schema + indexes + migrations
 - Seed data: 8 pages, 10 block types (incl. hero), 3 content types, 3 menus, 2 taxonomies

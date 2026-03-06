@@ -1,7 +1,10 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { page as routePage } from '$app/stores';
+  import { beforeNavigate } from '$app/navigation';
   import { api } from '$lib/api.js';
+  import { toast } from '$lib/toast.svelte.js';
+  import Breadcrumb from '$lib/components/Breadcrumb.svelte';
   import MediaPicker from '$lib/components/MediaPicker.svelte';
   import PageEditorSidebar from '$lib/components/PageEditorSidebar.svelte';
   import BlockEditorRegion from '$lib/components/BlockEditorRegion.svelte';
@@ -16,6 +19,7 @@
   let activeRegion = $state('content');
   let saving = $state(false);
   let showPreview = $state(false);
+  let dirty = $state(false);
 
   let allMenus = $state<any[]>([]);
   let menuDetails = $state<Record<number, any>>({});
@@ -23,7 +27,59 @@
   let previewPanel = $state<PreviewPanel | null>(null);
   let blockEditor = $state<BlockEditorRegion | null>(null);
 
-  const id = $derived($routePage.params.id);
+  // Snapshot of clean state for dirty tracking
+  let cleanSnapshot = $state('');
+
+  const id = $derived($routePage.params.id ?? '');
+
+  const breadcrumbs = $derived([
+    { label: 'Dashboard', href: '/' },
+    { label: 'Pages', href: '/pages' },
+    { label: pageData?.title || 'Loading...' },
+  ]);
+
+  function takeSnapshot() {
+    if (!pageData) return;
+    cleanSnapshot = JSON.stringify({
+      title: pageData.title, slug: pageData.slug,
+      status: pageData.status, fields: pageData.fields,
+    });
+  }
+
+  function checkDirty() {
+    if (!pageData || !cleanSnapshot) return;
+    const current = JSON.stringify({
+      title: pageData.title, slug: pageData.slug,
+      status: pageData.status, fields: pageData.fields,
+    });
+    dirty = current !== cleanSnapshot;
+  }
+
+  // Watch for changes to mark dirty
+  $effect(() => {
+    if (pageData) {
+      // Access reactive properties to trigger tracking
+      void pageData.title;
+      void pageData.slug;
+      void pageData.status;
+      void JSON.stringify(pageData.fields);
+      checkDirty();
+    }
+  });
+
+  // Warn before navigating away with unsaved changes
+  beforeNavigate(({ cancel }) => {
+    if (dirty && !confirm('You have unsaved changes. Leave anyway?')) {
+      cancel();
+    }
+  });
+
+  // Warn before closing tab with unsaved changes
+  function handleBeforeUnload(e: BeforeUnloadEvent) {
+    if (dirty) {
+      e.preventDefault();
+    }
+  }
 
   async function load() {
     try {
@@ -41,6 +97,8 @@
         if (contentType.regions?.length > 0) activeRegion = contentType.regions[0].name;
       }
       await loadMenuDetails();
+      takeSnapshot();
+      dirty = false;
     } catch (err: any) { error = err.message; }
   }
 
@@ -73,12 +131,14 @@
         title: pageData.title, slug: pageData.slug, status: pageData.status,
         fields: pageData.fields || {}, scheduledAt: pageData.scheduledAt || null,
       });
-      success = 'Page saved.';
-      setTimeout(() => success = '', 3000);
+      toast.success('Page saved.');
+      takeSnapshot();
+      dirty = false;
       if (showPreview) previewPanel?.refresh();
     } catch (err: any) {
-      error = err.message?.includes('Slug already exists')
+      const msg = err.message?.includes('Slug already exists')
         ? 'A page with this slug already exists.' : err.message;
+      toast.error(msg);
     } finally { saving = false; }
   }
 
@@ -86,22 +146,36 @@
     try {
       await api.put(`/pages/${id}`, { status });
       pageData.status = status;
-      success = status === 'published' ? 'Page published.' : 'Page unpublished.';
-      setTimeout(() => success = '', 3000);
+      toast.success(status === 'published' ? 'Page published.' : 'Page unpublished.');
+      takeSnapshot();
+      dirty = false;
       if (showPreview) previewPanel?.refresh();
-    } catch (err: any) { error = err.message; }
+    } catch (err: any) { toast.error(err.message); }
+  }
+
+  function handleKeydown(e: KeyboardEvent) {
+    if (e.ctrlKey && e.key === 's') {
+      e.preventDefault();
+      if (pageData && !saving) save();
+    }
+    if (e.ctrlKey && e.shiftKey && e.key === 'P') {
+      e.preventDefault();
+      showPreview = !showPreview;
+    }
   }
 </script>
+
+<svelte:window onkeydown={handleKeydown} onbeforeunload={handleBeforeUnload} />
 
 {#if !pageData}
   <div class="loading">Loading page...</div>
 {:else}
   <div class="page-header">
     <div>
-      <a href="/pages" style="color: var(--c-text-light); text-decoration: none; font-size: 0.85rem;">&#8592; Back to Pages</a>
+      <Breadcrumb crumbs={breadcrumbs} />
       <h1 style="margin-top: 0.25rem;">Edit: {pageData.title}</h1>
     </div>
-    <div style="display: flex; gap: 0.5rem;">
+    <div style="display: flex; gap: 0.5rem; align-items: center;">
       <button class="btn" class:btn-primary={!showPreview} class:btn-outline={showPreview}
         onclick={() => showPreview = !showPreview}>
         {showPreview ? 'Hide Preview' : 'Preview'}
@@ -111,7 +185,8 @@
       {:else}
         <button class="btn btn-outline" onclick={() => setStatus('draft')}>Unpublish</button>
       {/if}
-      <button class="btn btn-primary" onclick={save} disabled={saving}>
+      <button class="btn btn-primary save-btn" class:dirty onclick={save} disabled={saving}>
+        {#if dirty}<span class="dirty-dot"></span>{/if}
         {saving ? 'Saving...' : 'Save'}
       </button>
     </div>
@@ -120,7 +195,6 @@
   <PresenceIndicator pageId={id} />
 
   {#if error}<div class="alert alert-error">{error}</div>{/if}
-  {#if success}<div class="alert alert-success">{success}</div>{/if}
 
   <div class="editor-layout" class:with-preview={showPreview}>
     <div class="editor-main">
@@ -129,12 +203,12 @@
           <div class="card" style="margin-bottom: 1.5rem;">
             <div class="form-group">
               <label for="pe-title">Title</label>
-              <input id="pe-title" class="form-control" bind:value={pageData.title} />
+              <input id="pe-title" class="form-control" bind:value={pageData.title} oninput={() => checkDirty()} />
             </div>
             <div class="form-grid">
               <div class="form-group">
                 <label for="pe-slug">Slug</label>
-                <input id="pe-slug" class="form-control" bind:value={pageData.slug} />
+                <input id="pe-slug" class="form-control mono" bind:value={pageData.slug} oninput={() => checkDirty()} />
               </div>
               <div class="form-group">
                 <label for="pe-status">Status</label>
@@ -207,5 +281,24 @@
     min-width: 400px;
     max-width: 50%;
     height: 100%;
+  }
+
+  .save-btn {
+    position: relative;
+  }
+
+  .dirty-dot {
+    width: 7px;
+    height: 7px;
+    background: #fbbf24;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 0.15rem;
+    animation: pulse-dot 2s infinite;
+  }
+
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
   }
 </style>

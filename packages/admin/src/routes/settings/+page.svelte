@@ -1,10 +1,10 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { api } from '$lib/api.js';
+  import { toast } from '$lib/toast.svelte.js';
 
   let config = $state<any>(null);
   let error = $state('');
-  let success = $state('');
   let saving = $state(false);
   let importing = $state(false);
 
@@ -18,12 +18,10 @@
   async function save() {
     saving = true;
     error = '';
-    success = '';
     try {
       const res = await api.put<{ data: any }>('/config', config);
       config = res.data;
-      success = 'Settings saved.';
-      setTimeout(() => success = '', 3000);
+      toast.success('Settings saved.');
     } catch (err: any) { error = err.message; }
     finally { saving = false; }
   }
@@ -37,7 +35,6 @@
 </div>
 
 {#if error}<div class="alert alert-error">{error}</div>{/if}
-{#if success}<div class="alert alert-success">{success}</div>{/if}
 
 {#if config}
   <div class="card" style="max-width: 600px;">
@@ -88,8 +85,7 @@
             const res = await api.post<{ data: any }>('/import', data);
             const stats = res.data.stats;
             const summary = Object.entries(stats).map(([k, v]) => `${k}: ${v}`).join(', ');
-            success = `Import complete. ${summary}`;
-            setTimeout(() => success = '', 5000);
+            toast.success(`Import complete. ${summary}`);
           } catch (err: any) {
             error = err.message || 'Import failed';
           } finally {

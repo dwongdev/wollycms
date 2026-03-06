@@ -149,7 +149,7 @@ media, manage menus and taxonomies, publish content.
 
 ---
 
-## Phase 4: Visual Page Builder + Live Preview
+## Phase 4: Visual Page Builder + Live Preview -- COMPLETE
 
 **Goal**: Drag-and-drop page composition with live preview in the Astro
 frontend. The Storyblok-like experience.
@@ -180,7 +180,6 @@ frontend. The Storyblok-like experience.
   - [x] RepeaterEditor component (visual sub-field editing, not raw JSON)
   - [x] Null safety for block fields
   - [x] Inline block editing (click block in preview to select/edit, bidirectional PostMessage bridge)
-  - [ ] Hero styling polish (min-height, image sizing) — deferred, site-specific
 - [x] Advanced rich text:
   - [x] Slash commands (/ to insert headings, lists, tables, images, links)
   - [x] Dropcursor for drag-and-drop content
@@ -197,64 +196,349 @@ frontend. The Storyblok-like experience.
 Open the page editor, see a visual representation of the page with regions,
 drag blocks around, edit inline, see changes live in the preview panel.
 
-### Estimated Effort: 6-8 weeks
+### Completed: 2026-03-06
 
 ---
 
-## Phase 5: Production Hardening + Migration Tools
+## Phase 4.5: Admin UI Polish
 
-**Goal**: Production-ready CMS with tools to migrate existing sites.
+**Goal**: Make the admin UI feel like a professional document editor, not a
+form-driven CRUD app. These are targeted UX improvements that make daily
+content management faster and more pleasant.
 
-### Deliverables
+### 4.5a. Quick Wins (knock these out first)
 
-- [ ] PostgreSQL support (Drizzle adapter swap)
-- [ ] S3-compatible media storage (R2, MinIO, AWS S3)
-- [ ] CDN integration (cache headers, purge on publish)
-- [ ] Webhook system (configurable endpoints for publish events)
-- [ ] Search integration (Pagefind for Astro SSG, Meilisearch for SSR)
-- [ ] Migration tools:
-  - Drupal → SpacelyCMS importer (nodes, paragraphs, menus, media, terms)
-  - WordPress → SpacelyCMS importer
-  - Generic CSV/JSON import
-- [ ] Backup/restore system
-- [ ] Performance optimization (query caching, batch API, edge caching)
-- [ ] Security audit (full pass: OWASP top 10, input sanitization, CSRF, rate limiting)
-- [ ] Accessibility audit (WCAG AA: required alt text, heading order validation,
-      ARIA landmarks, color contrast, keyboard navigation, screen reader testing)
-- [ ] Comprehensive documentation site
-- [ ] Docker production deployment guide
+- [ ] Replace emoji sidebar icons with Lucide icons (already in stack via
+      TipTap — consistent rendering across OS, crisp at small sizes)
+- [ ] Monospace font for slugs and code-like values (slug fields, API paths
+      in settings, content type slugs — one CSS utility class)
+- [ ] Breadcrumb navigation in page editor (Dashboard > Pages > Page Title
+      — helps orientation, simple component)
+- [ ] Dirty state indicator (dot on Save button when unsaved changes exist,
+      `beforeunload` warning when navigating away with unsaved changes)
+- [ ] Toast notifications (bottom-right stacking toasts instead of inline
+      alerts that push content down — "Page saved", "Block moved to sidebar",
+      "3 pages published")
+- [ ] Keyboard shortcuts:
+  - `Ctrl+S` — Save page
+  - `Ctrl+Shift+P` — Toggle preview panel
+  - `Ctrl+Shift+N` — Add block to active region
+  - `Esc` — Close modal / collapse expanded block
+  - `?` — Show keyboard shortcut overlay (like GitHub)
+
+### 4.5b. Editor Feel (document editor, not form)
+
+- [ ] Notion-style page title (large editable heading instead of standard
+      form input — makes the editor feel like a document)
+- [ ] Inline slug field (subtle, auto-updates from title, editable on click
+      — not a full form row)
+- [ ] Status pill next to title (pill shape with icon, more visually
+      distinct than current badge)
+- [ ] Sidebar navigation grouping with section dividers:
+  - **Content**: Pages, Blocks, Media
+  - **Structure**: Menus, Taxonomies, Redirects
+  - **Schema**: Content Types, Block Types
+  - **System**: Users, Settings
+- [ ] SpacelyCMS wordmark/logo at top of sidebar (even just styled text in
+      a nice weight)
+- [ ] Draft/published count badges on sidebar nav items (small pills)
+- [ ] Tooltips on collapsed sidebar icons (60px mode)
+
+### 4.5c. Block & Region UX
+
+- [ ] Visual block type picker (icon grid grouped by category instead of
+      current modal — Text, Media, Navigation, Data, Layout sections;
+      "Recently Used" at top)
+- [ ] Hover quick-action bar on collapsed block cards (Edit | Duplicate |
+      Move to Region | Remove — appears on hover without expanding)
+- [ ] Region mini-wireframe at top of editor (simple diagram showing where
+      hero/content/sidebar/bottom appear on the page — click a region to
+      scroll to it)
+
+### 4.5d. Media & Preview Polish
+
+- [ ] Alt text reminder (yellow dot on media fields where alt text is empty
+      — accessibility nudge, tiny effort)
+- [ ] Recent uploads tab in media picker (saves "where did my upload go"
+      frustration)
+- [ ] Device toggle in preview toolbar (Mobile 375px | Tablet 768px |
+      Desktop 1280px — three buttons that change iframe width)
+- [ ] Side-by-side vs stacked preview toggle (some editors prefer preview
+      below rather than beside)
+- [ ] Shareable preview link (copy button for the tokenized preview URL —
+      non-admin stakeholders can view for feedback; URL already exists,
+      just need the copy UI)
+
+### 4.5e. Page List & Dashboard
+
+- [ ] Page list thumbnail column (hero image or first image block as tiny
+      preview, falls back to content type icon)
+- [ ] Quick inline title edit on page list (click title to rename without
+      entering full editor)
+- [ ] Content type color coding on page list rows (subtle left-border or
+      background tint by type)
+- [ ] Dashboard quick actions ("New Page", "Upload Media", "View Site" as
+      prominent action cards)
+- [ ] Empty state guidance (when a region has no blocks: "Drag blocks here
+      or click + to add" with subtle illustration, not just emptiness)
 
 ### Demo
 
-Migrate southside.edu content into SpacelyCMS, render it with Astro on
-Cloudflare Pages, compare side-by-side with the live Drupal site.
+Navigate the admin UI with keyboard shortcuts, see toast notifications,
+use the visual block picker, check preview at mobile width, identify pages
+missing alt text — everything feels snappy and intentional.
 
-### Estimated Effort: 4-6 weeks
+---
+
+## Phase 5: Production Hardening
+
+**Goal**: Make SpacelyCMS deployable for real. Everything needed to go from
+"works on my laptop" to "running in production serving a real website."
+
+### 5a. Production Infrastructure (do these first)
+
+- [ ] Webhook system (configurable endpoints, fires on publish/unpublish/
+      media upload — this is the glue that triggers Astro rebuilds)
+- [ ] PostgreSQL support (Drizzle adapter swap, connection pooling, env-based
+      database selection: `DATABASE_URL=postgres://...` vs SQLite default)
+- [ ] S3-compatible media storage (Cloudflare R2, AWS S3, MinIO — pluggable
+      storage backend selected via env var, local filesystem remains default)
+- [ ] API keys (long-lived tokens for build pipelines and external services,
+      separate from JWT user auth which expires in 24h)
+- [ ] Environment/config hardening:
+  - CORS configuration (allowed origins via env var)
+  - Rate limiting on auth endpoints
+  - CSRF protection for admin API
+  - Secure cookie settings for production
+  - Health check endpoint (`GET /api/health`)
+
+### 5b. Security & Quality
+
+- [ ] Security audit (OWASP top 10 pass: input sanitization review, SQL
+      injection check, XSS prevention, auth bypass testing)
+- [ ] Accessibility audit (WCAG AA: required alt text on media, heading
+      order validation in rich text, ARIA landmarks in admin UI, color
+      contrast check, keyboard navigation, screen reader testing)
+- [ ] Audit logging (who changed what and when — stored in DB, viewable
+      in admin, filterable by user/entity/action)
+- [ ] Backup/restore system (database export + media archive, scheduled
+      or on-demand, restore from backup via admin or CLI)
+
+### 5c. Performance
+
+- [ ] CDN integration (cache-control headers on content API, cache
+      invalidation on publish via webhook or API)
+- [ ] Query caching (in-memory cache for content API responses, invalidated
+      on write — reduces DB queries for repeated reads)
+- [ ] Batch API (fetch multiple pages/blocks in one request to speed up
+      Astro builds with many pages)
+
+### Demo
+
+Deploy SpacelyCMS with PostgreSQL on a cloud server, media on R2, Astro
+site on Cloudflare Pages. Publish a page in the admin, webhook triggers
+rebuild, site updates automatically.
+
+---
+
+## Phase 6: Packaging & Developer Experience
+
+**Goal**: Make SpacelyCMS installable and usable by someone who isn't us.
+A developer should go from zero to running CMS in under 5 minutes.
+
+### 6a. npm Publishing
+
+- [ ] Publish `@spacelycms/server` to npm (the CMS server as a package)
+- [ ] Publish `@spacelycms/astro` to npm (the Astro integration)
+- [ ] Publish `spacelycms` CLI to npm (setup, migrate, seed, type-gen)
+- [ ] Versioning strategy (semver, changelog, release automation)
+
+### 6b. CLI & Scaffolding
+
+- [ ] `npx create-spacely` — interactive project scaffolding:
+  - Choose database (SQLite / PostgreSQL)
+  - Choose media storage (local / S3 / R2)
+  - Generate `.env`, `docker-compose.yml`, seed data
+  - Option to include example Astro site
+- [ ] `npx spacely types generate` — generate TypeScript types from CMS
+      schemas (content types + block types → `.d.ts` file)
+- [ ] `npx spacely migrate` — run migrations
+- [ ] `npx spacely seed` — populate sample data
+- [ ] `npx spacely export` / `npx spacely import` — CLI backup/restore
+
+### 6c. Docker & Deployment
+
+- [ ] Published Docker image (`docker pull spacelycms/server`)
+- [ ] Docker Compose templates:
+  - `docker-compose.dev.yml` (SQLite, local media, hot reload)
+  - `docker-compose.prod.yml` (PostgreSQL, S3 media, Caddy reverse proxy)
+- [ ] Deployment guides:
+  - VPS with Docker (DigitalOcean, Hetzner)
+  - Cloudflare Pages + cloud server
+  - Railway / Render / Fly.io one-click deploy
+
+### 6d. Starter Templates
+
+- [ ] Blog starter (simple layout, rich_text + hero + image blocks)
+- [ ] Documentation starter (sidebar nav, code blocks, search)
+- [ ] Marketing site starter (landing pages, CTAs, testimonials)
+- [ ] College-site starter (current example, cleaned up and generalized)
+- [ ] Each template includes: Astro project, block components, layouts,
+      CSS, matching seed data, README with setup instructions
+
+### 6e. Documentation Site
+
+- [ ] Documentation site (built with Astro + Starlight or similar):
+  - Getting Started (install → first page in 5 minutes)
+  - Core Concepts (pages, blocks, regions, content types)
+  - Content API reference (all endpoints, request/response examples)
+  - Admin API reference
+  - Astro integration guide (client, BlockRenderer, menus, images)
+  - Block component authoring guide
+  - Deployment guides (per platform)
+  - Configuration reference (all env vars, settings)
+  - Migration guide (from Drupal, WordPress, other CMS)
+- [ ] Hosted at docs.spacelycms.com (or similar)
+
+### Demo
+
+Run `npx create-spacely my-blog`, choose blog template, `cd my-blog &&
+docker compose up`, open browser — working CMS with admin UI and example
+site in under 2 minutes.
+
+---
+
+## Phase 7: Content Features
+
+**Goal**: Feature parity with established CMS tools. These are the features
+that make teams choose SpacelyCMS over Strapi, Directus, or Storyblok.
+
+### 7a. Search
+
+- [ ] Pagefind integration for SSG sites (auto-indexes Astro build output,
+      client-side search UI component)
+- [ ] Meilisearch integration for SSR sites (server-side indexing, API
+      endpoint for search queries)
+- [ ] Admin search (full-text search across all pages and blocks in the
+      admin UI)
+
+### 7b. SEO & Meta
+
+- [ ] SEO fields on pages (meta title, meta description, OG image, robots,
+      canonical URL — editable in admin, available in content API)
+- [ ] Sitemap generation (`/sitemap.xml` — auto-generated from published
+      pages, configurable per content type)
+- [ ] OG image generation (auto-generate social sharing images from page
+      title + hero image)
+- [ ] Structured data / JSON-LD helpers (article, breadcrumb, organization)
+
+### 7c. Form Builder
+
+- [ ] Form content type (define form fields in admin: text, email, textarea,
+      select, checkbox, file upload)
+- [ ] Form submission storage (submissions saved in DB, viewable in admin)
+- [ ] Form submission notifications (webhook or email on new submission)
+- [ ] Spam protection (honeypot field, rate limiting, optional reCAPTCHA)
+- [ ] Astro form component (`<SpacelyForm>` renders form, handles submission)
+
+### 7d. Multi-language (i18n)
+
+- [ ] Locale support on pages (each page can have translations, linked by
+      a translation group ID)
+- [ ] Language switcher data in content API
+- [ ] Default language configuration
+- [ ] Astro helpers for locale-prefixed routes (`/en/about`, `/es/about`)
+- [ ] Admin UI: language selector in page editor, translation status
+
+### Demo
+
+A multi-language site with search, SEO meta tags, sitemap, contact form —
+all managed from the SpacelyCMS admin UI.
+
+---
+
+## Phase 8: Scale & Ecosystem
+
+**Goal**: Features for larger teams and more complex deployments.
+
+### 8a. Multi-site
+
+- [ ] Multiple sites from one CMS instance (each site has its own pages,
+      menus, media, config — shared block library optional)
+- [ ] Site selector in admin UI
+- [ ] Per-site API keys and webhooks
+- [ ] Content sharing across sites (reference blocks from another site)
+
+### 8b. Workflows & Collaboration
+
+- [ ] Content workflows (configurable: draft → review → approved → published)
+- [ ] Role-based workflow permissions (editors can submit, reviewers can
+      approve, admins can publish)
+- [ ] Email notifications (new content submitted, review requested,
+      content approved/rejected)
+- [ ] Comments/annotations on pages (internal editorial notes)
+- [ ] Scheduled publishing automation (cron checks scheduledAt, auto-
+      publishes and fires webhooks)
+
+### 8c. Migration Tools
+
+- [ ] Drupal importer (nodes → pages, paragraphs → blocks, menus, media,
+      taxonomy terms — maps Drupal structure to SpacelyCMS)
+- [ ] WordPress importer (posts/pages → pages, blocks → blocks, menus,
+      media, categories/tags → taxonomies)
+- [ ] Generic CSV/JSON import (map columns/fields to content types)
+- [ ] Import preview (dry-run showing what will be created before committing)
+
+### 8d. Extensibility
+
+- [ ] Plugin system (register custom block types, API endpoints, admin
+      UI panels, webhooks, media processors via JS modules)
+- [ ] GraphQL API (alternative to REST, auto-generated from schema)
+- [ ] Custom field types (register new field types with custom admin UI
+      renderers and validation)
+
+### Demo
+
+Two sites running from one CMS instance. Content goes through an editorial
+workflow. A Drupal site's content is migrated in. A custom plugin adds a
+new block type.
 
 ---
 
 ## Timeline Summary
 
-| Phase | Focus | Effort | Cumulative |
-|---|---|---|---|
-| Phase 1 | Data + API | 2-3 weeks | 2-3 weeks |
-| Phase 2 | Astro Integration | 1-2 weeks | 3-5 weeks |
-| Phase 3 | Admin UI | 4-6 weeks | 7-11 weeks |
-| Phase 4 | Visual Builder | 6-8 weeks | 13-19 weeks |
-| Phase 5 | Production + Migration | 4-6 weeks | 17-25 weeks |
+| Phase | Focus | Status |
+|---|---|---|
+| Phase 1 | Data + API | Complete |
+| Phase 2 | Astro Integration | Complete |
+| Phase 3 | Admin UI | Complete |
+| Phase 4 | Visual Builder | Complete |
+| Phase 4.5 | Admin UI Polish | Not started |
+| Phase 5 | Production Hardening | Not started |
+| Phase 6 | Packaging & DX | Not started |
+| Phase 7 | Content Features | Not started |
+| Phase 8 | Scale & Ecosystem | Not started |
 
-**MVP (Phases 1-3)**: ~7-11 weeks for a fully usable headless CMS with admin UI
-**Full Product (Phases 1-5)**: ~17-25 weeks
+**Phases 1-4** = The engine (done)
+**Phase 4.5** = Make it feel professional (UI/UX polish)
+**Phase 5** = Make it deployable (production-ready)
+**Phase 6** = Make it installable (other people can use it)
+**Phase 7** = Make it competitive (feature parity with established CMS tools)
+**Phase 8** = Make it scalable (teams, multi-site, migrations, plugins)
+
+Recommended priority: **4.5a → 4.5b → 5a → 4.5c/4.5d → 5b → 6 → 7 → 8**.
+The quick wins in 4.5a should be first — they're fast and immediately
+improve daily editing. Then interleave the remaining UI polish (4.5c-e)
+with production infrastructure (5a) since they're independent workstreams.
 
 ---
 
 ## What We're NOT Building (Scope Boundaries)
 
 - **E-commerce** — No shopping carts, payments, inventory
-- **User-facing accounts** — No frontend user registration/login
-- **Email system** — No newsletters, transactional email (use external service)
-- **Form builder** — Not in v1 (maybe v2, or use external like Formspree)
-- **Multi-site** — One CMS instance = one site (for now)
-- **Multi-language** — Not in v1 (architecture supports it later)
-- **Workflows/approvals** — Not in v1 (draft → published is sufficient)
-- **AI features** — Not in v1 (could add AI-assisted content later)
+- **User-facing accounts** — No frontend user registration/login (admin users only)
+- **Email marketing** — No newsletters or bulk email (use Mailchimp, Resend, etc.)
+- **Analytics** — No built-in analytics (use Plausible, Umami, etc.)
+- **CDN/hosting** — SpacelyCMS is the CMS, not the host. Deploy Astro wherever you want.
+- **Non-Astro frontends** — The API is standard REST/JSON so anything can consume it, but
+  we only build and maintain first-class integration for Astro

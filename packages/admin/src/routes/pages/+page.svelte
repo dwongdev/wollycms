@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { api } from '$lib/api.js';
+  import { toast } from '$lib/toast.svelte.js';
 
   let pages = $state<any[]>([]);
   let total = $state(0);
@@ -69,9 +70,10 @@
   async function duplicatePage(id: number) {
     try {
       await api.post(`/pages/${id}/duplicate`);
+      toast.success('Page duplicated.');
       load();
     } catch (err: any) {
-      error = err.message;
+      toast.error(err.message);
     }
   }
 
@@ -105,9 +107,10 @@
     if (!confirm(label)) return;
     try {
       await api.post('/pages/bulk', { ids: [...selected], action });
+      toast.success(`${selected.size} page(s) ${action === 'delete' ? 'deleted' : action + 'ed'}.`);
       load();
     } catch (err: any) {
-      error = err.message;
+      toast.error(err.message);
     }
   }
 </script>
@@ -168,7 +171,7 @@
         <tr>
           <td><input type="checkbox" checked={selected.has(page.id)} onchange={() => toggleSelect(page.id)} /></td>
           <td><a href="/pages/{page.id}"><strong>{page.title}</strong></a></td>
-          <td style="color: var(--c-text-light);">/{page.slug}</td>
+          <td class="mono" style="color: var(--c-text-light);">/{page.slug}</td>
           <td>{page.typeName}</td>
           <td><span class="badge badge-{page.status}">{page.status}</span></td>
           <td>{new Date(page.meta.updated_at).toLocaleDateString()}</td>
