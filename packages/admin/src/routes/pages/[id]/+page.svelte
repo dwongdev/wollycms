@@ -23,6 +23,11 @@
   let menuAddTarget = $state<number | null>(null);
   let menuAddParent = $state<number | null>(null);
 
+  // Revisions
+  let revisions = $state<any[]>([]);
+  let showRevisions = $state(false);
+  let revisionDetail = $state<any>(null);
+
   const id = $derived($routePage.params.id);
 
   async function load() {
@@ -117,6 +122,33 @@
       await loadMenuDetails();
       success = 'Removed from menu.';
       setTimeout(() => success = '', 3000);
+    } catch (err: any) { error = err.message; }
+  }
+
+  async function loadRevisions() {
+    try {
+      const res = await api.get<{ data: any[] }>(`/pages/${id}/revisions`);
+      revisions = res.data;
+    } catch { revisions = []; }
+  }
+
+  async function viewRevision(revId: number) {
+    try {
+      const res = await api.get<{ data: any }>(`/pages/${id}/revisions/${revId}`);
+      revisionDetail = res.data;
+    } catch (err: any) { error = err.message; }
+  }
+
+  async function restoreRevision(revId: number) {
+    if (!confirm('Restore this revision? Current state will be saved as a new revision.')) return;
+    try {
+      await api.post(`/pages/${id}/revisions/${revId}/restore`);
+      revisionDetail = null;
+      showRevisions = false;
+      success = 'Revision restored.';
+      setTimeout(() => success = '', 3000);
+      load();
+      loadRevisions();
     } catch (err: any) { error = err.message; }
   }
 
@@ -457,8 +489,91 @@
           </div>
         {/if}
       </div>
+
+      <div class="card" style="margin-bottom: 1rem;">
+        <h3 style="font-size: 0.95rem; margin-bottom: 0.75rem;">Revision History</h3>
+        {#if !showRevisions}
+          <button class="btn btn-sm btn-outline" style="width: 100%;" onclick={() => { showRevisions = true; loadRevisions(); }}>
+            Show Revisions
+          </button>
+        {:else}
+          {#if revisions.length === 0}
+            <p style="font-size: 0.85rem; color: var(--c-text-light);">No revisions yet. Revisions are created automatically when you save.</p>
+          {:else}
+            <div style="max-height: 300px; overflow-y: auto;">
+              {#each revisions as rev}
+                <div style="padding: 0.4rem 0; border-bottom: 1px solid var(--c-border); font-size: 0.85rem;">
+                  <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                      <strong>{rev.title}</strong>
+                      <div style="font-size: 0.75rem; color: var(--c-text-light);">
+                        {new Date(rev.createdAt).toLocaleString()}
+                        {#if rev.blockCount > 0} &middot; {rev.blockCount} blocks{/if}
+                      </div>
+                    </div>
+                    <div style="display: flex; gap: 0.25rem;">
+                      <button class="btn btn-sm btn-outline" style="padding: 0.15rem 0.4rem; font-size: 0.7rem;" onclick={() => viewRevision(rev.id)}>View</button>
+                      <button class="btn btn-sm btn-primary" style="padding: 0.15rem 0.4rem; font-size: 0.7rem;" onclick={() => restoreRevision(rev.id)}>Restore</button>
+                    </div>
+                  </div>
+                </div>
+              {/each}
+            </div>
+          {/if}
+          <button class="btn btn-sm btn-outline" style="width: 100%; margin-top: 0.5rem;" onclick={() => { showRevisions = false; revisionDetail = null; }}>
+            Hide Revisions
+          </button>
+        {/if}
+      </div>
     </div>
   </div>
+
+  {#if revisionDetail}
+    <div class="modal-overlay" onclick={() => revisionDetail = null} role="dialog">
+      <div class="modal" onclick={(e) => e.stopPropagation()} style="max-width: 600px;">
+        <div class="modal-header">
+          <h2>Revision: {revisionDetail.title}</h2>
+          <button class="btn-icon" onclick={() => revisionDetail = null}>&#10005;</button>
+        </div>
+        <div class="modal-body" style="max-height: 60vh; overflow-y: auto;">
+          <div class="form-group">
+            <label style="font-size: 0.8rem; font-weight: 600;">Title</label>
+            <p style="font-size: 0.9rem;">{revisionDetail.title}</p>
+          </div>
+          <div class="form-group">
+            <label style="font-size: 0.8rem; font-weight: 600;">Slug</label>
+            <p style="font-size: 0.9rem;">/{revisionDetail.slug}</p>
+          </div>
+          <div class="form-group">
+            <label style="font-size: 0.8rem; font-weight: 600;">Status</label>
+            <span class="badge badge-{revisionDetail.status}">{revisionDetail.status}</span>
+          </div>
+          {#if revisionDetail.fields && Object.keys(revisionDetail.fields).length > 0}
+            <div class="form-group">
+              <label style="font-size: 0.8rem; font-weight: 600;">Fields</label>
+              <pre style="font-size: 0.75rem; background: var(--c-bg-subtle); padding: 0.5rem; border-radius: 4px; overflow-x: auto;">{JSON.stringify(revisionDetail.fields, null, 2)}</pre>
+            </div>
+          {/if}
+          {#if Array.isArray(revisionDetail.blocks) && revisionDetail.blocks.length > 0}
+            <div class="form-group">
+              <label style="font-size: 0.8rem; font-weight: 600;">Blocks ({revisionDetail.blocks.length})</label>
+              {#each revisionDetail.blocks as block}
+                <div style="padding: 0.4rem; margin-bottom: 0.25rem; background: var(--c-bg-subtle); border-radius: 4px; font-size: 0.8rem;">
+                  <strong>{block.blockType}</strong> in {block.region}
+                  {#if block.title} — {block.title}{/if}
+                  {#if block.isShared}<span class="badge badge-published" style="font-size: 0.65rem; margin-left: 0.25rem;">shared</span>{/if}
+                </div>
+              {/each}
+            </div>
+          {/if}
+          <div class="modal-footer">
+            <button class="btn btn-outline" onclick={() => revisionDetail = null}>Close</button>
+            <button class="btn btn-primary" onclick={() => restoreRevision(revisionDetail.id)}>Restore This Revision</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  {/if}
 
   {#if showAddBlock}
     <div class="modal-overlay" onclick={() => showAddBlock = false} role="dialog">

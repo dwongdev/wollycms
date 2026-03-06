@@ -193,6 +193,70 @@ describe('Admin Pages', () => {
   });
 });
 
+// --- Page Revisions ---
+describe('Admin Page Revisions', () => {
+  let revPageId: number;
+
+  it('setup: create a page to test revisions', async () => {
+    const res = await json('/pages', 'POST', {
+      title: 'Revision Test Page',
+      typeId: 1,
+      status: 'draft',
+    });
+    expect(res.status).toBe(201);
+    revPageId = (await res.json()).data.id;
+  });
+
+  it('PUT creates a revision automatically', async () => {
+    await json(`/pages/${revPageId}`, 'PUT', { title: 'Revision Test Page v2' });
+    const res = await authed(`/pages/${revPageId}/revisions`);
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.data.length).toBe(1);
+    expect(body.data[0].title).toBe('Revision Test Page');
+  });
+
+  it('second PUT creates a second revision', async () => {
+    await json(`/pages/${revPageId}`, 'PUT', { title: 'Revision Test Page v3' });
+    const res = await authed(`/pages/${revPageId}/revisions`);
+    const body = await res.json();
+    expect(body.data.length).toBe(2);
+    // Most recent first
+    expect(body.data[0].title).toBe('Revision Test Page v2');
+    expect(body.data[1].title).toBe('Revision Test Page');
+  });
+
+  it('GET /:pageId/revisions/:revId returns full detail', async () => {
+    const listRes = await authed(`/pages/${revPageId}/revisions`);
+    const { data } = await listRes.json();
+    const res = await authed(`/pages/${revPageId}/revisions/${data[1].id}`);
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.data.title).toBe('Revision Test Page');
+    expect(body.data.fields).toBeDefined();
+  });
+
+  it('POST restore reverts page to revision state', async () => {
+    const listRes = await authed(`/pages/${revPageId}/revisions`);
+    const { data } = await listRes.json();
+    const oldestRevId = data[data.length - 1].id;
+
+    const res = await json(`/pages/${revPageId}/revisions/${oldestRevId}/restore`, 'POST', {});
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.data.title).toBe('Revision Test Page');
+
+    // Verify a new revision was created (snapshot of pre-restore state)
+    const afterRes = await authed(`/pages/${revPageId}/revisions`);
+    const afterBody = await afterRes.json();
+    expect(afterBody.data.length).toBe(3);
+  });
+
+  it('cleanup: delete test page', async () => {
+    await authed(`/pages/${revPageId}`, { method: 'DELETE' });
+  });
+});
+
 // --- Blocks CRUD ---
 describe('Admin Blocks', () => {
   let testBlockId: number;

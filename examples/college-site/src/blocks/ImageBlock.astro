@@ -1,5 +1,6 @@
 ---
 import type { BlockProps } from '@spacelycms/astro';
+import { spacely } from '../lib/spacely';
 
 interface Props extends BlockProps {
   fields: {
@@ -12,7 +13,7 @@ interface Props extends BlockProps {
 
 const { fields } = Astro.props;
 const imgSrc = typeof fields.image === 'number'
-  ? `http://localhost:4321/api/content/media/${fields.image}/large`
+  ? spacely.media.url(fields.image, 'large')
   : String(fields.image);
 ---
 

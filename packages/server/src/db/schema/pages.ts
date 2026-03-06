@@ -21,3 +21,17 @@ export const pages = sqliteTable('pages', {
   index('idx_pages_status').on(table.status),
   index('idx_pages_type_status').on(table.typeId, table.status),
 ]);
+
+export const pageRevisions = sqliteTable('page_revisions', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  pageId: integer('page_id').notNull().references(() => pages.id, { onDelete: 'cascade' }),
+  title: text('title').notNull(),
+  slug: text('slug').notNull(),
+  status: text('status').notNull(),
+  fields: text('fields', { mode: 'json' }).$type<Record<string, unknown>>(),
+  blocks: text('blocks', { mode: 'json' }).$type<unknown[]>(),
+  createdAt: text('created_at').notNull(),
+  createdBy: integer('created_by').references(() => users.id),
+}, (table) => [
+  index('idx_revisions_page').on(table.pageId),
+]);

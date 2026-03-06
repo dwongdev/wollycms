@@ -22,7 +22,7 @@ const heroImage = heroBlocks.find((b: any) => b.block_type === 'image');
 const heroCta = heroBlocks.find((b: any) => b.block_type === 'cta_button');
 const heroImgSrc = heroImage?.fields?.image
   ? (typeof heroImage.fields.image === 'number'
-    ? `http://localhost:4321/api/content/media/${heroImage.fields.image}/large`
+    ? spacely.media.url(heroImage.fields.image, 'large')
     : String(heroImage.fields.image))
   : null;
 const hasHero = !!(page.fields.tagline || heroImgSrc);

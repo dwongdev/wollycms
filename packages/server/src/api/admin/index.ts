@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { authMiddleware } from '../../auth/middleware.js';
 import authRouter from './auth.js';
 import pagesRouter from './pages.js';
+import revisionsRouter from './revisions.js';
 import blocksRouter from './blocks.js';
 import menusRouter from './menus.js';
 import taxonomiesRouter from './taxonomies.js';
@@ -22,6 +23,7 @@ app.route('/auth', authRouter);
 app.use('/*', authMiddleware);
 
 app.route('/pages', pagesRouter);
+app.route('/pages', revisionsRouter);
 app.route('/blocks', blocksRouter);
 app.route('/menus', menusRouter);
 app.route('/taxonomies', taxonomiesRouter);
