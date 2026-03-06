@@ -55,7 +55,7 @@ export function apiKeyAuth(requiredPermission: string) {
       .run();
 
     // Set a minimal JWT-like payload for downstream handlers
-    c.set('jwtPayload', { sub: 0, email: `apikey:${key.name}`, role: 'admin' });
+    c.set('jwtPayload', { sub: 0, email: `apikey:${key.name}`, role: 'admin', exp: 0 });
     await next();
   };
 }

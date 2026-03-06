@@ -1,4 +1,4 @@
-import { createMiddleware } from 'hono/factory';
+import type { Context, Next } from 'hono';
 
 type Role = 'admin' | 'editor' | 'viewer';
 
@@ -13,7 +13,7 @@ const ROLE_HIERARCHY: Record<Role, number> = {
  * Role hierarchy: viewer < editor < admin
  */
 export function requireRole(minRole: Role) {
-  return createMiddleware(async (c, next) => {
+  return async (c: Context, next: Next) => {
     const payload = c.get('jwtPayload');
     const userRole = (payload?.role || 'viewer') as Role;
     if ((ROLE_HIERARCHY[userRole] ?? 0) < ROLE_HIERARCHY[minRole]) {
@@ -23,5 +23,5 @@ export function requireRole(minRole: Role) {
       );
     }
     await next();
-  });
+  };
 }

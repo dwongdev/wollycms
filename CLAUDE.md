@@ -57,7 +57,7 @@ npm run test --workspace=packages/server       # Server tests only
 - Database: 13 tables with full Drizzle schema + indexes + migrations
 - Seed data: 8 pages, 10 block types (incl. hero), 3 content types, 3 menus, 2 taxonomies
 - Content API: 9 endpoints including preview (97 tests passing: 27 content + 70 admin)
-- Schema files use `.ts` imports (not `.js`) for drizzle-kit compatibility
+- Schema files use `.ts` imports (drizzle-kit requires this); `rewriteRelativeImportExtensions` in tsconfig converts to `.js` on build
 - App factory: `src/app.ts` (testable), `src/index.ts` (server entry)
 
 ## Architecture Key Points

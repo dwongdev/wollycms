@@ -65,7 +65,7 @@ app.post('/', async (c) => {
   const [existing] = await db.select({ id: contentTypes.id }).from(contentTypes).where(eq(contentTypes.slug, parsed.data.slug)).limit(1);
   if (existing) return c.json({ errors: [{ code: 'CONFLICT', message: 'Content type slug already exists' }] }, 409);
 
-  const [row] = await db.insert(contentTypes).values(parsed.data).returning();
+  const [row] = await db.insert(contentTypes).values(parsed.data as typeof contentTypes.$inferInsert).returning();
   return c.json({ data: row }, 201);
 });
 
@@ -77,7 +77,7 @@ app.put('/:id', async (c) => {
   const parsed = contentTypeSchema.partial().safeParse(body);
   if (!parsed.success) return c.json({ errors: parsed.error.issues.map((i) => ({ code: 'VALIDATION', message: i.message })) }, 400);
 
-  await db.update(contentTypes).set(parsed.data).where(eq(contentTypes.id, id));
+  await db.update(contentTypes).set(parsed.data as Partial<typeof contentTypes.$inferInsert>).where(eq(contentTypes.id, id));
   const [updated] = await db.select().from(contentTypes).where(eq(contentTypes.id, id)).limit(1);
   return c.json({ data: updated });
 });
