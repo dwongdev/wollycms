@@ -10,6 +10,7 @@
   let error = $state('');
   let success = $state('');
   let search = $state('');
+  let typeFilter = $state('');
   let showCreate = $state(false);
   let editBlock = $state<any>(null);
   let newBlock = $state({ title: '', typeId: 0, fields: {} as Record<string, unknown> });
@@ -18,6 +19,7 @@
     try {
       const params = new URLSearchParams();
       if (search) params.set('search', search);
+      if (typeFilter) params.set('type', typeFilter);
       const res = await api.get<{ data: any[]; meta: any }>(`/blocks?${params}`);
       blocks = res.data;
       total = res.meta.total;
@@ -77,8 +79,14 @@
 {#if error}<div class="alert alert-error">{error}</div>{/if}
 {#if success}<div class="alert alert-success">{success}</div>{/if}
 
-<div class="card" style="margin-bottom: 1rem;">
+<div class="card" style="margin-bottom: 1rem; display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
   <input class="form-control" placeholder="Search blocks..." bind:value={search} oninput={() => load()} style="max-width: 300px;" />
+  <select class="form-control" bind:value={typeFilter} onchange={() => load()} style="max-width: 180px;">
+    <option value="">All block types</option>
+    {#each blockTypes as bt}
+      <option value={bt.slug}>{bt.name}</option>
+    {/each}
+  </select>
 </div>
 
 <div class="table-wrap">

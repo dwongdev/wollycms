@@ -3,8 +3,14 @@ import { eq, asc } from 'drizzle-orm';
 import { z } from 'zod';
 import { getDb } from '../../db/index.js';
 import { contentTypes } from '../../db/schema/index.js';
+import { requireRole } from '../../auth/rbac.js';
 
 const app = new Hono();
+
+// Schema mutations require admin role
+app.post('/*', requireRole('admin'));
+app.put('/*', requireRole('admin'));
+app.delete('/*', requireRole('admin'));
 
 const fieldDefSchema: z.ZodType<any> = z.object({
   name: z.string().min(1),

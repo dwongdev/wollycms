@@ -13,8 +13,12 @@
   let contentTypes = $state<any[]>([]);
   let newPage = $state({ title: '', typeId: 0, status: 'draft' as string });
   let selected = $state<Set<number>>(new Set());
+  let pageSize = 20;
+  let offset = $state(0);
 
   let allSelected = $derived(pages.length > 0 && pages.every((p) => selected.has(p.id)));
+  let currentPage = $derived(Math.floor(offset / pageSize) + 1);
+  let totalPages = $derived(Math.ceil(total / pageSize));
 
   async function load() {
     try {
@@ -23,6 +27,8 @@
       if (statusFilter) params.set('status', statusFilter);
       if (typeFilter) params.set('type', typeFilter);
       if (sortBy) params.set('sort', sortBy);
+      params.set('limit', String(pageSize));
+      params.set('offset', String(offset));
       const res = await api.get<{ data: any[]; meta: any }>(`/pages?${params}`);
       pages = res.data;
       total = res.meta.total;
@@ -40,14 +46,23 @@
 
   onMount(() => { load(); loadTypes(); });
 
+  let createError = $state('');
+
   async function createPage() {
+    createError = '';
+    if (!newPage.title.trim()) { createError = 'Title is required.'; return; }
+    if (!newPage.typeId) { createError = 'Please select a content type.'; return; }
     try {
       await api.post('/pages', newPage);
       showCreate = false;
       newPage = { title: '', typeId: contentTypes[0]?.id || 0, status: 'draft' };
       load();
     } catch (err: any) {
-      error = err.message;
+      if (err.message?.includes('Slug already exists')) {
+        createError = 'A page with this slug already exists. Try a different title.';
+      } else {
+        createError = err.message;
+      }
     }
   }
 
@@ -99,7 +114,7 @@
 
 <div class="page-header">
   <h1>Pages ({total})</h1>
-  <button class="btn btn-primary" onclick={() => showCreate = true}>+ New Page</button>
+  <button class="btn btn-primary" onclick={() => { createError = ''; showCreate = true; }}>+ New Page</button>
 </div>
 
 {#if error}
@@ -107,20 +122,20 @@
 {/if}
 
 <div class="card" style="margin-bottom: 1rem; display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
-  <input class="form-control" placeholder="Search pages..." bind:value={search} oninput={() => load()} style="max-width: 300px;" />
-  <select class="form-control" bind:value={typeFilter} onchange={() => load()} style="max-width: 160px;">
+  <input class="form-control" placeholder="Search pages..." bind:value={search} oninput={() => { offset = 0; load(); }} style="max-width: 300px;" />
+  <select class="form-control" bind:value={typeFilter} onchange={() => { offset = 0; load(); }} style="max-width: 160px;">
     <option value="">All types</option>
     {#each contentTypes as ct}
       <option value={ct.slug}>{ct.name}</option>
     {/each}
   </select>
-  <select class="form-control" bind:value={statusFilter} onchange={() => load()} style="max-width: 160px;">
+  <select class="form-control" bind:value={statusFilter} onchange={() => { offset = 0; load(); }} style="max-width: 160px;">
     <option value="">All statuses</option>
     <option value="published">Published</option>
     <option value="draft">Draft</option>
     <option value="archived">Archived</option>
   </select>
-  <select class="form-control" bind:value={sortBy} onchange={() => load()} style="max-width: 180px;">
+  <select class="form-control" bind:value={sortBy} onchange={() => { offset = 0; load(); }} style="max-width: 180px;">
     <option value="updated_at:desc">Last updated</option>
     <option value="updated_at:asc">Oldest updated</option>
     <option value="created_at:desc">Newest created</option>
@@ -168,6 +183,19 @@
   </table>
 </div>
 
+{#if totalPages > 1}
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.75rem; font-size: 0.85rem;">
+    <span style="color: var(--c-text-light);">Showing {offset + 1}–{Math.min(offset + pageSize, total)} of {total}</span>
+    <div style="display: flex; gap: 0.25rem;">
+      <button class="btn btn-sm btn-outline" disabled={currentPage <= 1} onclick={() => { offset = 0; load(); }}>«</button>
+      <button class="btn btn-sm btn-outline" disabled={currentPage <= 1} onclick={() => { offset = Math.max(0, offset - pageSize); load(); }}>‹</button>
+      <span style="padding: 0.25rem 0.5rem; line-height: 1.6;">Page {currentPage} of {totalPages}</span>
+      <button class="btn btn-sm btn-outline" disabled={currentPage >= totalPages} onclick={() => { offset += pageSize; load(); }}>›</button>
+      <button class="btn btn-sm btn-outline" disabled={currentPage >= totalPages} onclick={() => { offset = (totalPages - 1) * pageSize; load(); }}>»</button>
+    </div>
+  </div>
+{/if}
+
 {#if showCreate}
   <div class="modal-overlay" onclick={() => showCreate = false} role="dialog">
     <div class="modal" onclick={(e) => e.stopPropagation()}>
@@ -176,6 +204,7 @@
         <button class="btn-icon" onclick={() => showCreate = false}>&#10005;</button>
       </div>
       <form class="modal-body" onsubmit={(e) => { e.preventDefault(); createPage(); }}>
+        {#if createError}<div class="alert alert-error" style="margin-bottom: 0.75rem;">{createError}</div>{/if}
         <div class="form-group">
           <label for="np-title">Title</label>
           <input id="np-title" class="form-control" bind:value={newPage.title} required />

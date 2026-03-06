@@ -123,14 +123,19 @@ all content without touching code or APIs.
 - [x] Block library: full edit modal with all field type renderers
 - [x] Video block type: source selector (upload/YouTube/Vimeo), conditional fields
 - [x] Seed data: no longer creates fake media records (preserves real uploads across reseeds)
-- [x] Tests: 71 tests (23 content API + 48 admin API)
+- [x] Page duplication (shared blocks referenced, inline blocks deep-copied)
+- [x] Bulk operations (publish/unpublish/archive/delete multiple pages)
+- [x] Page revision history (auto-snapshot on save, view/restore from admin UI)
+- [x] Pagination on pages list with prev/next controls
+- [x] Type filter and sort controls on pages list and block library
+- [x] Client-side validation with friendly error messages
+- [x] RBAC enforcement: admin-only guards on users, content/block types, config
+- [x] Tests: 87 tests (23 content API + 64 admin API), all passing
 
 ### Known Limitations
 
-- Role-based access control: roles exist in DB/JWT but are not enforced
-  at endpoint level (all authenticated users have full access)
-- 6 tests failing due to seed data count changes (block type and block
-  counts updated since tests were written)
+- RBAC: viewer role can read all admin data (no field-level restrictions)
+- No SSR preview mode demonstrated yet
 
 ### Demo
 
@@ -166,7 +171,8 @@ frontend. The Storyblok-like experience.
   - Table editing
   - Paste cleanup (Word, Google Docs)
 - [ ] Content scheduling (publish/unpublish on date)
-- [ ] Revision history with diff view and rollback
+- [x] Revision history with rollback (completed in Phase 3)
+- [ ] Revision diff view (side-by-side comparison)
 - [ ] Multi-user: real-time presence (who's editing what)
 
 ### Demo

@@ -532,3 +532,102 @@ describe('Admin Config', () => {
     expect(body.data.siteName).toBe('Updated CMS');
   });
 });
+
+// --- RBAC ---
+describe('Role-Based Access Control', () => {
+  let editorToken: string;
+
+  it('setup: create editor user and get token', async () => {
+    // Create editor via admin
+    await json('/users', 'POST', {
+      email: 'editor@test.com',
+      password: 'editorpass1',
+      name: 'Test Editor',
+      role: 'editor',
+    });
+    // Login as editor
+    const res = await app.request('/api/admin/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: 'editor@test.com', password: 'editorpass1' }),
+    });
+    const body = await res.json();
+    editorToken = body.data.token;
+    expect(editorToken).toBeDefined();
+  });
+
+  function editorReq(path: string, init: RequestInit = {}) {
+    const headers = new Headers(init.headers);
+    headers.set('Authorization', `Bearer ${editorToken}`);
+    if (init.body && !headers.has('Content-Type')) {
+      headers.set('Content-Type', 'application/json');
+    }
+    return app.request(`/api/admin${path}`, { ...init, headers });
+  }
+
+  // Editors CAN read admin-only resources
+  it('editor can read users list', async () => {
+    const res = await editorReq('/users');
+    expect(res.status).toBe(200);
+  });
+
+  it('editor can read content types', async () => {
+    const res = await editorReq('/content-types');
+    expect(res.status).toBe(200);
+  });
+
+  // Editors CANNOT mutate admin-only resources
+  it('editor cannot create users', async () => {
+    const res = await editorReq('/users', {
+      method: 'POST',
+      body: JSON.stringify({ email: 'x@x.com', password: 'password1', name: 'X', role: 'viewer' }),
+    });
+    expect(res.status).toBe(403);
+  });
+
+  it('editor cannot create content types', async () => {
+    const res = await editorReq('/content-types', {
+      method: 'POST',
+      body: JSON.stringify({ name: 'X', slug: 'x', fieldsSchema: [], regions: [] }),
+    });
+    expect(res.status).toBe(403);
+  });
+
+  it('editor cannot create block types', async () => {
+    const res = await editorReq('/block-types', {
+      method: 'POST',
+      body: JSON.stringify({ name: 'X', slug: 'x', fieldsSchema: [] }),
+    });
+    expect(res.status).toBe(403);
+  });
+
+  it('editor cannot update config', async () => {
+    const res = await editorReq('/config', {
+      method: 'PUT',
+      body: JSON.stringify({ siteName: 'Hacked' }),
+    });
+    expect(res.status).toBe(403);
+  });
+
+  // Editors CAN do content operations
+  it('editor can create pages', async () => {
+    const res = await editorReq('/pages', {
+      method: 'POST',
+      body: JSON.stringify({ title: 'Editor Page', typeId: 1, status: 'draft' }),
+    });
+    expect(res.status).toBe(201);
+    // Cleanup
+    const body = await res.json();
+    await editorReq(`/pages/${body.data.id}`, { method: 'DELETE' });
+  });
+
+  it('editor can create blocks', async () => {
+    const res = await editorReq('/blocks', {
+      method: 'POST',
+      body: JSON.stringify({ typeId: 1, title: 'Editor Block', isReusable: true, fields: {} }),
+    });
+    expect(res.status).toBe(201);
+    const body = await res.json();
+    await editorReq(`/blocks/${body.data.id}`, { method: 'DELETE' });
+  });
+});

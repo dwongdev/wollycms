@@ -4,8 +4,14 @@ import { z } from 'zod';
 import { getDb } from '../../db/index.js';
 import { users } from '../../db/schema/index.js';
 import { hashPassword } from '../../auth/password.js';
+import { requireRole } from '../../auth/rbac.js';
 
 const app = new Hono();
+
+// All user mutations require admin role
+app.post('/*', requireRole('admin'));
+app.put('/*', requireRole('admin'));
+app.delete('/*', requireRole('admin'));
 
 const userSchema = z.object({
   email: z.string().email(),

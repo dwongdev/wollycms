@@ -158,6 +158,8 @@
     saving = true;
     error = '';
     success = '';
+    if (!pageData.title?.trim()) { error = 'Title cannot be empty.'; saving = false; return; }
+    if (!pageData.slug?.trim()) { error = 'Slug cannot be empty.'; saving = false; return; }
     try {
       await api.put(`/pages/${id}`, {
         title: pageData.title,
@@ -168,7 +170,11 @@
       success = 'Page saved.';
       setTimeout(() => success = '', 3000);
     } catch (err: any) {
-      error = err.message;
+      if (err.message?.includes('Slug already exists')) {
+        error = 'A page with this slug already exists.';
+      } else {
+        error = err.message;
+      }
     } finally {
       saving = false;
     }

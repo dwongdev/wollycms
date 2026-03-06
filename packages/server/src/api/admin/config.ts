@@ -2,8 +2,12 @@ import { Hono } from 'hono';
 import { z } from 'zod';
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { join, dirname } from 'node:path';
+import { requireRole } from '../../auth/rbac.js';
 
 const app = new Hono();
+
+// Config updates require admin role
+app.put('/*', requireRole('admin'));
 
 const CONFIG_PATH = join(process.cwd(), 'data', 'config.json');
 
