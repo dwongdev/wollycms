@@ -121,8 +121,8 @@ app.post('/:id/test', async (c) => {
     clearTimeout(timeout);
     db.update(webhooks).set({ lastTriggeredAt: new Date().toISOString(), lastStatus: res.status }).where(eq(webhooks.id, id)).run();
     return c.json({ data: { status: res.status, ok: res.ok } });
-  } catch (err: any) {
-    return c.json({ errors: [{ code: 'DELIVERY_FAILED', message: err.message }] }, 502);
+  } catch {
+    return c.json({ errors: [{ code: 'DELIVERY_FAILED', message: 'Webhook delivery failed — check the URL and try again' }] }, 502);
   }
 });
 

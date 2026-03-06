@@ -13,6 +13,30 @@ import { logAudit } from '../../audit.js';
 
 const app = new Hono();
 
+/** Allowed MIME types for uploads */
+const ALLOWED_MIME_TYPES = new Set([
+  // Images
+  'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/avif',
+  'image/svg+xml', 'image/bmp', 'image/tiff', 'image/x-icon',
+  // Documents
+  'application/pdf',
+  'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'application/vnd.ms-powerpoint', 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  // Video
+  'video/mp4', 'video/webm', 'video/ogg',
+  // Audio
+  'audio/mpeg', 'audio/ogg', 'audio/wav', 'audio/webm',
+  // Archives
+  'application/zip', 'application/gzip',
+  // Text
+  'text/plain', 'text/csv', 'text/html', 'text/css', 'text/javascript',
+  'application/json', 'application/xml',
+]);
+
+/** Max upload size: 50 MB */
+const MAX_UPLOAD_SIZE = 50 * 1024 * 1024;
+
 /** Escape SQL LIKE wildcards in user input */
 function escapeLike(s: string): string {
   return s.replace(/%/g, '\\%').replace(/_/g, '\\_');
@@ -71,8 +95,16 @@ app.post('/', async (c) => {
     return c.json({ errors: [{ code: 'VALIDATION', message: 'File is required' }] }, 400);
   }
 
+  if (!ALLOWED_MIME_TYPES.has(file.type)) {
+    return c.json({ errors: [{ code: 'VALIDATION', message: `File type "${file.type}" is not allowed` }] }, 400);
+  }
+
+  if (file.size > MAX_UPLOAD_SIZE) {
+    return c.json({ errors: [{ code: 'VALIDATION', message: `File exceeds maximum size of ${MAX_UPLOAD_SIZE / 1024 / 1024}MB` }] }, 400);
+  }
+
   const originalName = file.name;
-  const ext = extname(originalName);
+  const ext = extname(originalName).toLowerCase();
   const filename = `${randomUUID()}${ext}`;
   const uploadDir = env.MEDIA_DIR;
 
