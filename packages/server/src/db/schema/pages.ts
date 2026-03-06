@@ -14,6 +14,7 @@ export const pages = sqliteTable('pages', {
   createdAt: text('created_at').notNull(),
   updatedAt: text('updated_at').notNull(),
   publishedAt: text('published_at'),
+  scheduledAt: text('scheduled_at'),
   createdBy: integer('created_by').references(() => users.id),
 }, (table) => [
   index('idx_pages_slug').on(table.slug),

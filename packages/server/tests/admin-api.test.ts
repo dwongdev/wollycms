@@ -144,6 +144,27 @@ describe('Admin Pages', () => {
     expect(body.data.status).toBe('published');
   });
 
+  it('PUT /:id sets scheduledAt', async () => {
+    const futureDate = new Date(Date.now() + 86400000).toISOString();
+    const res = await json(`/pages/${testPageId}`, 'PUT', { scheduledAt: futureDate });
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.data.scheduledAt).toBe(futureDate);
+  });
+
+  it('scheduled page is hidden from content API', async () => {
+    // The page is published + scheduled in the future
+    const res = await app.request(`/api/content/pages/${encodeURIComponent('test-page')}`, { method: 'GET' });
+    expect(res.status).toBe(404);
+  });
+
+  it('PUT /:id clears scheduledAt', async () => {
+    const res = await json(`/pages/${testPageId}`, 'PUT', { scheduledAt: null });
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.data.scheduledAt).toBeNull();
+  });
+
   it('POST /:id/blocks adds block to page', async () => {
     const res = await json(`/pages/${testPageId}/blocks`, 'POST', {
       blockTypeId: 1,
@@ -530,6 +551,34 @@ describe('Admin Config', () => {
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.data.siteName).toBe('Updated CMS');
+  });
+});
+
+// --- Export/Import ---
+describe('Admin Export/Import', () => {
+  let exportData: any;
+
+  it('GET /export returns full content dump', async () => {
+    const res = await authed('/export');
+    expect(res.status).toBe(200);
+    exportData = await res.json();
+    expect(exportData.version).toBe(1);
+    expect(exportData.pages.length).toBeGreaterThan(0);
+    expect(exportData.contentTypes.length).toBeGreaterThan(0);
+    expect(exportData.menus.length).toBeGreaterThan(0);
+  });
+
+  it('POST /import with invalid format returns 400', async () => {
+    const res = await json('/import', 'POST', { bad: true });
+    expect(res.status).toBe(400);
+  });
+
+  it('POST /import with valid data succeeds (skips existing)', async () => {
+    const res = await json('/import', 'POST', exportData);
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.data.imported).toBe(true);
+    expect(body.data.stats.pages).toBeGreaterThan(0);
   });
 });
 

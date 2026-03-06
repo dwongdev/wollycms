@@ -6,6 +6,7 @@
   let error = $state('');
   let success = $state('');
   let saving = $state(false);
+  let importing = $state(false);
 
   onMount(async () => {
     try {
@@ -68,5 +69,38 @@
       <label>Instagram</label>
       <input class="form-control" bind:value={config.social.instagram} placeholder="https://instagram.com/..." />
     </div>
+  </div>
+
+  <div class="card" style="max-width: 600px; margin-top: 1.5rem;">
+    <h2 style="font-size: 1.1rem; margin-bottom: 1rem;">Data Management</h2>
+    <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+      <a href="/api/admin/export" class="btn btn-outline" target="_blank" rel="noopener">Export All Content (JSON)</a>
+      <label class="btn btn-outline" style="cursor: pointer;">
+        {importing ? 'Importing...' : 'Import Content (JSON)'}
+        <input type="file" accept=".json" style="display: none;" onchange={async (e) => {
+          const file = (e.target as HTMLInputElement).files?.[0];
+          if (!file) return;
+          importing = true;
+          error = '';
+          try {
+            const text = await file.text();
+            const data = JSON.parse(text);
+            const res = await api.post<{ data: any }>('/import', data);
+            const stats = res.data.stats;
+            const summary = Object.entries(stats).map(([k, v]) => `${k}: ${v}`).join(', ');
+            success = `Import complete. ${summary}`;
+            setTimeout(() => success = '', 5000);
+          } catch (err: any) {
+            error = err.message || 'Import failed';
+          } finally {
+            importing = false;
+            (e.target as HTMLInputElement).value = '';
+          }
+        }} />
+      </label>
+    </div>
+    <p style="font-size: 0.8rem; color: var(--c-text-light); margin-top: 0.5rem;">
+      Export downloads all pages, blocks, menus, taxonomies, and redirects. Import skips existing records (no duplicates).
+    </p>
   </div>
 {/if}

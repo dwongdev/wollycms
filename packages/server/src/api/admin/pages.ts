@@ -15,6 +15,7 @@ const pageSchema = z.object({
   typeId: z.number().int().positive(),
   status: z.enum(['draft', 'published', 'archived']).default('draft'),
   fields: z.record(z.unknown()).default({}),
+  scheduledAt: z.string().nullable().optional(),
 });
 
 const pageUpdateSchema = pageSchema.partial();
@@ -45,6 +46,7 @@ app.get('/', async (c) => {
       createdAt: pages.createdAt,
       updatedAt: pages.updatedAt,
       publishedAt: pages.publishedAt,
+      scheduledAt: pages.scheduledAt,
     })
     .from(pages)
     .innerJoin(contentTypes, eq(pages.typeId, contentTypes.id))
@@ -78,6 +80,7 @@ app.get('/', async (c) => {
     data: rows.map((r) => ({
       id: r.id, type: r.typeSlug, typeName: r.typeName, title: r.title, slug: r.slug,
       status: r.status, fields: r.fields,
+      scheduledAt: r.scheduledAt,
       meta: { created_at: r.createdAt, updated_at: r.updatedAt, published_at: r.publishedAt },
     })),
     meta: { total: countResult[0].count, limit, offset },
@@ -120,6 +123,7 @@ app.get('/:id', async (c) => {
     .select({
       id: pages.id, typeId: pages.typeId, typeSlug: contentTypes.slug,
       title: pages.title, slug: pages.slug, status: pages.status, fields: pages.fields,
+      scheduledAt: pages.scheduledAt,
       createdAt: pages.createdAt, updatedAt: pages.updatedAt, publishedAt: pages.publishedAt,
     })
     .from(pages)
@@ -159,6 +163,7 @@ app.get('/:id', async (c) => {
     data: {
       id: page.id, typeId: page.typeId, type: page.typeSlug,
       title: page.title, slug: page.slug, status: page.status, fields: page.fields,
+      scheduledAt: page.scheduledAt,
       regions,
       meta: { created_at: page.createdAt, updated_at: page.updatedAt, published_at: page.publishedAt },
     },
@@ -185,6 +190,7 @@ app.post('/', async (c) => {
     slug,
     status: parsed.data.status,
     fields: parsed.data.fields,
+    scheduledAt: parsed.data.scheduledAt ?? null,
     createdAt: now,
     updatedAt: now,
     publishedAt: parsed.data.status === 'published' ? now : null,

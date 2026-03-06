@@ -166,6 +166,7 @@
         slug: pageData.slug,
         status: pageData.status,
         fields: pageData.fields || {},
+        scheduledAt: pageData.scheduledAt || null,
       });
       success = 'Page saved.';
       setTimeout(() => success = '', 3000);
@@ -438,6 +439,23 @@
         <p style="font-size: 0.85rem; color: var(--c-text-light);">Status: <span class="badge badge-{pageData.status}">{pageData.status}</span></p>
         <p style="font-size: 0.85rem; color: var(--c-text-light);">Created: {new Date(pageData.meta.created_at).toLocaleString()}</p>
         <p style="font-size: 0.85rem; color: var(--c-text-light);">Updated: {new Date(pageData.meta.updated_at).toLocaleString()}</p>
+        <hr style="margin: 0.75rem 0; border: none; border-top: 1px solid var(--c-border);" />
+        <div class="form-group" style="margin-bottom: 0;">
+          <label style="font-size: 0.8rem; font-weight: 600;">Schedule Publish</label>
+          <input type="datetime-local" class="form-control" style="font-size: 0.85rem;"
+            value={pageData.scheduledAt ? pageData.scheduledAt.slice(0, 16) : ''}
+            onchange={(e) => {
+              const val = (e.target as HTMLInputElement).value;
+              pageData.scheduledAt = val ? new Date(val).toISOString() : null;
+            }}
+          />
+          {#if pageData.scheduledAt}
+            <button class="btn btn-sm btn-outline" style="margin-top: 0.25rem; font-size: 0.75rem;" onclick={() => { pageData.scheduledAt = null; }}>Clear schedule</button>
+          {/if}
+          <p style="font-size: 0.75rem; color: var(--c-text-light); margin-top: 0.25rem;">
+            {pageData.scheduledAt ? 'Page will appear publicly after this date.' : 'No schedule — publishes immediately when status is Published.'}
+          </p>
+        </div>
       </div>
 
       <div class="card" style="margin-bottom: 1rem;">

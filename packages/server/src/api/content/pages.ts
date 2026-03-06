@@ -26,8 +26,10 @@ app.get('/', async (c) => {
   const limit = Math.min(parseInt(c.req.query('limit') || '20', 10), 100);
   const offset = parseInt(c.req.query('offset') || '0', 10);
 
+  const now = new Date().toISOString();
   const conditions: ReturnType<typeof eq>[] = [
     eq(pages.status, 'published'),
+    sql`(${pages.scheduledAt} IS NULL OR ${pages.scheduledAt} <= ${now})`,
   ];
 
   // Filter by content type slug via subquery
@@ -149,7 +151,11 @@ app.get('/:slug', async (c) => {
     })
     .from(pages)
     .innerJoin(contentTypes, eq(pages.typeId, contentTypes.id))
-    .where(and(eq(pages.slug, slug), eq(pages.status, 'published')))
+    .where(and(
+      eq(pages.slug, slug),
+      eq(pages.status, 'published'),
+      sql`(${pages.scheduledAt} IS NULL OR ${pages.scheduledAt} <= ${new Date().toISOString()})`,
+    ))
     .limit(1);
 
   if (pageRows.length === 0) {

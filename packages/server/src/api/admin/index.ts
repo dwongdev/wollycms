@@ -13,6 +13,7 @@ import blockTypesRouter from './block-types.js';
 import usersRouter from './users.js';
 import dashboardRouter from './dashboard.js';
 import configRouter from './config.js';
+import exportImportRouter from './export-import.js';
 
 const app = new Hono();
 
@@ -34,5 +35,6 @@ app.route('/block-types', blockTypesRouter);
 app.route('/users', usersRouter);
 app.route('/dashboard', dashboardRouter);
 app.route('/config', configRouter);
+app.route('/', exportImportRouter);
 
 export default app;

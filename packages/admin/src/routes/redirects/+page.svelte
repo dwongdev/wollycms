@@ -3,7 +3,14 @@
   import { api } from '$lib/api.js';
 
   let redirects = $state<any[]>([]);
+  let filteredRedirects = $derived(
+    search ? redirects.filter((r) =>
+      r.fromPath.toLowerCase().includes(search.toLowerCase()) ||
+      r.toPath.toLowerCase().includes(search.toLowerCase())
+    ) : redirects
+  );
   let error = $state('');
+  let search = $state('');
   let showCreate = $state(false);
   let newRedirect = $state({ fromPath: '', toPath: '', statusCode: 301 });
 
@@ -40,17 +47,21 @@
 </script>
 
 <div class="page-header">
-  <h1>Redirects ({redirects.length})</h1>
+  <h1>Redirects ({filteredRedirects.length}{search ? ` of ${redirects.length}` : ''})</h1>
   <button class="btn btn-primary" onclick={() => showCreate = true}>+ New Redirect</button>
 </div>
 
 {#if error}<div class="alert alert-error">{error}</div>{/if}
 
+<div class="card" style="margin-bottom: 1rem;">
+  <input class="form-control" placeholder="Search redirects..." bind:value={search} style="max-width: 300px;" />
+</div>
+
 <div class="table-wrap">
   <table>
     <thead><tr><th>From</th><th>To</th><th>Status</th><th>Active</th><th></th></tr></thead>
     <tbody>
-      {#each redirects as r}
+      {#each filteredRedirects as r}
         <tr>
           <td><code>{r.fromPath}</code></td>
           <td><code>{r.toPath}</code></td>
