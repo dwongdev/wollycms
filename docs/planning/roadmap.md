@@ -380,9 +380,10 @@ A developer should go from zero to running CMS in under 5 minutes.
 
 ### 6b. CLI & Scaffolding -- PARTIAL
 
-- [ ] `npx create-spacely` — interactive project scaffolding
-- [ ] `npx spacely types generate` — generate TypeScript types from CMS
-      schemas (content types + block types → `.d.ts` file)
+- [x] `npx create-spacely` — interactive project scaffolding (creates
+      package.json, .env, .gitignore, docker-compose, README, installs deps)
+- [x] `spacely types generate` — generate TypeScript types from CMS schemas
+      (content types + block types → `.d.ts` file with interfaces, unions)
 - [x] `spacely migrate` — run migrations
 - [x] `spacely seed` — populate sample data
 - [x] `spacely start` — start production server
@@ -394,7 +395,9 @@ A developer should go from zero to running CMS in under 5 minutes.
 
 - [ ] Published Docker image (`docker pull spacelycms/server`)
 - [x] Docker Compose dev template (`docker-compose.dev.yml`)
-- [ ] Docker Compose prod template (PostgreSQL, S3, Caddy reverse proxy)
+- [x] Docker Compose prod template (`docker-compose.prod.yml` with Caddy
+      reverse proxy, auto-HTTPS, security headers, health check)
+- [x] Caddyfile with security headers, gzip, static asset caching
 - [ ] Deployment guides
 
 ### 6x. Build Pipeline -- COMPLETE
