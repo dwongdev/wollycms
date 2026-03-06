@@ -10,6 +10,7 @@ import configRouter from './config.js';
 import schemasRouter from './schemas.js';
 import previewRouter from './preview.js';
 import batchRouter from './batch.js';
+import sitemapRouter from './sitemap.js';
 
 const app = new Hono();
 
@@ -32,5 +33,6 @@ app.route('/config', configRouter);
 app.route('/schemas', schemasRouter);
 app.route('/preview', previewRouter);
 app.route('/batch', batchRouter);
+app.route('/sitemap', sitemapRouter);
 
 export default app;

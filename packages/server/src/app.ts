@@ -40,6 +40,9 @@ app.use('*', cors({
 app.route('/api/content', contentRouter);
 app.route('/api/admin', adminRouter);
 
+// Convenience redirect for /sitemap.xml
+app.get('/sitemap.xml', (c) => c.redirect('/api/content/sitemap'));
+
 app.get('/api/health', (c) => c.json({
   status: 'ok',
   version: '0.1.0',
