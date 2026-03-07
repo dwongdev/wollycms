@@ -23,7 +23,7 @@
 - [ ] Verify admin UI accessible at `https://wollycms.home.cwolly.com`
 
 ## Phase D: Initial Content Setup
-- [ ] Log in and change default admin password
+- [ ] Visit admin URL → onboarding page creates first admin account
 - [ ] Set up content types for cwolly.com (blog posts, pages)
 - [ ] Create initial block types (hero, rich text, code block, etc.)
 - [ ] Create a few test pages/posts
@@ -66,3 +66,10 @@
 - If build failed again, check Forgejo Actions logs for the error
 - compose.yaml and .env already on mothership at /srv/compose/wollycms/
 - Next step: verify image in registry → `docker compose up -d` → Caddy → test admin UI
+
+## Session Notes (March 7, 2026)
+- CI build succeeded, container running on mothership
+- Caddy + DNS already working (wollycms.home.cwolly.com resolves)
+- **Fix: SvelteKit base path routing** — `goto()` and `<a href>` in admin SPA used absolute paths (`/login`) instead of `${base}/login` (`/admin/login`), causing 404s. Fixed in `+layout.svelte`, `login/+page.svelte`, `GlobalSearch.svelte`.
+- **Fix: First-run onboarding** — Server returned 500 on login because DB had no tables/users. Added auto-migration on startup + `/setup` onboarding page (no more hardcoded default creds).
+- Removed default admin credentials (admin@wollycms.local / admin123) — first admin is now created via onboarding UI

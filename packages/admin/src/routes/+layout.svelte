@@ -17,13 +17,27 @@
 
   let { children } = $props();
   const auth = getAuth();
-  const isLogin = $derived($page.url.pathname === `${base}/login`);
+  const isPublicPage = $derived(
+    $page.url.pathname === `${base}/login` || $page.url.pathname === `${base}/setup`,
+  );
+  let needsSetup = $state(false);
   let showShortcuts = $state(false);
   let navCounts = $state<Record<string, number>>({});
 
   onMount(async () => {
+    try {
+      const res = await fetch('/api/admin/setup/status');
+      const json = await res.json();
+      needsSetup = json.data?.needsSetup ?? false;
+    } catch { /* assume setup done if check fails */ }
+
+    if (needsSetup) {
+      if ($page.url.pathname !== `${base}/setup`) goto(`${base}/setup`);
+      return;
+    }
+
     await auth.load();
-    if (!auth.user && !isLogin) {
+    if (!auth.user && !isPublicPage) {
       goto(`${base}/login`);
     }
     if (auth.user) {
@@ -32,7 +46,11 @@
   });
 
   $effect(() => {
-    if (auth.loaded && !auth.user && !isLogin) {
+    if (needsSetup && $page.url.pathname !== `${base}/setup`) {
+      goto(`${base}/setup`);
+      return;
+    }
+    if (auth.loaded && !auth.user && !isPublicPage && !needsSetup) {
       goto(`${base}/login`);
     }
   });
@@ -111,9 +129,9 @@
 
 <svelte:window onkeydown={handleGlobalKeydown} />
 
-{#if !auth.loaded}
+{#if !auth.loaded && !needsSetup}
   <div class="loading">Loading...</div>
-{:else if isLogin || !auth.user}
+{:else if isPublicPage || needsSetup || !auth.user}
   {@render children()}
 {:else}
   <a href="#main-content" class="skip-link">Skip to main content</a>

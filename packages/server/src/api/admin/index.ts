@@ -20,8 +20,14 @@ import webhooksRouter from './webhooks.js';
 import apiKeysRouter from './api-keys.js';
 import auditRouter from './audit.js';
 import searchRouter from './search.js';
+import setupRouter from './setup.js';
 
 const app = new Hono();
+
+// Setup routes (public, only functional when no users exist)
+app.use('/setup/*', rateLimiter());
+app.use('/setup', rateLimiter());
+app.route('/setup', setupRouter);
 
 // Auth routes with rate limiting (login is public, /me is protected inside)
 app.use('/auth/login', rateLimiter());
