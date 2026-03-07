@@ -2,7 +2,9 @@ import './types.js';
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { serveStatic } from '@hono/node-server/serve-static';
-import { readFile, stat } from 'node:fs/promises';
+import { createReadStream } from 'node:fs';
+import { stat } from 'node:fs/promises';
+import type { Stats } from 'node:fs';
 import { join, extname, resolve } from 'node:path';
 import contentRouter from './api/content/index.js';
 import adminRouter from './api/admin/index.js';
@@ -124,8 +126,9 @@ if (!getStorage().isExternal) {
       return c.json({ errors: [{ code: 'FORBIDDEN', message: 'Invalid path' }] }, 403);
     }
 
+    let fileStat: Stats;
     try {
-      const fileStat = await stat(filePath);
+      fileStat = await stat(filePath);
       if (!fileStat.isFile()) {
         return c.notFound();
       }
@@ -133,19 +136,19 @@ if (!getStorage().isExternal) {
       return c.notFound();
     }
 
-    const fileBuffer = await readFile(filePath);
     const ext = extname(filePath).toLowerCase();
     const contentType = MIME_TYPES[ext] || 'application/octet-stream';
+    const fileStream = createReadStream(filePath);
 
     c.header('Content-Type', contentType);
-    c.header('Content-Length', String(fileBuffer.length));
+    c.header('Content-Length', String(fileStat.size));
     c.header('Cache-Control', 'public, max-age=31536000, immutable');
     c.header('Content-Security-Policy', "default-src 'none'; sandbox");
     if (!INLINE_SAFE_CONTENT_TYPES.has(contentType)) {
       c.header('Content-Disposition', 'attachment');
     }
 
-    return c.body(fileBuffer);
+    return c.body(fileStream as unknown as ReadableStream);
   });
 }
 

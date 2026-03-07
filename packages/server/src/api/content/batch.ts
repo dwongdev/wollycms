@@ -52,10 +52,22 @@ app.post('/', async (c) => {
         sql`(${pages.scheduledAt} IS NULL OR ${pages.scheduledAt} <= ${now})`,
       ));
 
-    const pagesResult: Record<string, unknown> = {};
-    for (const page of pageRows) {
+    const pageIds = pageRows.map((p) => p.id);
+    const pbByPageId = new Map<number, Array<{
+      pbId: number;
+      region: string;
+      position: number;
+      isShared: boolean;
+      overrides: Record<string, unknown> | null;
+      blockId: number;
+      blockFields: Record<string, unknown> | null;
+      blockTypeSlug: string;
+    }>>();
+
+    if (pageIds.length > 0) {
       const pbRows = await db
         .select({
+          pageId: pageBlocks.pageId,
           pbId: pageBlocks.id,
           region: pageBlocks.region,
           position: pageBlocks.position,
@@ -68,11 +80,22 @@ app.post('/', async (c) => {
         .from(pageBlocks)
         .innerJoin(blocks, eq(pageBlocks.blockId, blocks.id))
         .innerJoin(blockTypes, eq(blocks.typeId, blockTypes.id))
-        .where(eq(pageBlocks.pageId, page.id))
-        .orderBy(asc(pageBlocks.region), asc(pageBlocks.position));
+        .where(inArray(pageBlocks.pageId, pageIds))
+        .orderBy(asc(pageBlocks.pageId), asc(pageBlocks.region), asc(pageBlocks.position));
+
+      for (const row of pbRows) {
+        const existing = pbByPageId.get(row.pageId) || [];
+        existing.push(row);
+        pbByPageId.set(row.pageId, existing);
+      }
+    }
+
+    const pagesResult: Record<string, unknown> = {};
+    for (const page of pageRows) {
+      const pageBlocksForPage = pbByPageId.get(page.id) || [];
 
       const regions: Record<string, unknown[]> = {};
-      for (const pb of pbRows) {
+      for (const pb of pageBlocksForPage) {
         if (!regions[pb.region]) regions[pb.region] = [];
         let fields = pb.blockFields || {};
         if (pb.isShared && pb.overrides) fields = { ...fields, ...pb.overrides };
@@ -106,13 +129,19 @@ app.post('/', async (c) => {
   if (parsed.data.menus && parsed.data.menus.length > 0) {
     const slugList = parsed.data.menus.slice(0, 10);
     const menusResult: Record<string, unknown> = {};
-    for (const menuSlug of slugList) {
-      const [menu] = await db.select().from(menus).where(eq(menus.slug, menuSlug)).limit(1);
-      if (!menu) continue;
-      const items = await db.select().from(menuItems)
-        .where(eq(menuItems.menuId, menu.id))
-        .orderBy(asc(menuItems.position));
-      menusResult[menuSlug] = { ...menu, items };
+    const menuRows = await db.select().from(menus).where(inArray(menus.slug, slugList));
+    const menuIds = menuRows.map((m) => m.id);
+    const menuItemsRows = menuIds.length > 0
+      ? await db.select().from(menuItems).where(inArray(menuItems.menuId, menuIds)).orderBy(asc(menuItems.menuId), asc(menuItems.position))
+      : [];
+    const itemsByMenuId = new Map<number, typeof menuItemsRows>();
+    for (const item of menuItemsRows) {
+      const existing = itemsByMenuId.get(item.menuId) || [];
+      existing.push(item);
+      itemsByMenuId.set(item.menuId, existing);
+    }
+    for (const menu of menuRows) {
+      menusResult[menu.slug] = { ...menu, items: itemsByMenuId.get(menu.id) || [] };
     }
     result.menus = menusResult;
   }

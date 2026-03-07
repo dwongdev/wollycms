@@ -22,6 +22,15 @@ async function cacheMiddleware(c: Context, next: Next) {
   await next();
   if (c.req.method === 'GET' && c.res.status === 200) {
     const maxAge = env.NODE_ENV === 'production' ? 60 : 0;
+    c.res.headers.set('Cache-Control', `public, max-age=${maxAge}, s-maxage=${maxAge * 10}, stale-while-revalidate=${maxAge * 60}`);
+
+    if (c.res.headers.has('ETag')) return;
+
+    const contentType = c.res.headers.get('content-type') || '';
+    if (!contentType.includes('application/json')) return;
+
+    const contentLength = Number(c.res.headers.get('content-length') || '0');
+    if (contentLength > 512_000) return;
 
     // Clone response to read body without consuming the original
     const cloned = c.res.clone();
@@ -37,7 +46,6 @@ async function cacheMiddleware(c: Context, next: Next) {
     }
 
     c.res.headers.set('ETag', etag);
-    c.res.headers.set('Cache-Control', `public, max-age=${maxAge}, s-maxage=${maxAge * 10}, stale-while-revalidate=${maxAge * 60}`);
   }
 }
 app.use('*', cacheMiddleware);

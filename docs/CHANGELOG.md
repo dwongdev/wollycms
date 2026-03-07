@@ -15,3 +15,11 @@
 - Added webhook outbound URL safety policy to block local/private/internal targets and non-HTTP(S) URLs.
 - Sanitized request logging to omit query strings from logs.
 - Added/updated server tests for preview session cookie, preview auth behavior, and RBAC restrictions.
+
+### Performance sprint (batch 2)
+
+- Optimized `/api/content/batch` to eliminate N+1 query patterns:
+  - Block data is now fetched in one query for all requested page IDs.
+  - Menu items are now fetched in one query for all requested menu IDs.
+- Updated `/uploads/*` local file serving to stream files instead of reading whole files into memory.
+- Reduced ETag overhead in content cache middleware by hashing only JSON responses and skipping large payloads.
