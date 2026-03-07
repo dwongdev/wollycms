@@ -17,6 +17,7 @@
   let blockTypes = $state<any[]>([]);
   let error = $state('');
   let success = $state('');
+  let loading = $state(true);
   let activeRegion = $state('content');
   let saving = $state(false);
   let showPreview = $state(false);
@@ -128,6 +129,7 @@
       takeSnapshot();
       dirty = false;
     } catch (err: any) { error = err.message; }
+    finally { loading = false; }
   }
 
   async function loadMenuDetails() {
@@ -200,8 +202,10 @@
 
 <svelte:window onkeydown={handleKeydown} onbeforeunload={handleBeforeUnload} />
 
-{#if !pageData}
+{#if loading}
   <div class="loading">Loading page...</div>
+{:else if error && !pageData}
+  <div class="alert alert-error" style="margin: 2rem;">{error}</div>
 {:else}
   <div class="editor-header">
     <div class="editor-header-left">
