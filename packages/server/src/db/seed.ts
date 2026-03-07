@@ -22,7 +22,6 @@ const TABLE_NAMES = [
   'redirects',
   'block_types',
   'content_types',
-  'users',
 ];
 // Note: 'media' is intentionally excluded — reseeding should not
 // destroy real uploaded files. Media is managed via the admin UI.
