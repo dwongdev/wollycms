@@ -30,6 +30,12 @@ app.route('/auth', authRouter);
 // All other admin routes require authentication
 app.use('/*', authMiddleware);
 
+// Rate limit sensitive write operations
+const writeLimiter = rateLimiter({ max: 60, windowMs: 60_000 });
+app.use('/media/*', writeLimiter);
+app.use('/export', rateLimiter({ max: 10, windowMs: 60_000 }));
+app.use('/import', rateLimiter({ max: 10, windowMs: 60_000 }));
+
 app.route('/pages', pagesRouter);
 app.route('/pages', revisionsRouter);
 app.route('/blocks', blocksRouter);

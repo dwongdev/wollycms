@@ -37,6 +37,16 @@ const ALLOWED_MIME_TYPES = new Set([
 /** Max upload size: 50 MB */
 const MAX_UPLOAD_SIZE = 50 * 1024 * 1024;
 
+/** Allowed file extensions (must match MIME allowlist) */
+const ALLOWED_EXTENSIONS = new Set([
+  '.jpg', '.jpeg', '.png', '.gif', '.webp', '.avif', '.svg', '.bmp', '.tiff', '.ico',
+  '.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx',
+  '.mp4', '.webm', '.ogg', '.ogv',
+  '.mp3', '.wav',
+  '.zip', '.gz',
+  '.txt', '.csv', '.html', '.css', '.js', '.json', '.xml',
+]);
+
 /** Escape SQL LIKE wildcards in user input */
 function escapeLike(s: string): string {
   return s.replace(/%/g, '\\%').replace(/_/g, '\\_');
@@ -105,6 +115,11 @@ app.post('/', async (c) => {
 
   const originalName = file.name;
   const ext = extname(originalName).toLowerCase();
+
+  if (!ALLOWED_EXTENSIONS.has(ext)) {
+    return c.json({ errors: [{ code: 'VALIDATION', message: `File extension "${ext}" is not allowed` }] }, 400);
+  }
+
   const filename = `${randomUUID()}${ext}`;
   const uploadDir = env.MEDIA_DIR;
 

@@ -4,6 +4,7 @@ import { eq } from 'drizzle-orm';
 import { getDb } from '../../db/index.js';
 import { webhooks } from '../../db/schema/index.js';
 import { logAudit } from '../../audit.js';
+import { rateLimiter } from '../../auth/rate-limit.js';
 
 const app = new Hono();
 
@@ -94,7 +95,7 @@ app.delete('/:id', (c) => {
 });
 
 /** POST /:id/test - Send test webhook */
-app.post('/:id/test', async (c) => {
+app.post('/:id/test', rateLimiter({ max: 5, windowMs: 60_000 }), async (c) => {
   const db = getDb();
   const id = parseInt(c.req.param('id'), 10);
   const [hook] = db.select().from(webhooks).where(eq(webhooks.id, id)).limit(1).all();

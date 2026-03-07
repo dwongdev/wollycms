@@ -4,7 +4,7 @@ import { logger } from 'hono/logger';
 import { cors } from 'hono/cors';
 import { serveStatic } from '@hono/node-server/serve-static';
 import { readFile, stat } from 'node:fs/promises';
-import { join, extname } from 'node:path';
+import { join, extname, resolve } from 'node:path';
 import contentRouter from './api/content/index.js';
 import adminRouter from './api/admin/index.js';
 import { env, isProduction } from './env.js';
@@ -42,6 +42,19 @@ app.onError((err, c) => {
 
 app.use('*', logger());
 app.use('*', bodyLimit({ maxSize: 50 * 1024 * 1024 })); // 50MB max request body
+
+// Security headers
+app.use('*', async (c, next) => {
+  await next();
+  c.header('X-Content-Type-Options', 'nosniff');
+  c.header('X-Frame-Options', 'DENY');
+  c.header('X-XSS-Protection', '0');
+  c.header('Referrer-Policy', 'strict-origin-when-cross-origin');
+  if (isProduction()) {
+    c.header('Strict-Transport-Security', 'max-age=63072000; includeSubDomains');
+  }
+});
+
 app.use('*', cors({
   origin: env.CORS_ORIGINS === '*' ? '*' : env.CORS_ORIGINS.split(',').map((o) => o.trim()),
   allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
@@ -71,11 +84,16 @@ app.get('/api/health', (c) => c.json({
 app.get('/uploads/*', async (c) => {
   const requestedPath = c.req.path.replace(/^\/uploads\//, '');
 
-  if (requestedPath.includes('..') || requestedPath.startsWith('/')) {
+  if (requestedPath.includes('..') || requestedPath.startsWith('/') || requestedPath.includes('\0')) {
     return c.json({ errors: [{ code: 'FORBIDDEN', message: 'Invalid path' }] }, 403);
   }
 
-  const filePath = join(env.MEDIA_DIR, requestedPath);
+  const mediaRoot = resolve(env.MEDIA_DIR);
+  const filePath = resolve(join(env.MEDIA_DIR, requestedPath));
+
+  if (!filePath.startsWith(mediaRoot)) {
+    return c.json({ errors: [{ code: 'FORBIDDEN', message: 'Invalid path' }] }, 403);
+  }
 
   try {
     const fileStat = await stat(filePath);
