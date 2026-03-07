@@ -44,7 +44,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: forgejo.home.cwolly.com/${{ github.repository }}
+          images: forgejo.home.cwolly.com/chad/wollycms
           tags: |
             type=raw,value=latest,enable={{is_default_branch}}
             type=sha,prefix=
