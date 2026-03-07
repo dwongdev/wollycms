@@ -28,7 +28,7 @@ export function getAuth() {
   function logout() {
     clearToken();
     user = null;
-    window.location.href = '/login';
+    window.location.href = '/admin/login';
   }
 
   return {
