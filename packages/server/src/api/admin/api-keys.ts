@@ -5,8 +5,10 @@ import { getDb } from '../../db/index.js';
 import { apiKeys } from '../../db/schema/index.js';
 import { generateApiKey, hashApiKey } from '../../auth/api-key.js';
 import { logAudit } from '../../audit.js';
+import { requireRole } from '../../auth/rbac.js';
 
 const app = new Hono();
+app.use('/*', requireRole('admin'));
 
 const createSchema = z.object({
   name: z.string().min(1).max(100),

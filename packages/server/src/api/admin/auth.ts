@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import { sign } from 'hono/jwt';
+import { setCookie } from 'hono/cookie';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 import { getDb } from '../../db/index.js';
@@ -62,6 +63,24 @@ app.get('/me', authMiddleware, async (c) => {
   }
 
   return c.json({ data: user });
+});
+
+app.post('/preview-session', authMiddleware, async (c) => {
+  const payload = c.get('jwtPayload');
+  const now = Math.floor(Date.now() / 1000);
+  const token = await sign(
+    { sub: payload.sub, email: payload.email, role: payload.role, exp: now + 600 },
+    env.JWT_SECRET,
+    'HS256',
+  );
+  setCookie(c, 'wolly_preview', token, {
+    path: '/',
+    maxAge: 600,
+    httpOnly: true,
+    secure: env.NODE_ENV === 'production',
+    sameSite: 'Lax',
+  });
+  return c.json({ data: { ok: true, expiresIn: 600 } });
 });
 
 export default app;

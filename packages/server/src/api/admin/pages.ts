@@ -10,8 +10,13 @@ import { logAudit } from '../../audit.js';
 import { cacheInvalidate } from '../../cache.js';
 import { clearOgCache } from '../content/og-image.js';
 import pageBlocksRouter from './page-blocks.js';
+import { requireRole } from '../../auth/rbac.js';
 
 const app = new Hono();
+
+app.post('/*', requireRole('editor'));
+app.put('/*', requireRole('editor'));
+app.delete('/*', requireRole('editor'));
 
 const pageSchema = z.object({
   title: z.string().min(1),

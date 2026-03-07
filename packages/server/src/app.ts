@@ -1,6 +1,5 @@
 import './types.js';
 import { Hono } from 'hono';
-import { logger } from 'hono/logger';
 import { cors } from 'hono/cors';
 import { serveStatic } from '@hono/node-server/serve-static';
 import { readFile, stat } from 'node:fs/promises';
@@ -29,6 +28,24 @@ const MIME_TYPES: Record<string, string> = {
   '.json': 'application/json',
 };
 
+const INLINE_SAFE_CONTENT_TYPES = new Set([
+  'image/jpeg',
+  'image/png',
+  'image/gif',
+  'image/webp',
+  'image/avif',
+  'image/bmp',
+  'image/tiff',
+  'image/x-icon',
+  'application/pdf',
+  'video/mp4',
+  'video/webm',
+  'audio/mpeg',
+  'audio/ogg',
+  'audio/wav',
+  'audio/webm',
+]);
+
 const app = new Hono();
 
 app.onError((err, c) => {
@@ -41,7 +58,13 @@ app.onError((err, c) => {
   }, 500);
 });
 
-app.use('*', logger());
+app.use('*', async (c, next) => {
+  const start = Date.now();
+  await next();
+  // Log path without query to avoid leaking credentials in URLs.
+  console.log(`<-- ${c.req.method} ${c.req.path}`);
+  console.log(`--> ${c.req.method} ${c.req.path} ${c.res.status} ${Date.now() - start}ms`);
+});
 app.use('*', bodyLimit({ maxSize: 50 * 1024 * 1024 })); // 50MB max request body
 
 // Security headers
@@ -117,6 +140,10 @@ if (!getStorage().isExternal) {
     c.header('Content-Type', contentType);
     c.header('Content-Length', String(fileBuffer.length));
     c.header('Cache-Control', 'public, max-age=31536000, immutable');
+    c.header('Content-Security-Policy', "default-src 'none'; sandbox");
+    if (!INLINE_SAFE_CONTENT_TYPES.has(contentType)) {
+      c.header('Content-Disposition', 'attachment');
+    }
 
     return c.body(fileBuffer);
   });

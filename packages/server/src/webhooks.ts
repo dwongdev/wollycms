@@ -2,6 +2,7 @@ import { eq } from 'drizzle-orm';
 import { createHmac } from 'node:crypto';
 import { getDb } from './db/index.js';
 import { webhooks } from './db/schema/index.js';
+import { isSafeWebhookUrl } from './security/url.js';
 
 export type WebhookEvent =
   | 'page.published'
@@ -41,6 +42,10 @@ export async function fireWebhooks(event: WebhookEvent, data: Record<string, unk
 
   // Fire all webhooks concurrently, don't block the response
   for (const hook of matching) {
+    if (!isSafeWebhookUrl(hook.url)) {
+      console.error(`Webhook ${hook.id} (${hook.name}) blocked: unsafe target URL`);
+      continue;
+    }
     deliverWebhook(hook, body).catch((err) => {
       console.error(`Webhook ${hook.id} (${hook.name}) delivery failed:`, err.message);
     });

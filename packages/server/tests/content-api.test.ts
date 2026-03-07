@@ -319,13 +319,9 @@ describe('GET /api/content/preview/pages/:slug', () => {
     expect(res.status).toBe(401);
   });
 
-  it('returns page data with valid token (query param)', async () => {
+  it('rejects query-param token auth', async () => {
     const res = await get(`/api/content/preview/pages/home?token=${authToken}`);
-    expect(res.status).toBe(200);
-    const body = await res.json();
-    expect(body.data.slug).toBe('home');
-    expect(body.data.regions).toBeDefined();
-    expect(body.data.title).toBeDefined();
+    expect(res.status).toBe(401);
   });
 
   it('returns page data with valid token (Authorization header)', async () => {
@@ -338,8 +334,21 @@ describe('GET /api/content/preview/pages/:slug', () => {
     expect(body.data.slug).toBe('home');
   });
 
+  it('returns page data with valid preview cookie', async () => {
+    const res = await app.request('/api/content/preview/pages/home', {
+      method: 'GET',
+      headers: { Cookie: `wolly_preview=${authToken}` },
+    });
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.data.slug).toBe('home');
+  });
+
   it('returns 404 for non-existent page', async () => {
-    const res = await get(`/api/content/preview/pages/does-not-exist?token=${authToken}`);
+    const res = await app.request('/api/content/preview/pages/does-not-exist', {
+      method: 'GET',
+      headers: { Authorization: `Bearer ${authToken}` },
+    });
     expect(res.status).toBe(404);
   });
 });

@@ -4,8 +4,13 @@ import { z } from 'zod';
 import { getDb } from '../../db/index.js';
 import { menus, menuItems, pages } from '../../db/schema/index.js';
 import { cacheInvalidate } from '../../cache.js';
+import { requireRole } from '../../auth/rbac.js';
 
 const app = new Hono();
+
+app.post('/*', requireRole('editor'));
+app.put('/*', requireRole('editor'));
+app.delete('/*', requireRole('editor'));
 
 // Invalidate menu cache on any write operation
 app.use('*', async (c, next) => {

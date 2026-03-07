@@ -7,15 +7,17 @@ import { wolly } from '../../lib/wolly';
 import * as blockComponents from '../../lib/blocks';
 
 const { slug } = Astro.params;
-const token = Astro.url.searchParams.get('token');
+const token = Astro.cookies.get('wolly_preview')?.value;
 
 if (!token || !slug) {
-  return new Response('Missing token or slug', { status: 400 });
+  return new Response('Preview authorization is required', { status: 401 });
 }
 
 const API_BASE = 'http://localhost:4321/api/content';
 
-const pageRes = await fetch(`${API_BASE}/preview/pages/${slug}?token=${token}`);
+const pageRes = await fetch(`${API_BASE}/preview/pages/${slug}`, {
+  headers: { Authorization: `Bearer ${token}` },
+});
 if (!pageRes.ok) {
   return new Response(`Page not found: ${slug}`, { status: 404 });
 }

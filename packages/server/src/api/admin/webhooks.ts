@@ -5,12 +5,15 @@ import { getDb } from '../../db/index.js';
 import { webhooks } from '../../db/schema/index.js';
 import { logAudit } from '../../audit.js';
 import { rateLimiter } from '../../auth/rate-limit.js';
+import { requireRole } from '../../auth/rbac.js';
+import { isSafeWebhookUrl } from '../../security/url.js';
 
 const app = new Hono();
+app.use('/*', requireRole('admin'));
 
 const webhookSchema = z.object({
   name: z.string().min(1).max(100),
-  url: z.string().url(),
+  url: z.string().url().refine(isSafeWebhookUrl, 'URL targets a blocked host or network'),
   secret: z.string().optional(),
   events: z.array(z.string()).min(1),
   isActive: z.boolean().default(true),
@@ -100,6 +103,9 @@ app.post('/:id/test', rateLimiter({ max: 5, windowMs: 60_000 }), async (c) => {
   const id = parseInt(c.req.param('id') || '0', 10);
   const [hook] = await db.select().from(webhooks).where(eq(webhooks.id, id)).limit(1);
   if (!hook) return c.json({ errors: [{ code: 'NOT_FOUND', message: 'Webhook not found' }] }, 404);
+  if (!isSafeWebhookUrl(hook.url)) {
+    return c.json({ errors: [{ code: 'VALIDATION', message: 'Webhook target is blocked by security policy' }] }, 400);
+  }
 
   const { fireWebhooks } = await import('../../webhooks.js');
   // Send a test event directly to this one webhook

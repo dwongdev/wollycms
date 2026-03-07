@@ -9,14 +9,19 @@ import { processImage, isProcessableImage } from '../../media/processing.js';
 import { getStorage } from '../../media/storage.js';
 import { fireWebhooks } from '../../webhooks.js';
 import { logAudit } from '../../audit.js';
+import { requireRole } from '../../auth/rbac.js';
 
 const app = new Hono();
+
+app.post('/*', requireRole('editor'));
+app.put('/*', requireRole('editor'));
+app.delete('/*', requireRole('editor'));
 
 /** Allowed MIME types for uploads */
 const ALLOWED_MIME_TYPES = new Set([
   // Images
   'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/avif',
-  'image/svg+xml', 'image/bmp', 'image/tiff', 'image/x-icon',
+  'image/bmp', 'image/tiff', 'image/x-icon',
   // Documents
   'application/pdf',
   'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
@@ -29,8 +34,7 @@ const ALLOWED_MIME_TYPES = new Set([
   // Archives
   'application/zip', 'application/gzip',
   // Text
-  'text/plain', 'text/csv', 'text/html', 'text/css', 'text/javascript',
-  'application/json', 'application/xml',
+  'text/plain', 'text/csv', 'application/json',
 ]);
 
 /** Max upload size: 50 MB */
@@ -38,12 +42,12 @@ const MAX_UPLOAD_SIZE = 50 * 1024 * 1024;
 
 /** Allowed file extensions (must match MIME allowlist) */
 const ALLOWED_EXTENSIONS = new Set([
-  '.jpg', '.jpeg', '.png', '.gif', '.webp', '.avif', '.svg', '.bmp', '.tiff', '.ico',
+  '.jpg', '.jpeg', '.png', '.gif', '.webp', '.avif', '.bmp', '.tiff', '.ico',
   '.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx',
   '.mp4', '.webm', '.ogg', '.ogv',
   '.mp3', '.wav',
   '.zip', '.gz',
-  '.txt', '.csv', '.html', '.css', '.js', '.json', '.xml',
+  '.txt', '.csv', '.json',
 ]);
 
 /** Escape SQL LIKE wildcards in user input */

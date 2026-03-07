@@ -63,6 +63,14 @@ describe('Admin Auth', () => {
     expect(body.data.email).toBe('admin@wollycms.local');
   });
 
+  it('POST /auth/preview-session sets short-lived preview cookie', async () => {
+    const res = await authed('/auth/preview-session', { method: 'POST' });
+    expect(res.status).toBe(200);
+    const cookie = res.headers.get('set-cookie');
+    expect(cookie).toContain('wolly_preview=');
+    expect(cookie).toContain('HttpOnly');
+  });
+
   it('rejects requests without token', async () => {
     const res = await app.request('/api/admin/pages');
     expect(res.status).toBe(401);
@@ -654,6 +662,22 @@ describe('Role-Based Access Control', () => {
     const res = await editorReq('/config', {
       method: 'PUT',
       body: JSON.stringify({ siteName: 'Hacked' }),
+    });
+    expect(res.status).toBe(403);
+  });
+
+  it('editor cannot create API keys', async () => {
+    const res = await editorReq('/api-keys', {
+      method: 'POST',
+      body: JSON.stringify({ name: 'Blocked', permissions: 'content:read' }),
+    });
+    expect(res.status).toBe(403);
+  });
+
+  it('editor cannot create webhooks', async () => {
+    const res = await editorReq('/webhooks', {
+      method: 'POST',
+      body: JSON.stringify({ name: 'Blocked', url: 'https://example.com/hook', events: ['page.updated'], isActive: true }),
     });
     expect(res.status).toBe(403);
   });

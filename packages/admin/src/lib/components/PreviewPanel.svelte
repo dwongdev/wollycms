@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
-  import { getAuthToken } from '$lib/api.js';
+  import { api } from '$lib/api.js';
   import { toast } from '$lib/toast.svelte.js';
   import { Smartphone, Tablet, Monitor, RefreshCw, LinkIcon } from 'lucide-svelte';
 
@@ -16,16 +16,29 @@
 
   let iframeEl = $state<HTMLIFrameElement | null>(null);
   let loading = $state(true);
-  let previewUrl = $derived(buildPreviewUrl(slug));
+  let previewUrl = $state(buildPreviewUrl(slug));
   let deviceMode = $state<'mobile' | 'tablet' | 'desktop'>('desktop');
+  let sessionReady = $state(false);
 
   const deviceWidths = { mobile: 375, tablet: 768, desktop: 0 } as const;
 
   const PREVIEW_BASE = 'http://localhost:4322/preview';
+  const PREVIEW_ORIGIN = new URL(PREVIEW_BASE).origin;
 
   function buildPreviewUrl(s: string): string {
-    const token = getAuthToken();
-    return `${PREVIEW_BASE}/${s}?token=${encodeURIComponent(token || '')}`;
+    return `${PREVIEW_BASE}/${s}`;
+  }
+
+  async function ensurePreviewSession() {
+    if (sessionReady) return true;
+    try {
+      await api.post('/auth/preview-session');
+      sessionReady = true;
+      return true;
+    } catch {
+      toast.error('Unable to initialize preview session.');
+      return false;
+    }
   }
 
   export function refresh() {
@@ -53,6 +66,7 @@
   }
 
   function handleMessage(e: MessageEvent) {
+    if (e.origin !== PREVIEW_ORIGIN) return;
     if (!e.data || !e.data.type) return;
     if (e.data.type === 'wolly:select-block') {
       onBlockSelect?.(e.data.pbId, e.data.region);
@@ -65,6 +79,13 @@
 
   onDestroy(() => {
     window.removeEventListener('message', handleMessage);
+  });
+
+  $effect(() => {
+    if (!visible || !slug) return;
+    loading = true;
+    previewUrl = buildPreviewUrl(slug);
+    ensurePreviewSession();
   });
 </script>
 
@@ -98,7 +119,7 @@
       {/if}
       <iframe
         bind:this={iframeEl}
-        src={previewUrl}
+        src={sessionReady ? previewUrl : 'about:blank'}
         title="Page preview"
         onload={onLoad}
         style={deviceMode !== 'desktop' ? `width: ${deviceWidths[deviceMode]}px; margin: 0 auto;` : ''}

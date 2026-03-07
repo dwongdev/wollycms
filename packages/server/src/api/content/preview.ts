@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import { eq, asc } from 'drizzle-orm';
 import { verify } from 'hono/jwt';
+import { getCookie } from 'hono/cookie';
 import { createMiddleware } from 'hono/factory';
 import { getDb } from '../../db/index.js';
 import { env } from '../../env.js';
@@ -9,12 +10,12 @@ import {
 } from '../../db/schema/index.js';
 
 /**
- * Preview auth middleware: accepts JWT from ?token= query param
- * or Authorization header. Required for draft content access.
+ * Preview auth middleware: accepts JWT from Authorization header
+ * or the short-lived preview session cookie.
  */
 const previewAuth = createMiddleware(async (c, next) => {
-  const token = c.req.query('token')
-    || c.req.header('Authorization')?.replace('Bearer ', '');
+  const token = c.req.header('Authorization')?.replace('Bearer ', '')
+    || getCookie(c, 'wolly_preview');
   if (!token) {
     return c.json({ errors: [{ code: 'UNAUTHORIZED', message: 'Preview requires authentication' }] }, 401);
   }
