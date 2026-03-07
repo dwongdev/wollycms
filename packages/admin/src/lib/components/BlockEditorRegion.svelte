@@ -439,7 +439,8 @@
                   <button class="block-card-toggle" onclick={() => toggleExpanded(block.pb_id)}>
                     <span class="picker-icon-inline">
                       {#if lucideMap[blockTypes.find((t) => t.slug === block.block_type)?.icon]}
-                        <svelte:component this={lucideMap[blockTypes.find((t) => t.slug === block.block_type)?.icon]} size={14} />
+                        {@const BlockIcon = lucideMap[blockTypes.find((t) => t.slug === block.block_type)?.icon]}
+                        <BlockIcon size={14} />
                       {/if}
                     </span>
                     <span class="block-type-badge" style="background: {color}20; color: {color}; border-color: {color}40;">
@@ -553,7 +554,8 @@
                     <button class="picker-item" onclick={() => addBlock(bt.id)} title={bt.description || bt.name}>
                       <span class="picker-icon">
                         {#if lucideMap[bt.icon]}
-                          <svelte:component this={lucideMap[bt.icon]} size={20} />
+                          {@const PickerIcon = lucideMap[bt.icon]}
+                          <PickerIcon size={20} />
                         {:else}
                           <Grid3X3 size={20} />
                         {/if}
