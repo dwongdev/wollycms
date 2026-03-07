@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { goto } from '$app/navigation';
   import { base } from '$app/paths';
   import { api } from '$lib/api.js';
   import { toast } from '$lib/toast.svelte.js';
@@ -24,7 +25,8 @@
   let sortBy = $state('updated_at:desc');
   let showCreate = $state(false);
   let contentTypes = $state<any[]>([]);
-  let newPage = $state({ title: '', typeId: 0, status: 'draft' as string });
+  let newPage = $state({ title: '', slug: '', typeId: 0, status: 'draft' as string });
+  let slugManuallyEdited = $state(false);
   let selected = $state<Set<number>>(new Set());
   let pageSize = 20;
   let offset = $state(0);
@@ -64,18 +66,35 @@
 
   let createError = $state('');
 
+  function slugify(text: string): string {
+    return text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+  }
+
+  function handleNewTitleInput() {
+    if (!slugManuallyEdited) {
+      newPage.slug = slugify(newPage.title);
+    }
+  }
+
   async function createPage() {
     createError = '';
     if (!newPage.title.trim()) { createError = 'Title is required.'; return; }
     if (!newPage.typeId) { createError = 'Please select a content type.'; return; }
     try {
-      await api.post('/pages', newPage);
+      const payload: Record<string, unknown> = {
+        title: newPage.title,
+        typeId: newPage.typeId,
+        status: newPage.status,
+      };
+      if (newPage.slug.trim()) payload.slug = newPage.slug.trim();
+      const res = await api.post<{ data: { id: number } }>('/pages', payload);
       showCreate = false;
-      newPage = { title: '', typeId: contentTypes[0]?.id || 0, status: 'draft' };
-      load();
+      newPage = { title: '', slug: '', typeId: contentTypes[0]?.id || 0, status: 'draft' };
+      slugManuallyEdited = false;
+      goto(`${base}/pages/${res.data.id}`);
     } catch (err: any) {
       if (err.message?.includes('Slug already exists')) {
-        createError = 'A page with this slug already exists. Try a different title.';
+        createError = 'A page with this slug already exists. Try a different title or slug.';
       } else {
         createError = err.message;
       }
@@ -132,7 +151,7 @@
 
 <div class="page-header">
   <h1>Pages ({total})</h1>
-  <button class="btn btn-primary" onclick={() => { createError = ''; showCreate = true; }}>+ New Page</button>
+  <button class="btn btn-primary" onclick={() => { createError = ''; slugManuallyEdited = false; newPage.slug = ''; showCreate = true; }}>+ New Page</button>
 </div>
 
 {#if error}
@@ -232,7 +251,14 @@
         {#if createError}<div class="alert alert-error" style="margin-bottom: 0.75rem;">{createError}</div>{/if}
         <div class="form-group">
           <label for="np-title">Title</label>
-          <input id="np-title" class="form-control" bind:value={newPage.title} required />
+          <input id="np-title" class="form-control" bind:value={newPage.title} oninput={handleNewTitleInput} required />
+        </div>
+        <div class="form-group">
+          <label for="np-slug">Slug</label>
+          <div style="display: flex; align-items: center; gap: 0;">
+            <span style="padding: 0.4rem 0.5rem; background: var(--c-bg-alt, #f1f5f9); border: 1px solid var(--c-border); border-right: none; border-radius: var(--radius, 6px) 0 0 var(--radius, 6px); font-size: 0.85rem; color: var(--c-text-light);">/</span>
+            <input id="np-slug" class="form-control mono" style="border-radius: 0 var(--radius, 6px) var(--radius, 6px) 0; font-size: 0.85rem;" bind:value={newPage.slug} oninput={() => slugManuallyEdited = true} placeholder="auto-generated from title" />
+          </div>
         </div>
         <div class="form-group">
           <label for="np-type">Content Type</label>
