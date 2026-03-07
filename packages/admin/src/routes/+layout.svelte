@@ -119,9 +119,9 @@
   <div class="admin-layout">
     <aside class="sidebar" aria-label="Admin navigation">
       <div class="sidebar-header">
-        <a href="/" class="logo" aria-label="SpacelyCMS Dashboard">
+        <a href="/" class="logo" aria-label="WollyCMS Dashboard">
           <span class="logo-icon" aria-hidden="true">S</span>
-          <span class="logo-text">SpacelyCMS</span>
+          <span class="logo-text">WollyCMS</span>
         </a>
       </div>
       <nav class="sidebar-nav" aria-label="Main navigation">

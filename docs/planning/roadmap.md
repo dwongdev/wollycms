@@ -1,4 +1,4 @@
-# SpacelyCMS — Development Roadmap
+# WollyCMS — Development Roadmap
 
 ## Philosophy
 
@@ -44,15 +44,15 @@ for pages with blocks, menus, and media URLs.
 
 ## Phase 2: Astro Integration Package -- COMPLETE
 
-**Goal**: An Astro site rendering real pages from SpacelyCMS with
+**Goal**: An Astro site rendering real pages from WollyCMS with
 components for every block type.
 
 ### Deliverables
 
-- [x] `@spacelycms/astro` npm package (monorepo workspace)
-  - SpacelyClient class (API fetcher)
+- [x] `@wollycms/astro` npm package (monorepo workspace)
+  - WollyClient class (API fetcher)
   - BlockRenderer component
-  - SpacelyImage component
+  - WollyImage component
   - RichText renderer (TipTap JSON → HTML)
   - Menu helpers (isActive, getBreadcrumbs, getChildren, flattenMenu)
 - [x] Reference Astro site (in `examples/college-site/`):
@@ -142,7 +142,7 @@ all content without touching code or APIs.
 ### Demo
 
 Start server (`npm run dev`), open admin (`npm run dev:admin`), login with
-`admin@spacelycms.local` / `admin123`. Create pages, add blocks, upload
+`admin@wollycms.local` / `admin123`. Create pages, add blocks, upload
 media, manage menus and taxonomies, publish content.
 
 ### Completed: 2026-03-06
@@ -235,7 +235,7 @@ content management faster and more pleasant.
 - [x] Status pill next to title (colored pill with Lucide icon — green
       Published/CheckCircle, yellow Draft/Circle, gray Archived/Archive)
 - [x] Sidebar navigation grouping with section dividers (done in 4.5a)
-- [x] SpacelyCMS wordmark/logo (blue "S" icon badge + text, collapses to
+- [x] WollyCMS wordmark/logo (blue "S" icon badge + text, collapses to
       just badge on mobile)
 - [x] Count badges on sidebar nav items (Pages, Blocks, Media, Menus, Users
       — fetched from dashboard stats API)
@@ -286,7 +286,7 @@ missing alt text — everything feels snappy and intentional.
 
 ## Phase 5: Production Hardening
 
-**Goal**: Make SpacelyCMS deployable for real. Everything needed to go from
+**Goal**: Make WollyCMS deployable for real. Everything needed to go from
 "works on my laptop" to "running in production serving a real website."
 
 ### 5a. Production Infrastructure -- COMPLETE
@@ -355,7 +355,7 @@ missing alt text — everything feels snappy and intentional.
 
 ### Demo
 
-Deploy SpacelyCMS with PostgreSQL on a cloud server, media on R2, Astro
+Deploy WollyCMS with PostgreSQL on a cloud server, media on R2, Astro
 site on Cloudflare Pages. Publish a page in the admin, webhook triggers
 rebuild, site updates automatically.
 
@@ -363,32 +363,32 @@ rebuild, site updates automatically.
 
 ## Phase 6: Packaging & Developer Experience
 
-**Goal**: Make SpacelyCMS installable and usable by someone who isn't us.
+**Goal**: Make WollyCMS installable and usable by someone who isn't us.
 A developer should go from zero to running CMS in under 5 minutes.
 
 ### 6a. npm Publishing
 
-- [ ] Publish `@spacelycms/server` to npm (the CMS server as a package)
-- [ ] Publish `@spacelycms/astro` to npm (the Astro integration)
-- [ ] Publish `spacelycms` CLI to npm (setup, migrate, seed, type-gen)
+- [ ] Publish `@wollycms/server` to npm (the CMS server as a package)
+- [ ] Publish `@wollycms/astro` to npm (the Astro integration)
+- [ ] Publish `wollycms` CLI to npm (setup, migrate, seed, type-gen)
 - [ ] Versioning strategy (semver, changelog, release automation)
 
 ### 6b. CLI & Scaffolding -- PARTIAL
 
-- [x] `npx create-spacely` — interactive project scaffolding (creates
+- [x] `npx create-wolly` — interactive project scaffolding (creates
       package.json, .env, .gitignore, docker-compose, README, installs deps)
-- [x] `spacely types generate` — generate TypeScript types from CMS schemas
+- [x] `wolly types generate` — generate TypeScript types from CMS schemas
       (content types + block types → `.d.ts` file with interfaces, unions)
-- [x] `spacely migrate` — run migrations
-- [x] `spacely seed` — populate sample data
-- [x] `spacely start` — start production server
-- [x] `spacely export` — export all data as JSON
-- [x] `spacely import <file>` — import data from JSON backup
-- [x] `spacely health` — check server health
+- [x] `wolly migrate` — run migrations
+- [x] `wolly seed` — populate sample data
+- [x] `wolly start` — start production server
+- [x] `wolly export` — export all data as JSON
+- [x] `wolly import <file>` — import data from JSON backup
+- [x] `wolly health` — check server health
 
 ### 6c. Docker & Deployment -- PARTIAL
 
-- [ ] Published Docker image (`docker pull spacelycms/server`)
+- [ ] Published Docker image (`docker pull wollycms/server`)
 - [x] Docker Compose dev template (`docker-compose.dev.yml`)
 - [x] Docker Compose prod template (`docker-compose.prod.yml` with Caddy
       reverse proxy, auto-HTTPS, security headers, health check)
@@ -424,11 +424,11 @@ A developer should go from zero to running CMS in under 5 minutes.
   - Deployment guides (per platform)
   - Configuration reference (all env vars, settings)
   - Migration guide (from Drupal, WordPress, other CMS)
-- [ ] Hosted at docs.spacelycms.com (or similar)
+- [ ] Hosted at docs.wollycms.com (or similar)
 
 ### Demo
 
-Run `npx create-spacely my-blog`, choose blog template, `cd my-blog &&
+Run `npx create-wolly my-blog`, choose blog template, `cd my-blog &&
 docker compose up`, open browser — working CMS with admin UI and example
 site in under 2 minutes.
 
@@ -437,7 +437,7 @@ site in under 2 minutes.
 ## Phase 7: Content Features
 
 **Goal**: Feature parity with established CMS tools. These are the features
-that make teams choose SpacelyCMS over Strapi, Directus, or Storyblok.
+that make teams choose WollyCMS over Strapi, Directus, or Storyblok.
 
 ### 7a. Search -- PARTIAL
 
@@ -455,7 +455,7 @@ that make teams choose SpacelyCMS over Strapi, Directus, or Storyblok.
       as `seo` object with character count hints)
 - [x] Sitemap generation (`/sitemap.xml` — auto-generated from published
       pages, excludes noindex pages, cached, invalidated on mutations)
-- [x] Structured data / JSON-LD helpers in @spacelycms/astro:
+- [x] Structured data / JSON-LD helpers in @wollycms/astro:
       articleJsonLd, webPageJsonLd, breadcrumbJsonLd, organizationJsonLd,
       getPageSeo, jsonLdScript
 - [ ] OG image generation (deferred — auto-generate social sharing images
@@ -468,7 +468,7 @@ that make teams choose SpacelyCMS over Strapi, Directus, or Storyblok.
 - [ ] Form submission storage (submissions saved in DB, viewable in admin)
 - [ ] Form submission notifications (webhook or email on new submission)
 - [ ] Spam protection (honeypot field, rate limiting, optional reCAPTCHA)
-- [ ] Astro form component (`<SpacelyForm>` renders form, handles submission)
+- [ ] Astro form component (`<WollyForm>` renders form, handles submission)
 
 ### 7d. Multi-language (i18n)
 
@@ -482,7 +482,7 @@ that make teams choose SpacelyCMS over Strapi, Directus, or Storyblok.
 ### Demo
 
 A multi-language site with search, SEO meta tags, sitemap, contact form —
-all managed from the SpacelyCMS admin UI.
+all managed from the WollyCMS admin UI.
 
 ---
 
@@ -512,7 +512,7 @@ all managed from the SpacelyCMS admin UI.
 ### 8c. Migration Tools
 
 - [ ] Drupal importer (nodes → pages, paragraphs → blocks, menus, media,
-      taxonomy terms — maps Drupal structure to SpacelyCMS)
+      taxonomy terms — maps Drupal structure to WollyCMS)
 - [ ] WordPress importer (posts/pages → pages, blocks → blocks, menus,
       media, categories/tags → taxonomies)
 - [ ] Generic CSV/JSON import (map columns/fields to content types)
@@ -570,6 +570,6 @@ packaging for distribution.
 - **User-facing accounts** — No frontend user registration/login (admin users only)
 - **Email marketing** — No newsletters or bulk email (use Mailchimp, Resend, etc.)
 - **Analytics** — No built-in analytics (use Plausible, Umami, etc.)
-- **CDN/hosting** — SpacelyCMS is the CMS, not the host. Deploy Astro wherever you want.
+- **CDN/hosting** — WollyCMS is the CMS, not the host. Deploy Astro wherever you want.
 - **Non-Astro frontends** — The API is standard REST/JSON so anything can consume it, but
   we only build and maintain first-class integration for Astro

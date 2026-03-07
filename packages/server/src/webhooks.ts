@@ -53,12 +53,12 @@ async function deliverWebhook(
 ) {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    'User-Agent': 'SpacelyCMS-Webhook/1.0',
+    'User-Agent': 'WollyCMS-Webhook/1.0',
   };
 
   if (hook.secret) {
     const signature = createHmac('sha256', hook.secret).update(body).digest('hex');
-    headers['X-Spacely-Signature'] = `sha256=${signature}`;
+    headers['X-Wolly-Signature'] = `sha256=${signature}`;
   }
 
   const controller = new AbortController();

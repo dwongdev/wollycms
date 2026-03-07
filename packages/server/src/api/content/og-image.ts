@@ -12,7 +12,7 @@ const ogCache = new Map<string, { buffer: Buffer; generatedAt: number }>();
 const CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
 
 /** Default site name for branding */
-const SITE_NAME = 'SpacelyCMS';
+const SITE_NAME = 'WollyCMS';
 
 /**
  * Generate an OG image SVG using raw SVG markup.

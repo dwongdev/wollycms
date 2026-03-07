@@ -1,8 +1,8 @@
-# SpacelyCMS — Block Composition System
+# WollyCMS — Block Composition System
 
 ## Core Concept
 
-The block system is the heart of SpacelyCMS. It provides composable, reusable
+The block system is the heart of WollyCMS. It provides composable, reusable
 content building blocks that can be assembled into pages through named regions.
 
 This is inspired by:
@@ -197,7 +197,7 @@ function resolveBlock(pageBlock) {
 
 ---
 
-## Standard Block Types (Shipped with SpacelyCMS)
+## Standard Block Types (Shipped with WollyCMS)
 
 These are the block types included by default. Sites can add custom types.
 
@@ -273,7 +273,7 @@ src/
 Or explicitly via config:
 
 ```js
-// spacely.config.ts
+// wolly.config.ts
 export default {
   blocks: {
     'rich_text': './src/blocks/RichText.astro',

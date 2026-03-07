@@ -1,12 +1,12 @@
 ---
 import Layout from '../layouts/Default.astro';
-import BlockRenderer from '@spacelycms/astro/components/BlockRenderer.astro';
+import BlockRenderer from '@wollycms/astro/components/BlockRenderer.astro';
 import Breadcrumbs from '../components/Breadcrumbs.astro';
-import { spacely } from '../lib/spacely';
+import { wolly } from '../lib/wolly';
 import * as blockComponents from '../lib/blocks';
 
 export async function getStaticPaths() {
-  const result = await spacely.pages.list({ limit: 100 });
+  const result = await wolly.pages.list({ limit: 100 });
   return result.data
     .filter((p) => p.slug !== 'home')
     .map((page) => ({
@@ -16,11 +16,11 @@ export async function getStaticPaths() {
 }
 
 const { slug } = Astro.props;
-const page = await spacely.pages.getBySlug(slug);
+const page = await wolly.pages.getBySlug(slug);
 const [mainMenu, footerMenu, config] = await Promise.all([
-  spacely.menus.get('main'),
-  spacely.menus.get('footer'),
-  spacely.config.get(),
+  wolly.menus.get('main'),
+  wolly.menus.get('footer'),
+  wolly.config.get(),
 ]);
 
 const regions = page.regions ?? {};

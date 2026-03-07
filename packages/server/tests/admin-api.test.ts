@@ -13,7 +13,7 @@ beforeAll(async () => {
   const res = await app.request('/api/admin/auth/login', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email: 'admin@spacelycms.local', password: 'admin123' }),
+    body: JSON.stringify({ email: 'admin@wollycms.local', password: 'admin123' }),
   });
   const body = await res.json();
   authToken = body.data.token;
@@ -38,12 +38,12 @@ describe('Admin Auth', () => {
     const res = await app.request('/api/admin/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: 'admin@spacelycms.local', password: 'admin123' }),
+      body: JSON.stringify({ email: 'admin@wollycms.local', password: 'admin123' }),
     });
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.data.token).toBeDefined();
-    expect(body.data.user.email).toBe('admin@spacelycms.local');
+    expect(body.data.user.email).toBe('admin@wollycms.local');
     expect(body.data.user.role).toBe('admin');
   });
 
@@ -51,7 +51,7 @@ describe('Admin Auth', () => {
     const res = await app.request('/api/admin/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: 'admin@spacelycms.local', password: 'wrong' }),
+      body: JSON.stringify({ email: 'admin@wollycms.local', password: 'wrong' }),
     });
     expect(res.status).toBe(401);
   });
@@ -60,7 +60,7 @@ describe('Admin Auth', () => {
     const res = await authed('/auth/me');
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body.data.email).toBe('admin@spacelycms.local');
+    expect(body.data.email).toBe('admin@wollycms.local');
   });
 
   it('rejects requests without token', async () => {

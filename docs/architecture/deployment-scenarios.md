@@ -1,16 +1,16 @@
-# SpacelyCMS — Deployment Scenarios
+# WollyCMS — Deployment Scenarios
 
 ## The Core Concept
 
-SpacelyCMS has two completely separate pieces:
+WollyCMS has two completely separate pieces:
 
-1. **SpacelyCMS Server (the backend)** — Stores your content, serves it via
+1. **WollyCMS Server (the backend)** — Stores your content, serves it via
    JSON API, runs the admin UI. This is a Node.js app. It needs to be running
    somewhere so editors can manage content.
 
 2. **Your Astro Site (the frontend)** — A regular Astro project that fetches
-   content from the SpacelyCMS API and renders it into HTML pages. It uses
-   `@spacelycms/astro` for convenience, but fundamentally it's just making
+   content from the WollyCMS API and renders it into HTML pages. It uses
+   `@wollycms/astro` for convenience, but fundamentally it's just making
    HTTP requests to get JSON and rendering it however you want.
 
 These two pieces connect over HTTP. That's it. The backend serves JSON, the
@@ -19,7 +19,7 @@ the planet.
 
 ```
 ┌─────────────────┐      HTTP/JSON       ┌─────────────────┐
-│  SpacelyCMS     │ ◄──────────────────► │  Your Astro     │
+│  WollyCMS     │ ◄──────────────────► │  Your Astro     │
 │  (Node.js API)  │   "give me pages"    │  Site           │
 │                 │   "here's the JSON"  │  (renders HTML) │
 │  + Admin UI     │                      │                 │
@@ -33,18 +33,18 @@ the planet.
 ### What Astro Does
 
 Astro is a static site generator (with optional SSR). It's not part of
-SpacelyCMS — it's the tool you use to build your website. When you create
-an Astro site that uses SpacelyCMS:
+WollyCMS — it's the tool you use to build your website. When you create
+an Astro site that uses WollyCMS:
 
 - You write `.astro` component files that define how your site looks
 - You write block components (RichText.astro, Hero.astro, etc.) that decide
   how each content block renders
 - You choose your own CSS, fonts, layout, design — everything visual
-- `@spacelycms/astro` is a helper library that fetches content from the API
+- `@wollycms/astro` is a helper library that fetches content from the API
   and maps block types to your components
 
 Two completely different websites (a blog and a university) would share the
-same SpacelyCMS backend code but have **totally different** Astro frontends
+same WollyCMS backend code but have **totally different** Astro frontends
 with different designs, components, layouts, and deployed to different places.
 
 ---
@@ -61,7 +61,7 @@ etc.), run everything on it via Docker.
 │                                                             │
 │  Docker Compose                                             │
 │  ┌───────────────────────────────────────────────┐          │
-│  │  spacely-server (container)                    │          │
+│  │  wolly-server (container)                    │          │
 │  │  • Hono API on port 4321                       │          │
 │  │  • SQLite database (volume-mounted)            │          │
 │  │  • Media files (volume-mounted)                │          │
@@ -74,22 +74,22 @@ etc.), run everything on it via Docker.
 │  │  Built Astro site (static HTML files)          │          │
 │  │  • Served by Caddy/Nginx reverse proxy         │          │
 │  │  • blog.yourname.com → static files            │          │
-│  │  • blog.yourname.com/admin → spacely admin     │          │
+│  │  • blog.yourname.com/admin → wolly admin     │          │
 │  └───────────────────────────────────────────────┘          │
 │                                                             │
 │  Caddy (reverse proxy + auto HTTPS)                         │
 │  • blog.yourname.com → static Astro files                   │
-│  • blog.yourname.com/admin → spacely:4321/admin             │
-│  • blog.yourname.com/api → spacely:4321/api                 │
+│  • blog.yourname.com/admin → wolly:4321/admin             │
+│  • blog.yourname.com/api → wolly:4321/api                 │
 └─────────────────────────────────────────────────────────────┘
 ```
 
 ### How Content Gets Published
 
-1. You log into `blog.yourname.com/admin` — the SpacelyCMS admin UI
+1. You log into `blog.yourname.com/admin` — the WollyCMS admin UI
 2. You write a blog post using the block editor (rich text, images, etc.)
 3. You click "Publish"
-4. SpacelyCMS saves it to the SQLite database
+4. WollyCMS saves it to the SQLite database
 5. A webhook fires, triggering an Astro rebuild
 6. Astro fetches all pages from `http://localhost:4321/api/content/pages`
 7. Astro generates static HTML files for every page
@@ -122,11 +122,11 @@ The `[...slug].astro` file does the heavy lifting:
 
 ```astro
 ---
-import { SpacelyClient } from '@spacelycms/astro';
+import { WollyClient } from '@wollycms/astro';
 import BlogLayout from '../layouts/Blog.astro';
 import BlockRenderer from '../components/BlockRenderer.astro';
 
-const client = new SpacelyClient('http://localhost:4321/api/content');
+const client = new WollyClient('http://localhost:4321/api/content');
 
 export async function getStaticPaths() {
   const pages = await client.pages.list({ status: 'published' });
@@ -164,8 +164,8 @@ gets a list, generates a static HTML file for each one.
 
 ```yaml
 services:
-  spacely:
-    build: ./spacely
+  wolly:
+    build: ./wolly
     volumes:
       - ./data/db:/app/data          # SQLite persisted
       - ./data/media:/app/media      # uploads persisted
@@ -205,7 +205,7 @@ Cloudflare for speed and reliability.
 ```
 ┌─── College Internal Network ──────────────────┐
 │                                                │
-│  SpacelyCMS Server (on-premises)               │
+│  WollyCMS Server (on-premises)               │
 │  • Hono API on internal IP (10.0.1.50:4321)    │
 │  • PostgreSQL database (college DB server)     │
 │  • Media on S3-compatible storage (MinIO)      │
@@ -257,7 +257,7 @@ Cloudflare for speed and reliability.
    their office computer (or via VPN from home)
 2. They edit the "Admissions" page — update text, add a new accordion block
 3. They click "Publish"
-4. SpacelyCMS saves to the PostgreSQL database
+4. WollyCMS saves to the PostgreSQL database
 5. A webhook triggers the build pipeline (e.g., GitHub Actions)
 6. The build server connects to the CMS API (via VPN tunnel or Cloudflare
    Tunnel) and runs `astro build`
@@ -323,7 +323,7 @@ southside-site/
 Images uploaded through the CMS admin need to be accessible on the public
 site. Options:
 
-1. **Cloudflare R2** — SpacelyCMS uploads processed images to an R2 bucket.
+1. **Cloudflare R2** — WollyCMS uploads processed images to an R2 bucket.
    Astro references `https://media.southside.edu/...` URLs. Best option.
 2. **Build-time download** — During `astro build`, download all media from
    the CMS API and include them in the static build output. Simple but makes
@@ -354,7 +354,7 @@ on Cloudflare, but this site looks and works nothing like a college website.
 ```
 ┌─── Cloud Server (e.g., Hetzner, AWS) ─────────┐
 │                                                 │
-│  SpacelyCMS Server (Docker)                     │
+│  WollyCMS Server (Docker)                     │
 │  • Hono API on port 4321                        │
 │  • PostgreSQL database (managed, like Neon)     │
 │  • Media on Cloudflare R2                       │
@@ -445,7 +445,7 @@ smarthomedigest/
 
 ### Custom Content Types (defined in CMS admin)
 
-You'd create these content types in SpacelyCMS through the admin UI:
+You'd create these content types in WollyCMS through the admin UI:
 
 **article** — regions: hero, content, sidebar
 - Fields: author, category, tags, published_date, reading_time
@@ -473,7 +473,7 @@ You'd also create block types specific to this site:
 **rating_widget** — fields: score (1-10), label, show_breakdown
 
 These block types don't exist in the college site. They're defined in the
-SpacelyCMS admin for this specific site. The Astro frontend has matching
+WollyCMS admin for this specific site. The Astro frontend has matching
 components that know how to render them.
 
 ### Hybrid Rendering (SSG + SSR)
@@ -495,8 +495,8 @@ export default defineConfig({
 // This page is SERVER-RENDERED (not pre-built)
 export const prerender = false;
 
-import { SpacelyClient } from '@spacelycms/astro';
-const client = new SpacelyClient(import.meta.env.SPACELY_API_URL);
+import { WollyClient } from '@wollycms/astro';
+const client = new WollyClient(import.meta.env.WOLLY_API_URL);
 
 const { slug } = Astro.params;
 const articles = await client.pages.list({
@@ -522,7 +522,7 @@ infrequently and benefit from being static.
 
 ### Workflow: Publishing an Article
 
-1. Writer logs into `admin.smarthomedigest.com` (the SpacelyCMS admin UI)
+1. Writer logs into `admin.smarthomedigest.com` (the WollyCMS admin UI)
 2. Creates a new page with content type "article"
 3. Adds blocks: hero (featured image + title), rich_text (the article body),
    product_card blocks (affiliate links), related_articles block
@@ -538,7 +538,7 @@ infrequently and benefit from being static.
 
 ### Key Points
 
-- Same SpacelyCMS backend, completely different website
+- Same WollyCMS backend, completely different website
 - Custom content types and block types defined per-site in the CMS admin
 - Astro components are 100% custom to this site's design and functionality
 - Hybrid rendering: articles are static, listings are server-rendered
@@ -552,12 +552,12 @@ infrequently and benefit from being static.
 
 | Component | Same across all sites? | Notes |
 |---|---|---|
-| SpacelyCMS server code | Yes | Same Docker image, same API |
+| WollyCMS server code | Yes | Same Docker image, same API |
 | Database schema | Yes | Same tables (pages, blocks, menus, etc.) |
 | Content types | No | Defined per-site in admin (blog_post vs article vs secondary_page) |
 | Block types | Partially | Some are universal (rich_text, hero), others are site-specific (product_card) |
 | Admin UI | Yes | Same admin interface for all sites |
-| `@spacelycms/astro` | Yes | Same helper library |
+| `@wollycms/astro` | Yes | Same helper library |
 | Astro site code | No | Completely custom per project |
 | Design/CSS | No | Completely custom per project |
 | Block components | No | Each site writes its own .astro components for each block type |
@@ -566,13 +566,13 @@ infrequently and benefit from being static.
 
 ### The Mental Model
 
-Think of SpacelyCMS like a database with a nice editor UI. It stores
+Think of WollyCMS like a database with a nice editor UI. It stores
 structured content (pages made of blocks) and serves it as JSON.
 
 Think of your Astro site like a template engine. It takes that JSON and
 turns it into a website. How it looks, where it's hosted, how it renders —
 that's all up to you.
 
-The `@spacelycms/astro` package is like a database driver — it handles the
+The `@wollycms/astro` package is like a database driver — it handles the
 connection and gives you typed data. But what you do with that data is
 entirely your own code.

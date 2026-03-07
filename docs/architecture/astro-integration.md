@@ -1,11 +1,11 @@
-# SpacelyCMS — Astro Integration (`@spacelycms/astro`)
+# WollyCMS — Astro Integration (`@wollycms/astro`)
 
 ## Overview
 
 The Astro integration is a separate npm package that any Astro project can
 install. It provides:
 
-1. **Client** — Fetches content from the SpacelyCMS API
+1. **Client** — Fetches content from the WollyCMS API
 2. **BlockRenderer** — Maps block types to Astro components
 3. **Route generation** — Dynamic routes from CMS page slugs
 4. **Menu helpers** — Tree traversal, active state detection
@@ -19,17 +19,17 @@ install. It provides:
 ## Installation & Setup
 
 ```bash
-npm install @spacelycms/astro
+npm install @wollycms/astro
 ```
 
 ```js
 // astro.config.mjs
 import { defineConfig } from 'astro/config';
-import spacely from '@spacelycms/astro';
+import wolly from '@wollycms/astro';
 
 export default defineConfig({
   integrations: [
-    spacely({
+    wolly({
       apiUrl: 'http://localhost:4321/api/content',
       // Optional: for preview/draft mode
       adminApiUrl: 'http://localhost:4321/api/admin',
@@ -46,26 +46,26 @@ export default defineConfig({
 ```astro
 ---
 // In any .astro file
-import { spacely } from '@spacelycms/astro';
+import { wolly } from '@wollycms/astro';
 
 // Fetch a single page by slug
-const page = await spacely.pages.getBySlug('cite-resource-wizard');
+const page = await wolly.pages.getBySlug('cite-resource-wizard');
 
 // Fetch pages by type
-const articles = await spacely.pages.list({
+const articles = await wolly.pages.list({
   type: 'article',
   sort: 'published_at:desc',
   limit: 10
 });
 
 // Fetch a menu
-const mainMenu = await spacely.menus.get('main');
+const mainMenu = await wolly.menus.get('main');
 
 // Fetch taxonomy terms
-const departments = await spacely.taxonomies.getTerms('department');
+const departments = await wolly.taxonomies.getTerms('department');
 
 // Fetch site config
-const config = await spacely.config.get();
+const config = await wolly.config.get();
 ---
 ```
 
@@ -79,7 +79,7 @@ components:
 ```astro
 ---
 // src/components/BlockRenderer.astro
-import { BlockRenderer } from '@spacelycms/astro';
+import { BlockRenderer } from '@wollycms/astro';
 ---
 
 <!-- Render all blocks in a region -->
@@ -106,7 +106,7 @@ Slug mapping: PascalCase filename → snake_case block type slug.
 Or configure explicitly:
 
 ```js
-// spacely.config.ts
+// wolly.config.ts
 export default {
   blocks: {
     'rich_text': './src/blocks/RichText.astro',
@@ -142,7 +142,7 @@ interface BlockProps {
 ```astro
 ---
 // src/blocks/Location.astro
-import type { BlockProps } from '@spacelycms/astro';
+import type { BlockProps } from '@wollycms/astro';
 
 interface Props extends BlockProps {
   fields: {
@@ -179,12 +179,12 @@ const { fields } = Astro.props;
 ```astro
 ---
 // src/pages/[...slug].astro
-import { spacely } from '@spacelycms/astro';
+import { wolly } from '@wollycms/astro';
 import BlockRenderer from '../components/BlockRenderer.astro';
 import Layout from '../layouts/Default.astro';
 
 export async function getStaticPaths() {
-  const pages = await spacely.pages.list({ status: 'published' });
+  const pages = await wolly.pages.list({ status: 'published' });
   return pages.map(page => ({
     params: { slug: page.slug || undefined },
     props: { page }
@@ -192,7 +192,7 @@ export async function getStaticPaths() {
 }
 
 const { page } = Astro.props;
-const mainMenu = await spacely.menus.get('main');
+const mainMenu = await wolly.menus.get('main');
 ---
 
 <Layout title={page.title} menu={mainMenu}>
@@ -224,11 +224,11 @@ For content types that need different layouts:
 ```astro
 ---
 // src/pages/event/[slug].astro
-import { spacely } from '@spacelycms/astro';
+import { wolly } from '@wollycms/astro';
 import EventLayout from '../../layouts/Event.astro';
 
 export async function getStaticPaths() {
-  const events = await spacely.pages.list({ type: 'event' });
+  const events = await wolly.pages.list({ type: 'event' });
   return events.map(e => ({
     params: { slug: e.slug },
     props: { event: e }
@@ -253,9 +253,9 @@ const { event } = Astro.props;
 
 ```astro
 ---
-import { spacely, menuHelpers } from '@spacelycms/astro';
+import { wolly, menuHelpers } from '@wollycms/astro';
 
-const menu = await spacely.menus.get('main');
+const menu = await wolly.menus.get('main');
 const currentPath = Astro.url.pathname;
 
 // Get breadcrumb trail for current page
@@ -293,11 +293,11 @@ const isActive = menuHelpers.isActive(menu, '/admissions', currentPath);
 
 ```astro
 ---
-import { SpacelyImage } from '@spacelycms/astro';
+import { WollyImage } from '@wollycms/astro';
 ---
 
 <!-- Responsive image with srcset -->
-<SpacelyImage
+<WollyImage
   media={page.fields.hero_image}
   sizes="(max-width: 768px) 100vw, 1200px"
   loading="lazy"
@@ -324,14 +324,14 @@ Converts TipTap JSON to HTML, with support for custom node types:
 
 ```astro
 ---
-import { RichText } from '@spacelycms/astro';
+import { RichText } from '@wollycms/astro';
 ---
 
 <RichText
   content={block.fields.body}
   components={{
     // Override rendering for specific node types
-    image: (node) => `<SpacelyImage media={node.attrs.media} />`,
+    image: (node) => `<WollyImage media={node.attrs.media} />`,
     link: (node) => `<a href="${node.attrs.href}" class="styled-link">`,
   }}
 />
@@ -344,13 +344,13 @@ import { RichText } from '@spacelycms/astro';
 The integration can generate TypeScript types from CMS schemas:
 
 ```bash
-npx spacely types generate
+npx wolly types generate
 ```
 
 Produces:
 
 ```ts
-// src/spacely.d.ts (auto-generated)
+// src/wolly.d.ts (auto-generated)
 
 export interface SecondaryPage {
   id: string;
@@ -360,10 +360,10 @@ export interface SecondaryPage {
   status: 'draft' | 'published';
   fields: Record<string, unknown>;
   regions: {
-    hero: SpacelyBlock[];
-    content: SpacelyBlock[];
-    sidebar: SpacelyBlock[];
-    bottom: SpacelyBlock[];
+    hero: WollyBlock[];
+    content: WollyBlock[];
+    sidebar: WollyBlock[];
+    bottom: WollyBlock[];
   };
 }
 
@@ -388,9 +388,9 @@ export interface AccordionBlock {
 
 ```js
 // astro.config.mjs — for static hosts
-import { spacely } from '@spacelycms/astro';
+import { wolly } from '@wollycms/astro';
 
-const redirects = await spacely.redirects.list();
+const redirects = await wolly.redirects.list();
 
 export default defineConfig({
   redirects: Object.fromEntries(

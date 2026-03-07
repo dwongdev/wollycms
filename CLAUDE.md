@@ -1,8 +1,8 @@
-# SpacelyCMS — Project Instructions
+# WollyCMS — Project Instructions
 
 ## Project Overview
 
-SpacelyCMS is a self-hosted, open-source headless CMS designed for Astro.js.
+WollyCMS is a self-hosted, open-source headless CMS designed for Astro.js.
 It provides composable block-based page building with reusable content blocks,
 hierarchical menus, taxonomy management, and media handling.
 
@@ -22,7 +22,7 @@ hierarchical menus, taxonomy management, and media handling.
 ```
 packages/server/    — Hono API server + Drizzle schema + media processing
 packages/admin/     — SvelteKit admin UI
-packages/astro/     — @spacelycms/astro npm integration package
+packages/astro/     — @wollycms/astro npm integration package
 examples/           — Reference Astro site
 docs/               — Architecture and planning documentation
 scripts/            — Build, deploy, migration scripts

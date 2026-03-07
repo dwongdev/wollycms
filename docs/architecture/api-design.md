@@ -1,8 +1,8 @@
-# SpacelyCMS — API Design
+# WollyCMS — API Design
 
 ## Overview
 
-SpacelyCMS exposes two API surfaces:
+WollyCMS exposes two API surfaces:
 
 1. **Content API** (`/api/content/*`) — Public, read-only. Used by Astro at build
    time or SSR runtime to fetch pages, blocks, menus, media, and taxonomies.
@@ -221,7 +221,7 @@ GET /api/content/config
 
 GET /api/content/schemas
   — Returns all content type and block type schemas
-  — Used by @spacelycms/astro to generate TypeScript types
+  — Used by @wollycms/astro to generate TypeScript types
 ```
 
 ### Preview (Authenticated)

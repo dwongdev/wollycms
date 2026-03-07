@@ -1,12 +1,12 @@
 {
-  "name": "@spacelycms/astro",
+  "name": "@wollycms/astro",
   "version": "0.1.0",
   "private": true,
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
     "./components/BlockRenderer.astro": "./src/components/BlockRenderer.astro",
-    "./components/SpacelyImage.astro": "./src/components/SpacelyImage.astro",
+    "./components/WollyImage.astro": "./src/components/WollyImage.astro",
     "./components/RichText.astro": "./src/components/RichText.astro",
     "./components/PreviewBlockRenderer.astro": "./src/components/PreviewBlockRenderer.astro"
   },
@@ -18,7 +18,7 @@
     "withastro",
     "astro-component",
     "cms",
-    "spacelycms"
+    "wollycms"
   ],
   "peerDependencies": {
     "astro": "^5.0.0"

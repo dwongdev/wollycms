@@ -1,4 +1,4 @@
-# SpacelyCMS — Technology Stack
+# WollyCMS — Technology Stack
 
 ## CMS Server
 
@@ -31,7 +31,7 @@
 | **HTTP Client** | Fetch API | — | Native, no extra dependency |
 | **State Management** | Svelte stores | — | Built-in, reactive |
 
-## Astro Integration (`@spacelycms/astro`)
+## Astro Integration (`@wollycms/astro`)
 
 | Layer | Technology | Rationale |
 |---|---|---|
@@ -54,7 +54,7 @@
 ## Monorepo Structure
 
 ```
-SpacelyCMS/
+WollyCMS/
 ├── packages/
 │   ├── server/           # Hono API server + database
 │   │   ├── src/
@@ -79,10 +79,10 @@ SpacelyCMS/
 │   │   │   └── blocks/   # Block editor components
 │   │   └── package.json
 │   │
-│   └── astro/            # @spacelycms/astro integration
+│   └── astro/            # @wollycms/astro integration
 │       ├── src/
 │       │   ├── client.ts     # API client
-│       │   ├── components/   # BlockRenderer, SpacelyImage, RichText
+│       │   ├── components/   # BlockRenderer, WollyImage, RichText
 │       │   ├── helpers/      # Menu helpers, type utils
 │       │   └── index.ts      # Package exports
 │       └── package.json

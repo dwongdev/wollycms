@@ -1,4 +1,4 @@
-# SpacelyCMS: Full Publishing Analysis
+# WollyCMS: Full Publishing Analysis
 
 *Generated: March 6, 2026*
 
@@ -19,7 +19,7 @@
 
 ## What You've Built
 
-SpacelyCMS is a self-hosted headless CMS with composable block-based page building, built for Astro but framework-agnostic at the API layer.
+WollyCMS is a self-hosted headless CMS with composable block-based page building, built for Astro but framework-agnostic at the API layer.
 
 **By the numbers:**
 
@@ -32,7 +32,7 @@ SpacelyCMS is a self-hosted headless CMS with composable block-based page buildi
 | API endpoints | 30+ (content + admin) |
 | Block types | 10 built-in |
 | Admin UI components | 36+ Svelte components, 18 route handlers |
-| Packages | 4 (@spacelycms/server, admin, astro, create-spacely) |
+| Packages | 4 (@wollycms/server, admin, astro, create-wolly) |
 
 **Tech stack:** Hono, Drizzle ORM, better-sqlite3 + PostgreSQL, SvelteKit 2 (Svelte 5), Sharp, Zod, TipTap, Astro 5.
 
@@ -78,7 +78,7 @@ Despite the Astro focus, the Hono API server is completely decoupled. Anyone cou
 
 Post-Vercel-pricing-controversy, post-Heroku-free-tier-death, developers increasingly want to own their infrastructure. A CMS that runs on a $5 VPS with SQLite hits this market perfectly.
 
-### 7. You Own spacelycms.com
+### 7. You Own wollycms.com
 
 Having the primary .com domain is a significant asset. Many open-source projects struggle with domain squatters.
 
@@ -104,7 +104,7 @@ You have a working CMS. Publishing it means:
 - Setting up CI/CD (GitHub Actions for tests, builds, releases)
 - npm publishing pipeline (scoped packages, versioning, changelogs)
 - Issue templates, PR templates, discussion forums
-- A marketing website (spacelycms.com needs content)
+- A marketing website (wollycms.com needs content)
 - Getting started guides, video tutorials, blog posts
 - Discord or community forum setup
 
@@ -122,7 +122,7 @@ Your dependency tree includes fast-moving packages (Hono, Drizzle, SvelteKit, As
 
 A CMS handles authentication, file uploads, and database queries — three of the most attack-prone surfaces in web development. Publishing means:
 - You'll receive vulnerability reports with a 90-day disclosure clock
-- Every deployment of SpacelyCMS becomes your responsibility in the court of public opinion
+- Every deployment of WollyCMS becomes your responsibility in the court of public opinion
 - CVE processes add formal overhead
 - CMS platforms are high-value targets for attackers
 
@@ -136,29 +136,29 @@ Your architecture docs are excellent for a developer building the CMS. Users nee
 
 ## Legal Considerations
 
-### Trademark: The "Spacely" Name
+### Trademark: The "Wolly" Name
 
 This requires honest assessment. The name has conflicts:
 
-- **Spacely AI** (spacely.ai) — A funded Thai startup ($1M seed) doing AI interior design, 400,000+ users
-- **Spacely** (rentspacely.com) — Has a **registered USPTO trademark** (Serial #90307413, filed Nov 2020) in International Class 42 (software)
-- **Spacely** (getspacely.com) — Active productivity app
-- **The Jetsons** — "Spacely Sprockets" is owned by Warner Bros. Discovery (Hanna-Barbera). Strong cultural association
+- **Wolly AI** (wolly.ai) — A funded Thai startup ($1M seed) doing AI interior design, 400,000+ users
+- **Wolly** (rentwolly.com) — Has a **registered USPTO trademark** (Serial #90307413, filed Nov 2020) in International Class 42 (software)
+- **Wolly** (getwolly.com) — Active productivity app
+- **The Jetsons** — "Wolly Sprockets" is owned by Warner Bros. Discovery (Hanna-Barbera). Strong cultural association
 
 **Risk level: Moderate to High**
 
 The existing USPTO trademark is in Class 42 (software), which overlaps with a CMS. However:
-- "SpacelyCMS" is distinct from "Spacely" for parking/storage software
+- "WollyCMS" is distinct from "Wolly" for parking/storage software
 - CMS software and parking rental software are different market segments
-- You own spacelycms.com, which establishes your own use
+- You own wollycms.com, which establishes your own use
 - The Jetsons connection is a common-law risk but Warner Bros. would likely only act if you became very visible or used Jetsons imagery
 
 **Mitigating factors:**
 - Trademark disputes are expensive to prosecute — small players rarely get targeted
-- "SpacelyCMS" (with the CMS suffix) is more defensible than bare "Spacely"
+- "WollyCMS" (with the CMS suffix) is more defensible than bare "Wolly"
 - Different market segment from the registered trademark holder
 
-**Practical advice:** You can likely publish under SpacelyCMS without immediate legal trouble, but you probably cannot register your own trademark for it. If the project gets significant traction, trademark disputes become more likely. Having a backup name in mind is prudent. If you want zero risk, rename now before you have users.
+**Practical advice:** You can likely publish under WollyCMS without immediate legal trouble, but you probably cannot register your own trademark for it. If the project gets significant traction, trademark disputes become more likely. Having a backup name in mind is prudent. If you want zero risk, rename now before you have users.
 
 ### MIT License
 
@@ -184,7 +184,7 @@ Not needed yet. Use a lightweight Developer Certificate of Origin (DCO) via `Sig
 For a self-hosted CMS, **GDPR liability sits with the deployer, not you.** However:
 - Document what data the CMS stores (user credentials, audit logs, media with potential EXIF data)
 - Document that scrypt hashing is used for passwords
-- If you ever offer hosted/cloud SpacelyCMS, you become a data processor and need a DPA, privacy policy, etc.
+- If you ever offer hosted/cloud WollyCMS, you become a data processor and need a DPA, privacy policy, etc.
 
 ### Sharp / libvips Licensing
 
@@ -199,7 +199,7 @@ For a self-hosted CMS, **GDPR liability sits with the deployer, not you.** Howev
 
 ### Direct Competitors
 
-| CMS | Positioning | Why SpacelyCMS Is Different |
+| CMS | Positioning | Why WollyCMS Is Different |
 |-----|-------------|---------------------------|
 | **Strapi** | General-purpose headless CMS | No page composition, no block regions, no reusable blocks |
 | **Payload** | Next.js-native CMS | Coupled to Next.js, no Astro-first support |
@@ -211,7 +211,7 @@ For a self-hosted CMS, **GDPR liability sits with the deployer, not you.** Howev
 
 ### Your Unique Position
 
-SpacelyCMS occupies an unclaimed intersection: **composable blocks + self-hosted + Astro-first + framework-agnostic API**. No existing product hits all four.
+WollyCMS occupies an unclaimed intersection: **composable blocks + self-hosted + Astro-first + framework-agnostic API**. No existing product hits all four.
 
 The closest analog is actually Drupal's block/region system — but rebuilt as a modern headless API with a Svelte admin UI. That's a compelling pitch to anyone who's used Drupal and wished it wasn't PHP.
 
@@ -223,7 +223,7 @@ The closest analog is actually Drupal's block/region system — but rebuilt as a
 
 **1. Managed Cloud Hosting (Best proven model)**
 
-Ghost is the gold standard: free open-source core, paid managed hosting ($10.4M revenue in 2024, zero VC funding, 24,000+ paying customers). The insight: people who want the software also need a server. "SpacelyCMS Cloud" at $10-50/mo per instance is the most realistic revenue path.
+Ghost is the gold standard: free open-source core, paid managed hosting ($10.4M revenue in 2024, zero VC funding, 24,000+ paying customers). The insight: people who want the software also need a server. "WollyCMS Cloud" at $10-50/mo per instance is the most realistic revenue path.
 
 **2. Open Core (Enterprise features behind a paywall)**
 
@@ -313,7 +313,7 @@ This is *on top of* any feature development you want to do. And it scales with a
 
 **Do it, but with boundaries.**
 
-- Rename if you want zero trademark risk (or accept moderate risk with SpacelyCMS)
+- Rename if you want zero trademark risk (or accept moderate risk with WollyCMS)
 - Set up GitHub Discussions (not Discord — less overhead)
 - Write a SECURITY.md with disclosure process
 - Write a CONTRIBUTING.md with clear expectations
@@ -327,7 +327,7 @@ This is *on top of* any feature development you want to do. And it scales with a
 **Possible, but eyes wide open.**
 
 - Rename to something with zero trademark baggage (strongly recommended for a business)
-- Build spacelycms.com (or new domain) as a marketing site
+- Build wollycms.com (or new domain) as a marketing site
 - Plan managed hosting from day one (even simple Docker deployments)
 - Consider holding back 1-2 enterprise features for a paid tier
 - Budget 15-25 hours/week minimum

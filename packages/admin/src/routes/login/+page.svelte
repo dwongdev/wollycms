@@ -27,7 +27,7 @@
 
 <div class="login-page">
   <form class="login-form card" onsubmit={handleLogin}>
-    <h1>SpacelyCMS</h1>
+    <h1>WollyCMS</h1>
     <p class="login-subtitle">Sign in to manage your content</p>
 
     {#if error}

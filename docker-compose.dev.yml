@@ -1,5 +1,5 @@
 services:
-  spacelycms:
+  wollycms:
     build:
       context: .
       dockerfile: Dockerfile.dev
@@ -10,16 +10,16 @@ services:
       - NODE_ENV=development
       - PORT=4321
       - HOST=0.0.0.0
-      - DATABASE_URL=sqlite:./data/spacely.db
+      - DATABASE_URL=sqlite:./data/wolly.db
       - MEDIA_DIR=./uploads
       - JWT_SECRET=dev-secret-change-me
     volumes:
       - ./packages/server/src:/app/packages/server/src
       - ./packages/admin/src:/app/packages/admin/src
-      - spacely-data:/app/data
-      - spacely-uploads:/app/uploads
+      - wolly-data:/app/data
+      - wolly-uploads:/app/uploads
     restart: unless-stopped
 
 volumes:
-  spacely-data:
-  spacely-uploads:
+  wolly-data:
+  wolly-uploads:

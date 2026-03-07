@@ -1110,7 +1110,7 @@ details[open] > .accordion-title::after {
 }
 
 /* Unknown block fallback */
-.spacely-block-unknown {
+.wolly-block-unknown {
   padding: var(--space-md);
   background: #FEF3E2;
   border: 1px solid var(--gold);

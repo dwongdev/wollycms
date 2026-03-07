@@ -1,6 +1,6 @@
 ---
-import type { BlockProps } from '@spacelycms/astro';
-import { spacely } from '../lib/spacely';
+import type { BlockProps } from '@wollycms/astro';
+import { wolly } from '../lib/wolly';
 
 interface Props extends BlockProps {
   fields: {
@@ -21,7 +21,7 @@ const sortMap: Record<string, string> = {
   title_desc: 'title:desc',
 };
 
-const result = await spacely.pages.list({
+const result = await wolly.pages.list({
   type: fields.content_type,
   sort: sortMap[fields.sort ?? 'newest'],
   limit: fields.limit ?? 10,

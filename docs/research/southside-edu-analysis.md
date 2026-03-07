@@ -6,12 +6,12 @@
 
 ## Purpose
 
-This analysis serves as a **reference architecture** for SpacelyCMS. Southside.edu
+This analysis serves as a **reference architecture** for WollyCMS. Southside.edu
 represents a real-world, mid-size institutional website with complex content
-composition needs. Understanding its architecture informs what SpacelyCMS must
+composition needs. Understanding its architecture informs what WollyCMS must
 support to be viable for content-heavy sites.
 
-SpacelyCMS is not being built exclusively for this site — it is a general-purpose
+WollyCMS is not being built exclusively for this site — it is a general-purpose
 headless CMS for Astro.js. But this site is the validation target.
 
 ---
@@ -88,7 +88,7 @@ headless CMS for Astro.js. But this site is the validation target.
 The site has **24 reusable paragraph library items** that are referenced **86 times**
 across pages via the `from_library` paragraph type.
 
-This is the exact pattern SpacelyCMS must support: create a block once (e.g.,
+This is the exact pattern WollyCMS must support: create a block once (e.g.,
 "Financial Aid Office" sidebar with address, phone, hours), then reference it from
 any page. Update it in one place, it changes everywhere.
 
@@ -221,7 +221,7 @@ Many redirects exist for maintaining old URL paths after content restructuring.
 
 ---
 
-## Implications for SpacelyCMS
+## Implications for WollyCMS
 
 ### Must-Have (informed by this analysis)
 

@@ -6,7 +6,7 @@ export async function seedUsers(db: AppDatabase) {
   const now = new Date().toISOString();
 
   const inserted = await db.insert(users).values({
-    email: 'admin@spacelycms.local',
+    email: 'admin@wollycms.local',
     name: 'Admin',
     passwordHash: hashPassword('admin123'),
     role: 'admin',

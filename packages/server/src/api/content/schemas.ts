@@ -6,7 +6,7 @@ const app = new Hono();
 
 /**
  * GET / - Return all content type and block type schemas.
- * Used by @spacelycms/astro to generate TypeScript types.
+ * Used by @wollycms/astro to generate TypeScript types.
  */
 app.get('/', async (c) => {
   const db = getDb();

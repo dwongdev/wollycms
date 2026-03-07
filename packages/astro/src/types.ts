@@ -191,7 +191,7 @@ export interface BlockProps {
 }
 
 /** Client configuration */
-export interface SpacelyConfig {
+export interface WollyConfig {
   apiUrl: string;
 }
 

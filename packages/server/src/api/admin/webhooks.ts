@@ -107,12 +107,12 @@ app.post('/:id/test', rateLimiter({ max: 5, windowMs: 60_000 }), async (c) => {
   const payload = JSON.stringify({
     event: 'test',
     timestamp: new Date().toISOString(),
-    data: { message: 'This is a test webhook from SpacelyCMS' },
+    data: { message: 'This is a test webhook from WollyCMS' },
   });
 
-  const headers: Record<string, string> = { 'Content-Type': 'application/json', 'User-Agent': 'SpacelyCMS-Webhook/1.0' };
+  const headers: Record<string, string> = { 'Content-Type': 'application/json', 'User-Agent': 'WollyCMS-Webhook/1.0' };
   if (hook.secret) {
-    headers['X-Spacely-Signature'] = `sha256=${createHmac('sha256', hook.secret).update(payload).digest('hex')}`;
+    headers['X-Wolly-Signature'] = `sha256=${createHmac('sha256', hook.secret).update(payload).digest('hex')}`;
   }
 
   try {

@@ -1,10 +1,10 @@
-# SpacelyCMS
+# WollyCMS
 
 A self-hosted, open-source headless CMS designed for [Astro.js](https://astro.build) with composable block-based page building, reusable content blocks, and hierarchical menu management.
 
-## Why SpacelyCMS?
+## Why WollyCMS?
 
-SpacelyCMS fills the gap between simple headless CMS tools (Strapi, Directus) that lack page composition, and expensive SaaS platforms (Storyblok) that lock you in. It brings Drupal's powerful content composition model — paragraphs, reusable blocks, multi-region layouts — into a modern, lightweight, Astro-native package.
+WollyCMS fills the gap between simple headless CMS tools (Strapi, Directus) that lack page composition, and expensive SaaS platforms (Storyblok) that lock you in. It brings Drupal's powerful content composition model — paragraphs, reusable blocks, multi-region layouts — into a modern, lightweight, Astro-native package.
 
 ## Features
 
@@ -14,7 +14,7 @@ SpacelyCMS fills the gap between simple headless CMS tools (Strapi, Directus) th
 - **Hierarchical Menus** — Multiple menus with deep nesting, container items, and drag-drop editing
 - **Rich Text Editor** — TipTap WYSIWYG with slash commands, table editing, paste cleanup
 - **Media Library** — Upload, organize, and process images (Sharp generates WebP variants)
-- **Astro-Native** — First-class `@spacelycms/astro` integration with BlockRenderer, route generation, menu helpers, and image optimization
+- **Astro-Native** — First-class `@wollycms/astro` integration with BlockRenderer, route generation, menu helpers, and image optimization
 - **Admin UI** — SvelteKit SPA with keyboard shortcuts, toast notifications, revision history, multi-user presence
 - **Webhooks** — HMAC-SHA256 signed webhooks for build triggers on content changes
 - **API Keys** — Long-lived tokens for build pipelines with permission scoping
@@ -27,7 +27,7 @@ SpacelyCMS fills the gap between simple headless CMS tools (Strapi, Directus) th
 ## Quick Start
 
 ```bash
-git clone <repo-url> spacelycms && cd spacelycms
+git clone <repo-url> wollycms && cd wollycms
 cp .env.example .env
 npm install
 npm run db:migrate
@@ -35,7 +35,7 @@ npm run db:seed
 npm run dev
 ```
 
-The API server starts at `http://localhost:4321`. Default login: `admin@spacelycms.local` / `admin123`.
+The API server starts at `http://localhost:4321`. Default login: `admin@wollycms.local` / `admin123`.
 
 ```bash
 # In separate terminals:
@@ -85,11 +85,11 @@ docker compose up -d
 ## Project Structure
 
 ```
-spacelycms/
+wollycms/
 ├── packages/
 │   ├── server/       # Hono API server + Drizzle schema
 │   ├── admin/        # SvelteKit admin SPA
-│   └── astro/        # @spacelycms/astro integration
+│   └── astro/        # @wollycms/astro integration
 ├── examples/
 │   └── college-site/ # Reference Astro site
 ├── docs/             # Architecture and planning docs
@@ -102,7 +102,7 @@ All configuration is via environment variables. See [`.env.example`](.env.exampl
 
 | Variable | Default | Description |
 |---|---|---|
-| `DATABASE_URL` | `sqlite:./data/spacely.db` | Database connection string |
+| `DATABASE_URL` | `sqlite:./data/wolly.db` | Database connection string |
 | `PORT` | `4321` | Server port |
 | `JWT_SECRET` | — | **Required in production.** Secret for JWT signing |
 | `CORS_ORIGINS` | `*` | Allowed origins (comma-separated) |
@@ -133,7 +133,7 @@ npm run db:seed           # Populate sample data
 | [Data Model](docs/architecture/data-model.md) | Database schema and entity relationships |
 | [Block System](docs/architecture/block-system.md) | Composable block/region architecture |
 | [API Design](docs/architecture/api-design.md) | Content API and Admin API specifications |
-| [Astro Integration](docs/architecture/astro-integration.md) | `@spacelycms/astro` package design |
+| [Astro Integration](docs/architecture/astro-integration.md) | `@wollycms/astro` package design |
 | [Roadmap](docs/planning/roadmap.md) | Implementation phases and status |
 | [Deployment Guide](docs/guides/deployment.md) | Docker, manual deploy, backups, security |
 

@@ -1,14 +1,14 @@
 ---
 import Layout from '../layouts/Default.astro';
-import BlockRenderer from '@spacelycms/astro/components/BlockRenderer.astro';
-import { spacely } from '../lib/spacely';
+import BlockRenderer from '@wollycms/astro/components/BlockRenderer.astro';
+import { wolly } from '../lib/wolly';
 import * as blockComponents from '../lib/blocks';
 
-const page = await spacely.pages.getBySlug('home');
+const page = await wolly.pages.getBySlug('home');
 const [mainMenu, footerMenu, config] = await Promise.all([
-  spacely.menus.get('main'),
-  spacely.menus.get('footer'),
-  spacely.config.get(),
+  wolly.menus.get('main'),
+  wolly.menus.get('footer'),
+  wolly.config.get(),
 ]);
 
 const regions = page.regions ?? {};

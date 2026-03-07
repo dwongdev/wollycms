@@ -1,5 +1,5 @@
 services:
-  spacelycms:
+  wollycms:
     build: .
     ports:
       - "4321:4321"
@@ -7,7 +7,7 @@ services:
       - NODE_ENV=production
       - PORT=4321
       - HOST=0.0.0.0
-      - DATABASE_URL=sqlite:./data/spacely.db
+      - DATABASE_URL=sqlite:./data/wolly.db
       - MEDIA_DIR=./uploads
       - JWT_SECRET=${JWT_SECRET:?Set JWT_SECRET in .env}
       - CORS_ORIGINS=${CORS_ORIGINS:-*}
@@ -15,8 +15,8 @@ services:
       - RATE_LIMIT_WINDOW_MS=${RATE_LIMIT_WINDOW_MS:-900000}
       - SITE_URL=${SITE_URL:-http://localhost:4322}
     volumes:
-      - spacely-data:/app/data
-      - spacely-uploads:/app/uploads
+      - wolly-data:/app/data
+      - wolly-uploads:/app/uploads
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://localhost:4321/api/health').then(r => r.ok ? process.exit(0) : process.exit(1)).catch(() => process.exit(1))"]
@@ -26,5 +26,5 @@ services:
       retries: 3
 
 volumes:
-  spacely-data:
-  spacely-uploads:
+  wolly-data:
+  wolly-uploads:

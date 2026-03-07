@@ -14,7 +14,7 @@ export interface SeoMeta {
  */
 export function getPageSeo(page: Page, siteConfig?: SiteConfig): SeoMeta {
   const seo = page.seo;
-  const siteName = siteConfig?.siteName || 'SpacelyCMS';
+  const siteName = siteConfig?.siteName || 'WollyCMS';
 
   return {
     title: seo?.meta_title || `${page.title} | ${siteName}`,
@@ -45,7 +45,7 @@ export function articleJsonLd(page: Page, options: {
     url: `${options.siteUrl.replace(/\/$/, '')}/${page.slug}`,
     publisher: {
       '@type': 'Organization',
-      name: options.siteName || 'SpacelyCMS',
+      name: options.siteName || 'WollyCMS',
     },
     author: options.authorName ? {
       '@type': 'Person',
@@ -71,7 +71,7 @@ export function webPageJsonLd(page: Page, options: {
     dateModified: page.meta.updated_at,
     isPartOf: {
       '@type': 'WebSite',
-      name: options.siteName || 'SpacelyCMS',
+      name: options.siteName || 'WollyCMS',
       url: options.siteUrl,
     },
   };

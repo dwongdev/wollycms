@@ -1,13 +1,13 @@
-# Deploying SpacelyCMS
+# Deploying WollyCMS
 
 ## Quick Deploy with Docker
 
-The fastest way to deploy SpacelyCMS is with Docker Compose.
+The fastest way to deploy WollyCMS is with Docker Compose.
 
 ### 1. Clone and configure
 
 ```bash
-git clone <your-repo> spacelycms && cd spacelycms
+git clone <your-repo> wollycms && cd wollycms
 cp .env.example .env
 ```
 
@@ -35,7 +35,7 @@ docker compose -f docker-compose.dev.yml up -d
 Edit `Caddyfile` — replace `cms.example.com` with your domain:
 ```
 cms.yoursite.com {
-    reverse_proxy spacelycms:4321
+    reverse_proxy wollycms:4321
     encode gzip zstd
     # ... (security headers included by default)
 }
@@ -52,13 +52,13 @@ Caddy automatically provisions Let's Encrypt certificates.
 **SQLite (default — zero config):**
 ```bash
 # .env
-DATABASE_URL=sqlite:./data/spacely.db
+DATABASE_URL=sqlite:./data/wolly.db
 ```
 
 **PostgreSQL (production scale):**
 ```bash
 # .env
-DATABASE_URL=postgresql://spacely:secretpassword@db:5432/spacely
+DATABASE_URL=postgresql://wolly:secretpassword@db:5432/wolly
 ```
 
 When using PostgreSQL with Docker Compose, add a Postgres service to your compose file:
@@ -67,13 +67,13 @@ services:
   db:
     image: postgres:16-alpine
     environment:
-      POSTGRES_USER: spacely
+      POSTGRES_USER: wolly
       POSTGRES_PASSWORD: secretpassword
-      POSTGRES_DB: spacely
+      POSTGRES_DB: wolly
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U spacely"]
+      test: ["CMD-SHELL", "pg_isready -U wolly"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -85,8 +85,8 @@ volumes:
 ### 4. Initialize the database
 
 ```bash
-docker compose exec spacelycms node packages/server/dist/cli.js migrate
-docker compose exec spacelycms node packages/server/dist/cli.js seed
+docker compose exec wollycms node packages/server/dist/cli.js migrate
+docker compose exec wollycms node packages/server/dist/cli.js seed
 ```
 
 Migrations and seeds auto-detect the dialect from `DATABASE_URL`.
@@ -95,7 +95,7 @@ Migrations and seeds auto-detect the dialect from `DATABASE_URL`.
 
 Open `https://cms.yoursite.com/admin`
 
-Default credentials: `admin@spacelycms.local` / `admin123`
+Default credentials: `admin@wollycms.local` / `admin123`
 
 **Change the default password immediately** in Settings > Users.
 
@@ -103,7 +103,7 @@ Default credentials: `admin@spacelycms.local` / `admin123`
 
 ## Recommended Production Architecture
 
-The recommended way to run SpacelyCMS in production is a three-layer
+The recommended way to run WollyCMS in production is a three-layer
 architecture using Cloudflare services. This gives you zero open ports,
 global CDN media delivery, and edge-hosted static pages — all on
 commodity hardware.
@@ -112,7 +112,7 @@ commodity hardware.
 ┌─────────────────────────────────┐
 │       Your Infrastructure       │
 │                                 │
-│   SpacelyCMS Server (:4321)     │
+│   WollyCMS Server (:4321)     │
 │   SQLite or PostgreSQL          │
 │         │                       │
 │    cloudflared tunnel           │
@@ -141,7 +141,7 @@ commodity hardware.
   never listens on a public IP.
 - **No egress fees** — R2 has zero egress costs, unlike AWS S3.
 - **Global edge** — Media and the Astro site are served from 300+ PoPs.
-- **Automatic rebuilds** — A SpacelyCMS webhook triggers Cloudflare Pages
+- **Automatic rebuilds** — A WollyCMS webhook triggers Cloudflare Pages
   to rebuild when content changes.
 
 ### 1. Set up a Cloudflare Tunnel
@@ -157,13 +157,13 @@ curl -L https://github.com/cloudflare/cloudflared/releases/latest/download/cloud
 cloudflared tunnel login
 
 # Create a tunnel
-cloudflared tunnel create spacelycms
+cloudflared tunnel create wollycms
 
 # Route your CMS domain to the tunnel
-cloudflared tunnel route dns spacelycms cms.yoursite.com
+cloudflared tunnel route dns wollycms cms.yoursite.com
 
 # Run the tunnel (points to your local CMS server)
-cloudflared tunnel --url http://localhost:4321 run spacelycms
+cloudflared tunnel --url http://localhost:4321 run wollycms
 ```
 
 For production, run `cloudflared` as a systemd service:
@@ -179,7 +179,7 @@ open ports on your server.
 ### 2. Set up Cloudflare R2 for media
 
 1. In the Cloudflare dashboard, go to **R2 Object Storage** and create a
-   bucket (e.g., `spacely-media`).
+   bucket (e.g., `wolly-media`).
 2. Under **Settings > Public access**, connect a custom domain
    (e.g., `media.yoursite.com`).
 3. Under **Manage R2 API Tokens**, create an API token with read/write
@@ -191,14 +191,14 @@ Add to your `.env`:
 ```bash
 MEDIA_STORAGE=s3
 S3_ENDPOINT=https://<account-id>.r2.cloudflarestorage.com
-S3_BUCKET=spacely-media
+S3_BUCKET=wolly-media
 S3_REGION=auto
 S3_ACCESS_KEY=<your-r2-access-key-id>
 S3_SECRET_KEY=<your-r2-secret-access-key>
 S3_PUBLIC_URL=https://media.yoursite.com
 ```
 
-R2 is S3-compatible, so SpacelyCMS uses the standard S3 client internally.
+R2 is S3-compatible, so WollyCMS uses the standard S3 client internally.
 Set `S3_REGION=auto` — R2 ignores regions but the S3 SDK requires a value.
 
 ### 3. Deploy the Astro frontend to Cloudflare Pages
@@ -210,9 +210,9 @@ Set `S3_REGION=auto` — R2 ignores regions but the S3 SDK requires a value.
    `dist/`.
 4. Add environment variable `PUBLIC_CMS_URL=https://cms.yoursite.com`.
 5. Note the **Deploy Hook URL** from **Settings > Builds & deployments >
-   Deploy hooks** (create one named "spacely-publish").
+   Deploy hooks** (create one named "wolly-publish").
 
-In the SpacelyCMS admin, go to **Webhooks** and create a webhook:
+In the WollyCMS admin, go to **Webhooks** and create a webhook:
 
 - **URL**: the Cloudflare Pages deploy hook URL
 - **Events**: `page.published`, `page.unpublished`, `page.deleted`
@@ -233,14 +233,14 @@ rebuilds and deploys the Astro site.
 ### Steps
 
 ```bash
-git clone <your-repo> spacelycms && cd spacelycms
+git clone <your-repo> wollycms && cd wollycms
 npm install
 npm run build
 
 # Configure
 cp .env.example .env
 # Edit .env with production values
-# For PostgreSQL: DATABASE_URL=postgresql://user:pass@localhost:5432/spacely
+# For PostgreSQL: DATABASE_URL=postgresql://user:pass@localhost:5432/wolly
 
 # Initialize database (auto-detects SQLite or PostgreSQL from DATABASE_URL)
 node packages/server/dist/cli.js migrate
@@ -256,7 +256,7 @@ NODE_ENV=production node packages/server/dist/index.js
 npm install -g pm2
 
 pm2 start packages/server/dist/index.js \
-  --name spacelycms \
+  --name wollycms \
   --env production
 
 pm2 save
@@ -300,14 +300,14 @@ server {
 ```bash
 npm create astro@latest my-site
 cd my-site
-npm install @spacelycms/astro
+npm install @wollycms/astro
 ```
 
 ### 2. Configure the client
 
 ```typescript
-// src/lib/spacely.ts
-import { createClient } from '@spacelycms/astro';
+// src/lib/wolly.ts
+import { createClient } from '@wollycms/astro';
 
 export const cms = createClient({
   apiUrl: 'https://cms.yoursite.com/api/content',
@@ -319,7 +319,7 @@ export const cms = createClient({
 ```astro
 ---
 // src/pages/[...slug].astro
-import { cms } from '../lib/spacely';
+import { cms } from '../lib/wolly';
 
 export async function getStaticPaths() {
   const { data } = await cms.pages.list({ limit: 100 });
@@ -336,7 +336,7 @@ const page = await cms.pages.getBySlug(slug || 'home');
 
 ### 4. Set up build webhooks
 
-In SpacelyCMS admin, go to Webhooks and create a webhook pointing to your
+In WollyCMS admin, go to Webhooks and create a webhook pointing to your
 Astro hosting platform's deploy hook URL. Subscribe to `page.published`,
 `page.unpublished`, and `page.deleted` events.
 
@@ -348,20 +348,20 @@ Astro hosting platform's deploy hook URL. Subscribe to `page.published`,
 
 ```bash
 # CLI
-spacely export > backup-$(date +%Y%m%d).json
+wolly export > backup-$(date +%Y%m%d).json
 
 # Docker
-docker compose exec spacelycms node packages/server/dist/cli.js export > backup.json
+docker compose exec wollycms node packages/server/dist/cli.js export > backup.json
 ```
 
 ### Import data
 
 ```bash
-spacely import backup.json
+wolly import backup.json
 
 # Docker
-docker compose cp backup.json spacelycms:/tmp/backup.json
-docker compose exec spacelycms node packages/server/dist/cli.js import /tmp/backup.json
+docker compose cp backup.json wollycms:/tmp/backup.json
+docker compose exec wollycms node packages/server/dist/cli.js import /tmp/backup.json
 ```
 
 ### Media files
@@ -377,14 +377,14 @@ tar -czf media-backup.tar.gz uploads/
 
 | Variable | Default | Description |
 |---|---|---|
-| `DATABASE_URL` | `sqlite:./data/spacely.db` | Database connection (`sqlite:` or `postgresql://`) |
+| `DATABASE_URL` | `sqlite:./data/wolly.db` | Database connection (`sqlite:` or `postgresql://`) |
 | `PORT` | `4321` | Server port |
 | `HOST` | `localhost` | Server bind address |
 | `JWT_SECRET` | — | **Required.** Secret for JWT signing |
 | `MEDIA_STORAGE` | `local` | Media backend: `local` or `s3` |
 | `MEDIA_DIR` | `./uploads` | Media storage path (local mode) |
 | `S3_ENDPOINT` | — | S3-compatible endpoint URL (e.g., `https://<id>.r2.cloudflarestorage.com`) |
-| `S3_BUCKET` | — | Bucket name (e.g., `spacely-media`) |
+| `S3_BUCKET` | — | Bucket name (e.g., `wolly-media`) |
 | `S3_REGION` | — | Bucket region (`auto` for Cloudflare R2) |
 | `S3_ACCESS_KEY` | — | S3/R2 access key ID |
 | `S3_SECRET_KEY` | — | S3/R2 secret access key |

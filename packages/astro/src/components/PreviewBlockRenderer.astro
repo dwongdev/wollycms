@@ -18,14 +18,14 @@ const { blocks, region, components } = Astro.props;
 {blocks.map((block, index) => {
   const Component = components[block.block_type];
   if (!Component) {
-    return <div class="spacely-block spacely-block-unknown" data-spacely-pb={block.id} data-spacely-region={region} data-spacely-type={block.block_type}>Unknown block type: {block.block_type}</div>;
+    return <div class="wolly-block wolly-block-unknown" data-wolly-pb={block.id} data-wolly-region={region} data-wolly-type={block.block_type}>Unknown block type: {block.block_type}</div>;
   }
   return (
     <div
-      class="spacely-block"
-      data-spacely-pb={block.id}
-      data-spacely-region={region}
-      data-spacely-type={block.block_type}
+      class="wolly-block"
+      data-wolly-pb={block.id}
+      data-wolly-region={region}
+      data-wolly-type={block.block_type}
     >
       <Component
         fields={block.fields}

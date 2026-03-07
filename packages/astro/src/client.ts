@@ -1,5 +1,5 @@
 import type {
-  SpacelyConfig,
+  WollyConfig,
   PageListParams,
   PageSummary,
   Page,
@@ -14,10 +14,10 @@ import type {
   PaginatedResponse,
 } from './types.js';
 
-export class SpacelyClient {
+export class WollyClient {
   private baseUrl: string;
 
-  constructor(config: SpacelyConfig) {
+  constructor(config: WollyConfig) {
     this.baseUrl = config.apiUrl.replace(/\/+$/, '');
   }
 
@@ -25,7 +25,7 @@ export class SpacelyClient {
     const url = `${this.baseUrl}${path}`;
     const res = await fetch(url);
     if (!res.ok) {
-      throw new Error(`SpacelyCMS API error: ${res.status} ${res.statusText} (${url})`);
+      throw new Error(`WollyCMS API error: ${res.status} ${res.statusText} (${url})`);
     }
     return res.json() as Promise<T>;
   }
@@ -110,6 +110,6 @@ export class SpacelyClient {
   };
 }
 
-export function createClient(config: SpacelyConfig): SpacelyClient {
-  return new SpacelyClient(config);
+export function createClient(config: WollyConfig): WollyClient {
+  return new WollyClient(config);
 }

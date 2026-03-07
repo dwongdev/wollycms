@@ -1,0 +1,12 @@
+{
+  "name": "create-wolly",
+  "version": "0.1.0",
+  "description": "Create a new WollyCMS project",
+  "type": "module",
+  "bin": {
+    "create-wolly": "src/index.js"
+  },
+  "files": ["src"],
+  "keywords": ["wollycms", "cms", "astro", "create"],
+  "license": "MIT"
+}

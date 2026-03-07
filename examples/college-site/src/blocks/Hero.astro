@@ -1,6 +1,6 @@
 ---
-import type { BlockProps } from '@spacelycms/astro';
-import { spacely } from '../lib/spacely';
+import type { BlockProps } from '@wollycms/astro';
+import { wolly } from '../lib/wolly';
 
 interface Props extends BlockProps {
   fields: {
@@ -20,7 +20,7 @@ const style = fields.style ?? 'interior';
 
 const imgSrc = fields.image
   ? (typeof fields.image === 'number'
-    ? spacely.media.url(fields.image, 'large')
+    ? wolly.media.url(fields.image, 'large')
     : String(fields.image))
   : null;
 ---

@@ -13,7 +13,7 @@ beforeAll(async () => {
   const res = await app.request('/api/admin/auth/login', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email: 'admin@spacelycms.local', password: 'admin123' }),
+    body: JSON.stringify({ email: 'admin@wollycms.local', password: 'admin123' }),
   });
   const body = await res.json();
   authToken = body.data.token;

@@ -1,4 +1,4 @@
-# SpacelyCMS — Requirements
+# WollyCMS — Requirements
 
 ## Target Users
 

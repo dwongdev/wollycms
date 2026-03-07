@@ -5,7 +5,7 @@ import { startScheduler } from './scheduler.js';
 
 serve({ fetch: app.fetch, port: env.PORT, hostname: env.HOST }, (info) => {
   console.log(
-    `SpacelyCMS server running at http://${info.address}:${info.port}`,
+    `WollyCMS server running at http://${info.address}:${info.port}`,
   );
   startScheduler();
 });

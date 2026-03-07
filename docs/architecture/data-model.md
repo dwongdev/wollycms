@@ -1,4 +1,4 @@
-# SpacelyCMS — Data Model
+# WollyCMS — Data Model
 
 ## Overview
 
@@ -394,7 +394,7 @@ CREATE INDEX idx_revisions_page ON page_revisions(page_id);
 
 The data model is designed so that Drupal content can be mapped directly:
 
-| Drupal Concept | SpacelyCMS Equivalent |
+| Drupal Concept | WollyCMS Equivalent |
 |---|---|
 | Content Type | content_types |
 | Node | pages |

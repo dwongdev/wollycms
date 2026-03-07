@@ -2,8 +2,8 @@
 export const prerender = false;
 
 import Layout from '../../layouts/Default.astro';
-import PreviewBlockRenderer from '@spacelycms/astro/components/PreviewBlockRenderer.astro';
-import { spacely } from '../../lib/spacely';
+import PreviewBlockRenderer from '@wollycms/astro/components/PreviewBlockRenderer.astro';
+import { wolly } from '../../lib/wolly';
 import * as blockComponents from '../../lib/blocks';
 
 const { slug } = Astro.params;
@@ -23,9 +23,9 @@ const pageJson = await pageRes.json();
 const page = pageJson.data;
 
 const [mainMenu, footerMenu, config] = await Promise.all([
-  spacely.menus.get('main'),
-  spacely.menus.get('footer'),
-  spacely.config.get(),
+  wolly.menus.get('main'),
+  wolly.menus.get('footer'),
+  wolly.config.get(),
 ]);
 
 const regions = page.regions ?? {};
@@ -95,7 +95,7 @@ const hasSidebar = sidebarBlocks.length > 0;
   }
 
   /* Preview block hover/click overlays */
-  .spacely-block {
+  .wolly-block {
     position: relative;
     transition: outline 0.15s, outline-offset 0.15s;
     outline: 2px solid transparent;
@@ -103,12 +103,12 @@ const hasSidebar = sidebarBlocks.length > 0;
     cursor: pointer;
   }
 
-  .spacely-block:hover {
+  .wolly-block:hover {
     outline-color: rgba(37, 99, 235, 0.4);
   }
 
-  .spacely-block:hover::after {
-    content: attr(data-spacely-type) ' — ' attr(data-spacely-region);
+  .wolly-block:hover::after {
+    content: attr(data-wolly-type) ' — ' attr(data-wolly-region);
     position: absolute;
     top: 0;
     right: 0;
@@ -124,13 +124,13 @@ const hasSidebar = sidebarBlocks.length > 0;
     z-index: 100;
   }
 
-  .spacely-block.spacely-selected {
+  .wolly-block.wolly-selected {
     outline-color: #2563eb;
     outline-width: 3px;
     outline-offset: -3px;
   }
 
-  .spacely-block.spacely-selected::before {
+  .wolly-block.wolly-selected::before {
     content: '';
     position: absolute;
     inset: 0;
@@ -147,25 +147,25 @@ const hasSidebar = sidebarBlocks.length > 0;
 
     // Click handler — select block and notify admin
     document.addEventListener('click', function(e) {
-      const blockEl = e.target.closest('.spacely-block');
+      const blockEl = e.target.closest('.wolly-block');
       if (!blockEl) return;
 
       e.preventDefault();
       e.stopPropagation();
 
       // Deselect previous
-      if (selectedEl) selectedEl.classList.remove('spacely-selected');
+      if (selectedEl) selectedEl.classList.remove('wolly-selected');
 
       // Select new
       selectedEl = blockEl;
-      blockEl.classList.add('spacely-selected');
+      blockEl.classList.add('wolly-selected');
 
-      const pbId = blockEl.dataset.spacelyPb;
-      const region = blockEl.dataset.spacelyRegion;
-      const type = blockEl.dataset.spacelyType;
+      const pbId = blockEl.dataset.wollyPb;
+      const region = blockEl.dataset.wollyRegion;
+      const type = blockEl.dataset.wollyType;
 
       window.parent.postMessage({
-        type: 'spacely:select-block',
+        type: 'wolly:select-block',
         pbId: pbId,
         region: region,
         blockType: type,
@@ -176,20 +176,20 @@ const hasSidebar = sidebarBlocks.length > 0;
     window.addEventListener('message', function(e) {
       if (!e.data || !e.data.type) return;
 
-      if (e.data.type === 'spacely:refresh') {
+      if (e.data.type === 'wolly:refresh') {
         window.location.reload();
         return;
       }
 
-      if (e.data.type === 'spacely:highlight-block') {
+      if (e.data.type === 'wolly:highlight-block') {
         // Deselect previous
-        if (selectedEl) selectedEl.classList.remove('spacely-selected');
+        if (selectedEl) selectedEl.classList.remove('wolly-selected');
 
         // Find and highlight the target block
-        const target = document.querySelector('[data-spacely-pb="' + e.data.pbId + '"]');
+        const target = document.querySelector('[data-wolly-pb="' + e.data.pbId + '"]');
         if (target) {
           selectedEl = target;
-          target.classList.add('spacely-selected');
+          target.classList.add('wolly-selected');
           target.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
       }

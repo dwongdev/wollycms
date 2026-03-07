@@ -32,7 +32,7 @@ app.get('/export', async (c) => {
     redirects: await db.select().from(redirects),
   };
 
-  c.header('Content-Disposition', `attachment; filename="spacely-export-${new Date().toISOString().slice(0, 10)}.json"`);
+  c.header('Content-Disposition', `attachment; filename="wolly-export-${new Date().toISOString().slice(0, 10)}.json"`);
   return c.json(data);
 });
 

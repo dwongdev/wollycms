@@ -30,13 +30,13 @@
 
   export function refresh() {
     if (iframeEl?.contentWindow) {
-      iframeEl.contentWindow.postMessage({ type: 'spacely:refresh' }, '*');
+      iframeEl.contentWindow.postMessage({ type: 'wolly:refresh' }, '*');
     }
   }
 
   export function highlightBlock(pbId: string) {
     if (iframeEl?.contentWindow) {
-      iframeEl.contentWindow.postMessage({ type: 'spacely:highlight-block', pbId }, '*');
+      iframeEl.contentWindow.postMessage({ type: 'wolly:highlight-block', pbId }, '*');
     }
   }
 
@@ -54,7 +54,7 @@
 
   function handleMessage(e: MessageEvent) {
     if (!e.data || !e.data.type) return;
-    if (e.data.type === 'spacely:select-block') {
+    if (e.data.type === 'wolly:select-block') {
       onBlockSelect?.(e.data.pbId, e.data.region);
     }
   }

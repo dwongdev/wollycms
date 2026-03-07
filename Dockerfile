@@ -31,7 +31,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /app
 
 # Create non-root user
-RUN groupadd -r spacely && useradd -r -g spacely -m spacely
+RUN groupadd -r wolly && useradd -r -g wolly -m wolly
 
 # Copy production node_modules
 COPY --from=deps /app/node_modules ./node_modules
@@ -49,14 +49,14 @@ COPY --from=build-admin /app/packages/admin/build ./packages/admin/build
 COPY package.json ./
 
 # Create data and uploads directories
-RUN mkdir -p data uploads && chown -R spacely:spacely /app
+RUN mkdir -p data uploads && chown -R wolly:wolly /app
 
-USER spacely
+USER wolly
 
 ENV NODE_ENV=production
 ENV PORT=4321
 ENV HOST=0.0.0.0
-ENV DATABASE_URL=sqlite:./data/spacely.db
+ENV DATABASE_URL=sqlite:./data/wolly.db
 ENV MEDIA_DIR=./uploads
 ENV JWT_SECRET=change-me-in-production
 

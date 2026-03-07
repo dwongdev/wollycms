@@ -2,15 +2,15 @@ const API_BASE = '/api/admin';
 
 function getToken(): string | null {
   if (typeof window === 'undefined') return null;
-  return localStorage.getItem('spacely_token');
+  return localStorage.getItem('wolly_token');
 }
 
 export function setToken(token: string) {
-  localStorage.setItem('spacely_token', token);
+  localStorage.setItem('wolly_token', token);
 }
 
 export function clearToken() {
-  localStorage.removeItem('spacely_token');
+  localStorage.removeItem('wolly_token');
 }
 
 export function isAuthenticated(): boolean {

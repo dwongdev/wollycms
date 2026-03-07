@@ -44,7 +44,7 @@ async function clearTables(db: ReturnType<typeof getDb>) {
 }
 
 async function seed() {
-  console.log('Starting SpacelyCMS seed...\n');
+  console.log('Starting WollyCMS seed...\n');
 
   const db = getDb();
 

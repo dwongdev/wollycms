@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@astrojs/node": "^9.5.4",
-    "@spacelycms/astro": "*",
+    "@wollycms/astro": "*",
     "astro": "^5.7.0"
   }
 }

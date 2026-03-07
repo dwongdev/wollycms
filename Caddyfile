@@ -1,10 +1,10 @@
-# SpacelyCMS Caddy Configuration
+# WollyCMS Caddy Configuration
 # Replace cms.example.com with your domain
 # Caddy handles automatic HTTPS via Let's Encrypt
 
 cms.example.com {
 	# API and admin UI
-	reverse_proxy spacelycms:4321
+	reverse_proxy wollycms:4321
 
 	# Compress responses
 	encode gzip zstd

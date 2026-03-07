@@ -1,6 +1,6 @@
 # Competitive Landscape — Headless CMS Options for Astro
 
-> Why build SpacelyCMS instead of using an existing solution?
+> Why build WollyCMS instead of using an existing solution?
 
 ---
 
@@ -121,9 +121,9 @@
 
 ---
 
-## The Gap SpacelyCMS Fills
+## The Gap WollyCMS Fills
 
-| Capability | Storyblok | Strapi | Payload | SpacelyCMS |
+| Capability | Storyblok | Strapi | Payload | WollyCMS |
 |---|---|---|---|---|
 | Self-hosted | ✗ | ✓ | ✓ | ✓ |
 | Free / open source | ✗ | ✓ | ✓ | ✓ |
@@ -140,7 +140,7 @@
 | Dynamic content listings | ✗ | ✓ | ✓ | ✓ |
 | Webmaster-friendly | ✓ | Moderate | ✗ | Goal |
 
-### SpacelyCMS Positioning
+### WollyCMS Positioning
 
 **"The self-hosted, Astro-native CMS with Drupal's content composition power
 and Storyblok's editing vision."**

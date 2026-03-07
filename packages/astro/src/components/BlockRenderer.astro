@@ -13,7 +13,7 @@ const { blocks, region, components } = Astro.props;
 {blocks.map((block, index) => {
   const Component = components[block.block_type];
   if (!Component) {
-    return <div class="spacely-block-unknown" data-type={block.block_type}>Unknown block type: {block.block_type}</div>;
+    return <div class="wolly-block-unknown" data-type={block.block_type}>Unknown block type: {block.block_type}</div>;
   }
   return (
     <Component

@@ -1,4 +1,4 @@
-# SpacelyCMS — Architecture Overview
+# WollyCMS — Architecture Overview
 
 ## Design Principles
 
@@ -22,7 +22,7 @@
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                     SpacelyCMS Server                        │
+│                     WollyCMS Server                        │
 │                                                              │
 │  ┌──────────────────────────────────────────────────────┐    │
 │  │                  Admin UI (SPA)                       │    │
@@ -69,7 +69,7 @@
 │              Any Astro Project                               │
 │                                                              │
 │  ┌──────────────────────────────────────────────────────┐    │
-│  │           @spacelycms/astro (npm package)             │    │
+│  │           @wollycms/astro (npm package)             │    │
 │  │                                                       │    │
 │  │  • Client: fetches content, pages, menus, media       │    │
 │  │  • BlockRenderer: maps block types → Astro components │    │
@@ -91,7 +91,7 @@
 ┌──────────────────────────────────┐
 │       Your Infrastructure        │
 │                                  │
-│  SpacelyCMS Server (:4321)       │
+│  WollyCMS Server (:4321)       │
 │  SQLite or PostgreSQL            │
 │           │                      │
 │      cloudflared tunnel          │
@@ -208,7 +208,7 @@ instance, many page references.
 
 ### 4. The Astro Integration is a Separate Package
 
-`@spacelycms/astro` is an npm package that any Astro project can install. It
+`@wollycms/astro` is an npm package that any Astro project can install. It
 fetches from the CMS API and provides helpers. The CMS server knows nothing
 about Astro internals — it just serves JSON.
 
@@ -229,7 +229,7 @@ backend.
 
 ```
 Build time:
-  Astro build → @spacelycms/astro fetches all pages, menus, blocks, media URLs
+  Astro build → @wollycms/astro fetches all pages, menus, blocks, media URLs
   → Generates static HTML → Deploy to CDN
 
 Content update:
