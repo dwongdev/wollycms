@@ -1,7 +1,4 @@
 <script lang="ts">
-  import { goto } from '$app/navigation';
-  import { base } from '$app/paths';
-
   const API_BASE = '/api/admin';
 
   let name = $state('');
@@ -32,7 +29,7 @@
         error = json.errors?.[0]?.message || 'Setup failed';
         return;
       }
-      goto(`${base}/login`);
+      window.location.href = '/admin/login';
     } catch (err: any) {
       error = err.message || 'Setup failed';
     } finally {
