@@ -109,9 +109,7 @@ app.get('/api/health', (c) => {
 });
 
 /**
- * GET /uploads/* - Serve uploaded files from MEDIA_DIR with correct content
- * types and long-lived cache headers (filenames contain UUIDs).
- * Only mounted for local storage — S3/R2 media is served directly from CDN.
+ * GET /uploads/* - Serve uploaded files from MEDIA_DIR (local storage only).
  */
 if (!getStorage().isExternal) {
   app.get('/uploads/*', async (c) => {
@@ -155,6 +153,39 @@ if (!getStorage().isExternal) {
     }
 
     return c.body(fileStream as unknown as ReadableStream);
+  });
+}
+
+/**
+ * GET /media/* - Serve media files from R2/S3 storage.
+ * Reads the file from the storage backend and streams it with correct
+ * content type and long-lived cache headers (filenames contain UUIDs).
+ */
+if (getStorage().isExternal) {
+  app.get('/media/*', async (c) => {
+    const requestedPath = c.req.path.replace(/^\/media\//, '');
+
+    if (requestedPath.includes('..') || requestedPath.startsWith('/') || requestedPath.includes('\0') || !requestedPath) {
+      return c.json({ errors: [{ code: 'FORBIDDEN', message: 'Invalid path' }] }, 403);
+    }
+
+    const fileData = await getStorage().read(requestedPath);
+    if (!fileData) {
+      return c.notFound();
+    }
+
+    const ext = '.' + (requestedPath.split('.').pop() || '').toLowerCase();
+    const contentType = MIME_TYPES[ext] || 'application/octet-stream';
+
+    c.header('Content-Type', contentType);
+    c.header('Content-Length', String(fileData.byteLength));
+    c.header('Cache-Control', 'public, max-age=31536000, immutable');
+    c.header('Content-Security-Policy', "default-src 'none'; sandbox");
+    if (!INLINE_SAFE_CONTENT_TYPES.has(contentType)) {
+      c.header('Content-Disposition', 'attachment');
+    }
+
+    return c.body(fileData);
   });
 }
 
