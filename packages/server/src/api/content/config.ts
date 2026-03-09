@@ -9,16 +9,16 @@ const app = new Hono();
 app.get('/', (c) => {
   return c.json({
     data: {
-      siteName: 'Southside College',
+      siteName: 'Southside Virginia Community College',
       tagline: 'Your Future Starts Here',
       logo: null,
       footer: {
-        text: 'Southside College. All rights reserved.',
+        text: 'Southside Virginia Community College. All rights reserved.',
       },
       social: {
-        facebook: null,
+        facebook: 'https://www.facebook.com/SouthsideVirginiaCommunityCollege/',
         twitter: null,
-        instagram: null,
+        instagram: 'https://www.instagram.com/southsidevacc/',
       },
     },
   });

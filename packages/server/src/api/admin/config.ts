@@ -12,14 +12,14 @@ app.put('/*', requireRole('admin'));
 const CONFIG_PATH = join(process.cwd(), 'data', 'config.json');
 
 const defaultConfig = {
-  siteName: 'Southside College',
+  siteName: 'Southside Virginia Community College',
   tagline: 'Your Future Starts Here',
   logo: null as string | null,
-  footer: { text: 'Southside College. All rights reserved.' },
+  footer: { text: 'Southside Virginia Community College. All rights reserved.' },
   social: {
-    facebook: null as string | null,
+    facebook: 'https://www.facebook.com/SouthsideVirginiaCommunityCollege/' as string | null,
     twitter: null as string | null,
-    instagram: null as string | null,
+    instagram: 'https://www.instagram.com/southsidevacc/' as string | null,
   },
 };
 
