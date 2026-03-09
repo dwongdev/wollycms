@@ -46,12 +46,17 @@ jobs:
       - name: Build admin UI
         run: npm run build:admin
 
+      - name: Prepare admin assets for Workers
+        run: |
+          mkdir -p packages/admin/build-assets/admin
+          cp -r packages/admin/build/* packages/admin/build-assets/admin/
+
       - name: Build worker
         run: npm run build:worker
 
       - name: Generate wrangler.toml
         run: |
-          cat > wrangler.toml << 'TOML'
+          cat > wrangler.toml <<'TOML'
           name = "${{ vars.WORKER_NAME }}"
           main = "packages/server/dist-worker/worker.js"
           compatibility_date = "2024-12-01"
@@ -84,4 +89,5 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          wranglerVersion: '4.71.0'
           command: deploy
