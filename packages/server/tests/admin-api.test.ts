@@ -584,7 +584,7 @@ describe('Admin Block Types', () => {
     const res = await authed('/block-types');
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body.data.length).toBe(11);
+    expect(body.data.length).toBe(12);
   });
 
   it('GET /:id returns block type', async () => {
