@@ -185,13 +185,15 @@ describe('GET /api/content/media/:id/:variant', () => {
     expect(body.errors[0].code).toBe('FILE_NOT_FOUND');
   });
 
-  it('returns 404 for unavailable variant', async () => {
+  it('falls back to original when variant is unavailable', async () => {
     // Media record 2 (test-logo.png) has empty variants {},
-    // so requesting "thumbnail" should return VARIANT_NOT_FOUND.
+    // so requesting "thumbnail" falls back to the original path.
+    // In tests there's no file on disk, so we get FILE_NOT_FOUND
+    // (not VARIANT_NOT_FOUND — the variant fallback is transparent).
     const res = await get('/api/content/media/2/thumbnail');
     expect(res.status).toBe(404);
     const body = await res.json();
-    expect(body.errors[0].code).toBe('VARIANT_NOT_FOUND');
+    expect(body.errors[0].code).toBe('FILE_NOT_FOUND');
   });
 
   it('returns 404 for non-existent media', async () => {
