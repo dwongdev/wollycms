@@ -1,6 +1,6 @@
 <script lang="ts">
   import { api } from '$lib/api.js';
-  import { AlertTriangle } from 'lucide-svelte';
+  import { AlertTriangle, Search } from 'lucide-svelte';
   import { focusTrap } from '$lib/focusTrap.js';
 
   let { value, onSelect }: { value: number | null; onSelect: (mediaId: number | null) => void } = $props();
@@ -9,19 +9,27 @@
   let mediaList = $state<any[]>([]);
   let loading = $state(false);
   let selected = $state<any>(null);
-  let pickerTab = $state<'recent' | 'all'>('recent');
+  let searchQuery = $state('');
+  let typeFilter = $state<'all' | 'image' | 'video' | 'document'>('all');
+  let total = $state(0);
+  let offset = $state(0);
+  const PAGE_SIZE = 30;
+
+  let searchDebounce: ReturnType<typeof setTimeout>;
 
   const missingAlt = $derived(selected && selected.mimeType?.startsWith('image/') && !selected.altText);
-
-  const recentMedia = $derived(
-    [...mediaList].sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || '')).slice(0, 12)
-  );
 
   async function loadMedia() {
     loading = true;
     try {
-      const res = await api.get<{ data: any[] }>('/media?limit=50');
+      const params = new URLSearchParams();
+      params.set('limit', String(PAGE_SIZE));
+      params.set('offset', String(offset));
+      if (searchQuery) params.set('search', searchQuery);
+      if (typeFilter !== 'all') params.set('type', typeFilter);
+      const res = await api.get<{ data: any[]; meta: { total: number } }>(`/media?${params}`);
       mediaList = res.data;
+      total = res.meta?.total ?? res.data.length;
     } catch { /* ignore */ }
     loading = false;
   }
@@ -38,7 +46,9 @@
 
   function openPicker() {
     open = true;
-    pickerTab = 'recent';
+    searchQuery = '';
+    typeFilter = 'all';
+    offset = 0;
     loadMedia();
   }
 
@@ -51,9 +61,37 @@
     onSelect(null);
   }
 
+  function onSearch(value: string) {
+    searchQuery = value;
+    offset = 0;
+    clearTimeout(searchDebounce);
+    searchDebounce = setTimeout(loadMedia, 300);
+  }
+
+  function onTypeChange(type: typeof typeFilter) {
+    typeFilter = type;
+    offset = 0;
+    loadMedia();
+  }
+
+  function prevPage() {
+    offset = Math.max(0, offset - PAGE_SIZE);
+    loadMedia();
+  }
+
+  function nextPage() {
+    offset = offset + PAGE_SIZE;
+    loadMedia();
+  }
+
   function thumbnailUrl(item: any): string {
     return `/api/content/media/${item.id}/thumbnail`;
   }
+
+  const hasNextPage = $derived(offset + PAGE_SIZE < total);
+  const hasPrevPage = $derived(offset > 0);
+  const currentPage = $derived(Math.floor(offset / PAGE_SIZE) + 1);
+  const totalPages = $derived(Math.max(1, Math.ceil(total / PAGE_SIZE)));
 </script>
 
 <div class="media-picker">
@@ -88,23 +126,38 @@
 
 {#if open}
   <div class="modal-overlay" onclick={() => open = false} role="dialog" aria-modal="true" aria-labelledby="select-media-title">
-    <div class="modal" style="max-width: 720px;" onclick={(e) => e.stopPropagation()} use:focusTrap onescape={() => open = false}>
+    <div class="modal" style="max-width: 760px;" onclick={(e) => e.stopPropagation()} use:focusTrap onescape={() => open = false}>
       <div class="modal-header">
         <h2 id="select-media-title">Select Media</h2>
         <button class="btn-icon" onclick={() => open = false} aria-label="Close">&#10005;</button>
       </div>
-      <div class="modal-body" style="max-height: 60vh; overflow-y: auto;">
+      <div class="picker-toolbar">
+        <div class="picker-search">
+          <Search size={14} />
+          <input
+            type="search"
+            placeholder="Search media..."
+            value={searchQuery}
+            oninput={(e) => onSearch((e.target as HTMLInputElement).value)}
+          />
+        </div>
+        <div class="picker-filters">
+          <button class="filter-btn" class:active={typeFilter === 'all'} onclick={() => onTypeChange('all')}>All</button>
+          <button class="filter-btn" class:active={typeFilter === 'image'} onclick={() => onTypeChange('image')}>Images</button>
+          <button class="filter-btn" class:active={typeFilter === 'video'} onclick={() => onTypeChange('video')}>Videos</button>
+          <button class="filter-btn" class:active={typeFilter === 'document'} onclick={() => onTypeChange('document')}>Docs</button>
+        </div>
+      </div>
+      <div class="modal-body" style="max-height: 55vh; overflow-y: auto;">
         {#if loading}
-          <p style="text-align: center; color: var(--c-text-light);">Loading...</p>
+          <p style="text-align: center; color: var(--c-text-light); padding: 2rem 0;">Loading...</p>
         {:else if mediaList.length === 0}
-          <p style="text-align: center; color: var(--c-text-light);">No media uploaded yet. Upload files in the Media section first.</p>
+          <p style="text-align: center; color: var(--c-text-light); padding: 2rem 0;">
+            {searchQuery ? `No media matching "${searchQuery}"` : 'No media uploaded yet.'}
+          </p>
         {:else}
-          <div class="tabs" style="margin-bottom: 0.75rem;">
-            <button class="tab" class:active={pickerTab === 'recent'} onclick={() => pickerTab = 'recent'}>Recent</button>
-            <button class="tab" class:active={pickerTab === 'all'} onclick={() => pickerTab = 'all'}>All Media</button>
-          </div>
           <div class="media-grid">
-            {#each (pickerTab === 'recent' ? recentMedia : mediaList) as item}
+            {#each mediaList as item}
               <button class="media-grid-item" class:selected={value === item.id} onclick={() => pick(item)}>
                 {#if item.mimeType?.startsWith('image/')}
                   <img src={thumbnailUrl(item)} alt={item.altText || item.title} />
@@ -114,7 +167,7 @@
                 {:else if item.mimeType?.startsWith('video/')}
                   <div class="media-file-icon">🎬 {item.originalName?.split('.').pop()?.toUpperCase()}</div>
                 {:else}
-                  <div class="media-file-icon">{item.originalName?.split('.').pop()?.toUpperCase() || 'FILE'}</div>
+                  <div class="media-file-icon">📄 {item.originalName?.split('.').pop()?.toUpperCase() || 'FILE'}</div>
                 {/if}
                 <span class="media-grid-label">{item.title || item.originalName}</span>
               </button>
@@ -122,6 +175,13 @@
           </div>
         {/if}
       </div>
+      {#if total > PAGE_SIZE}
+        <div class="picker-pagination">
+          <button class="btn btn-sm btn-outline" disabled={!hasPrevPage} onclick={prevPage}>← Prev</button>
+          <span class="picker-page-info">{currentPage} / {totalPages} ({total} items)</span>
+          <button class="btn btn-sm btn-outline" disabled={!hasNextPage} onclick={nextPage}>Next →</button>
+        </div>
+      {/if}
     </div>
   </div>
 {/if}
@@ -188,17 +248,90 @@
     color: var(--c-primary, #2563eb);
   }
 
+  .picker-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1.25rem;
+    border-bottom: 1px solid var(--c-border, #e2e8f0);
+  }
+
+  .picker-search {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 1;
+    padding: 0.4rem 0.6rem;
+    border: 1px solid var(--c-border, #e2e8f0);
+    border-radius: var(--radius, 6px);
+    background: var(--c-bg, #fff);
+    color: var(--c-text-light, #64748b);
+  }
+
+  .picker-search input {
+    border: none;
+    outline: none;
+    background: transparent;
+    flex: 1;
+    font-size: 0.85rem;
+    color: var(--c-text, #1e293b);
+  }
+
+  .picker-filters {
+    display: flex;
+    gap: 0.25rem;
+  }
+
+  .filter-btn {
+    padding: 0.3rem 0.6rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    border: 1px solid var(--c-border, #e2e8f0);
+    border-radius: var(--radius, 6px);
+    background: var(--c-bg, #fff);
+    color: var(--c-text-light, #64748b);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .filter-btn:hover {
+    border-color: var(--c-primary, #2563eb);
+    color: var(--c-primary, #2563eb);
+  }
+
+  .filter-btn.active {
+    background: var(--c-primary, #2563eb);
+    color: #fff;
+    border-color: var(--c-primary, #2563eb);
+  }
+
+  .picker-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1.25rem;
+    border-top: 1px solid var(--c-border, #e2e8f0);
+  }
+
+  .picker-page-info {
+    font-size: 0.8rem;
+    color: var(--c-text-light, #64748b);
+  }
+
   .media-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-    gap: 0.75rem;
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    gap: 0.6rem;
+    padding: 0.75rem 0;
   }
 
   .media-grid-item {
+    position: relative;
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 0.5rem;
+    padding: 0.4rem;
     border: 2px solid var(--c-border, #e2e8f0);
     border-radius: var(--radius, 6px);
     background: #fff;
@@ -220,7 +353,7 @@
     aspect-ratio: 1;
     object-fit: cover;
     border-radius: 4px;
-    margin-bottom: 0.35rem;
+    margin-bottom: 0.25rem;
   }
 
   .media-file-thumb {
@@ -245,14 +378,14 @@
     justify-content: center;
     background: var(--c-bg-alt, #f8fafc);
     border-radius: 4px;
-    margin-bottom: 0.35rem;
+    margin-bottom: 0.25rem;
     font-size: 0.75rem;
     font-weight: 600;
     color: var(--c-text-light, #64748b);
   }
 
   .media-grid-label {
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     text-align: center;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -271,14 +404,10 @@
     margin-bottom: 0.2rem;
   }
 
-  .media-grid-item {
-    position: relative;
-  }
-
   .media-grid-alt-dot {
     position: absolute;
-    top: 0.4rem;
-    right: 0.4rem;
+    top: 0.35rem;
+    right: 0.35rem;
     width: 8px;
     height: 8px;
     border-radius: 50%;
