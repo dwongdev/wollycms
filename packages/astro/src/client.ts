@@ -13,6 +13,7 @@ import type {
   ApiResponse,
   PaginatedResponse,
 } from './types.js';
+import type { TrackingScriptsData } from './helpers/tracking.js';
 
 export class WollyClient {
   private baseUrl: string;
@@ -105,6 +106,15 @@ export class WollyClient {
   readonly schemas = {
     get: async (): Promise<Schemas> => {
       const res = await this.fetch<ApiResponse<Schemas>>('/schemas');
+      return res.data;
+    },
+  };
+
+  readonly trackingScripts = {
+    /** Get active tracking scripts, optionally filtered for a specific page slug. */
+    getForPage: async (slug?: string): Promise<TrackingScriptsData> => {
+      const qs = slug ? `?page=${encodeURIComponent(slug)}` : '';
+      const res = await this.fetch<ApiResponse<TrackingScriptsData>>(`/tracking-scripts${qs}`);
       return res.data;
     },
   };

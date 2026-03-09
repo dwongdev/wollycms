@@ -43,6 +43,13 @@
       "when": 1772839530637,
       "tag": "0005_add-seo-fields",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1773022111434,
+      "tag": "0006_jittery_the_initiative",
+      "breakpoints": true
     }
   ]
 }

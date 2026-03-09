@@ -13,4 +13,5 @@ export const { menus, menuItems } = mod;
 export const { media } = mod;
 export const { redirects, users } = mod;
 export const { webhooks, apiKeys, auditLogs } = mod;
+export const { trackingScripts } = mod;
 export type { FieldDefinition, RegionDefinition } from './_sqlite.js';

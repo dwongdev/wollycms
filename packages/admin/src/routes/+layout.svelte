@@ -11,7 +11,7 @@
   import {
     LayoutDashboard, FileText, Blocks, Image, Menu, Tags,
     CornerDownRight, ClipboardList, Square, Users, Settings,
-    Webhook, KeyRound, ScrollText,
+    Webhook, KeyRound, ScrollText, Code,
   } from 'lucide-svelte';
   import '../app.css';
 
@@ -104,6 +104,7 @@
         { href: '/users', label: 'Users', icon: Users },
         { href: '/webhooks', label: 'Webhooks', icon: Webhook },
         { href: '/api-keys', label: 'API Keys', icon: KeyRound },
+        { href: '/tracking-scripts', label: 'Tracking', icon: Code },
         { href: '/audit-logs', label: 'Audit Log', icon: ScrollText },
         { href: '/settings', label: 'Settings', icon: Settings },
       ],

@@ -354,3 +354,82 @@ describe('GET /api/content/preview/pages/:slug', () => {
     expect(res.status).toBe(404);
   });
 });
+
+// --- Content API Tracking Scripts ---
+describe('GET /api/content/tracking-scripts', () => {
+  // Create test scripts via admin API first
+  beforeAll(async () => {
+    const headers = { Authorization: `Bearer ${authToken}`, 'Content-Type': 'application/json' };
+
+    // Global head script
+    await app.request('/api/admin/tracking-scripts', {
+      method: 'POST', headers,
+      body: JSON.stringify({ name: 'GA4', code: '<script>ga4()</script>', position: 'head', scope: 'global', priority: 0 }),
+    });
+
+    // Global body script
+    await app.request('/api/admin/tracking-scripts', {
+      method: 'POST', headers,
+      body: JSON.stringify({ name: 'ChatWidget', code: '<script>chat()</script>', position: 'body', scope: 'global', priority: 10 }),
+    });
+
+    // Targeted script for admissions only
+    await app.request('/api/admin/tracking-scripts', {
+      method: 'POST', headers,
+      body: JSON.stringify({ name: 'AdmissionPixel', code: '<script>pixel()</script>', position: 'head', scope: 'targeted', targetPages: ['admissions'], priority: 5 }),
+    });
+
+    // Inactive script (should not appear)
+    await app.request('/api/admin/tracking-scripts', {
+      method: 'POST', headers,
+      body: JSON.stringify({ name: 'Inactive', code: '<script>nope()</script>', position: 'head', scope: 'global', isActive: false }),
+    });
+  });
+
+  it('returns scripts grouped by position', async () => {
+    const res = await get('/api/content/tracking-scripts');
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.data).toHaveProperty('head');
+    expect(body.data).toHaveProperty('body');
+  });
+
+  it('returns global scripts without page filter', async () => {
+    const res = await get('/api/content/tracking-scripts');
+    const body = await res.json();
+    const headNames = body.data.head.map((s: any) => s.name);
+    expect(headNames).toContain('GA4');
+    expect(body.data.body.some((s: any) => s.name === 'ChatWidget')).toBe(true);
+  });
+
+  it('excludes inactive scripts', async () => {
+    const res = await get('/api/content/tracking-scripts');
+    const body = await res.json();
+    const allNames = [...body.data.head, ...body.data.body].map((s: any) => s.name);
+    expect(allNames).not.toContain('Inactive');
+  });
+
+  it('targeted script appears for matching page', async () => {
+    const res = await get('/api/content/tracking-scripts?page=admissions');
+    const body = await res.json();
+    const headNames = body.data.head.map((s: any) => s.name);
+    expect(headNames).toContain('AdmissionPixel');
+  });
+
+  it('targeted script does NOT appear for non-matching page', async () => {
+    const res = await get('/api/content/tracking-scripts?page=about');
+    const body = await res.json();
+    const headNames = body.data.head.map((s: any) => s.name);
+    expect(headNames).not.toContain('AdmissionPixel');
+  });
+
+  it('scripts are sorted by priority', async () => {
+    const res = await get('/api/content/tracking-scripts?page=admissions');
+    const body = await res.json();
+    // GA4 (priority 0) should come before AdmissionPixel (priority 5)
+    const headNames = body.data.head.map((s: any) => s.name);
+    const ga4Idx = headNames.indexOf('GA4');
+    const pixelIdx = headNames.indexOf('AdmissionPixel');
+    expect(ga4Idx).toBeLessThan(pixelIdx);
+  });
+});

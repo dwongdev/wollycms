@@ -739,3 +739,85 @@ describe('Admin Search', () => {
     expect(body.data.menus.length).toBeGreaterThan(0);
   });
 });
+
+// --- Tracking Scripts ---
+describe('Admin Tracking Scripts', () => {
+  let scriptId: number;
+
+  it('POST /tracking-scripts creates a global script', async () => {
+    const res = await json('/tracking-scripts', 'POST', {
+      name: 'GA4',
+      code: '<script>ga("send","pageview")</script>',
+      position: 'head',
+      priority: 0,
+      scope: 'global',
+    });
+    expect(res.status).toBe(201);
+    const body = await res.json();
+    expect(body.data.name).toBe('GA4');
+    expect(body.data.scope).toBe('global');
+    expect(body.data.isActive).toBe(true);
+    scriptId = body.data.id;
+  });
+
+  it('POST /tracking-scripts creates a targeted script', async () => {
+    const res = await json('/tracking-scripts', 'POST', {
+      name: 'HubSpot',
+      code: '<script>hs("track")</script>',
+      position: 'body',
+      scope: 'targeted',
+      targetPages: ['admissions', 'about'],
+    });
+    expect(res.status).toBe(201);
+    const body = await res.json();
+    expect(body.data.scope).toBe('targeted');
+    expect(body.data.targetPages).toEqual(['admissions', 'about']);
+  });
+
+  it('GET /tracking-scripts lists all scripts', async () => {
+    const res = await authed('/tracking-scripts');
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.data.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('GET /tracking-scripts/:id returns single script', async () => {
+    const res = await authed(`/tracking-scripts/${scriptId}`);
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.data.name).toBe('GA4');
+    expect(body.data.targetPages).toEqual([]);
+  });
+
+  it('PUT /tracking-scripts/:id updates script', async () => {
+    const res = await json(`/tracking-scripts/${scriptId}`, 'PUT', { name: 'GA4 Updated', priority: 5 });
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.data.name).toBe('GA4 Updated');
+    expect(body.data.priority).toBe(5);
+  });
+
+  it('PUT /tracking-scripts/:id toggles isActive', async () => {
+    const res = await json(`/tracking-scripts/${scriptId}`, 'PUT', { isActive: false });
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.data.isActive).toBe(false);
+  });
+
+  it('POST /tracking-scripts rejects empty name', async () => {
+    const res = await json('/tracking-scripts', 'POST', { name: '', code: '<script></script>' });
+    expect(res.status).toBe(400);
+  });
+
+  it('POST /tracking-scripts rejects empty code', async () => {
+    const res = await json('/tracking-scripts', 'POST', { name: 'Test', code: '' });
+    expect(res.status).toBe(400);
+  });
+
+  it('DELETE /tracking-scripts/:id deletes script', async () => {
+    const res = await authed(`/tracking-scripts/${scriptId}`, { method: 'DELETE' });
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.success).toBe(true);
+  });
+});

@@ -20,6 +20,7 @@ import webhooksRouter from './webhooks.js';
 import apiKeysRouter from './api-keys.js';
 import auditRouter from './audit.js';
 import searchRouter from './search.js';
+import trackingScriptsRouter from './tracking-scripts.js';
 import setupRouter from './setup.js';
 
 const app = new Hono();
@@ -60,5 +61,6 @@ app.route('/webhooks', webhooksRouter);
 app.route('/api-keys', apiKeysRouter);
 app.route('/audit-logs', auditRouter);
 app.route('/search', searchRouter);
+app.route('/tracking-scripts', trackingScriptsRouter);
 
 export default app;

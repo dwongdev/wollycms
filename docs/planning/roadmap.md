@@ -464,7 +464,21 @@ that make teams choose WollyCMS over Strapi, Directus, or Storyblok.
 - [ ] OG image generation (deferred — auto-generate social sharing images
       from page title + hero image)
 
-### 7c. Form Builder
+### 7c. Tracking Scripts -- COMPLETE
+
+- [x] Tracking scripts management (admin CRUD for analytics/marketing snippets)
+- [x] Per-script page targeting (global or targeted to specific page slugs)
+- [x] Head/body placement with priority ordering
+- [x] Active/inactive toggle
+- [x] Content API endpoint (`GET /api/content/tracking-scripts?page=slug` —
+      returns active scripts grouped by position, filtered by page)
+- [x] Admin UI page (create/edit modal with page selector, scope toggle,
+      code textarea, position/priority controls)
+- [x] Astro integration (`trackingHelpers.renderHeadScripts()` /
+      `renderBodyScripts()`, `WollyClient.trackingScripts.getForPage()`)
+- [x] Tests: 9 admin + 6 content API tests
+
+### 7d. Form Builder
 
 - [ ] Form content type (define form fields in admin: text, email, textarea,
       select, checkbox, file upload)
@@ -473,7 +487,7 @@ that make teams choose WollyCMS over Strapi, Directus, or Storyblok.
 - [ ] Spam protection (honeypot field, rate limiting, optional reCAPTCHA)
 - [ ] Astro form component (`<WollyForm>` renders form, handles submission)
 
-### 7d. Multi-language (i18n)
+### 7e. Multi-language (i18n)
 
 - [ ] Locale support on pages (each page can have translations, linked by
       a translation group ID)
@@ -548,7 +562,7 @@ new block type.
 | Phase 4.5 | Admin UI Polish | Complete (a-e) |
 | Phase 5 | Production Hardening | Complete (5a-5c) |
 | Phase 6 | Packaging & DX | In progress (build, CLI, Docker dev) |
-| Phase 7 | Content Features | In progress (SEO complete, search partial) |
+| Phase 7 | Content Features | In progress (SEO + tracking complete, search partial) |
 | Phase 8 | Scale & Ecosystem | Partial (scheduled publishing) |
 
 **Phases 1-4** = The engine (done)

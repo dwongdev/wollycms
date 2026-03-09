@@ -3,3 +3,4 @@ export * from './types.js';
 export * as menuHelpers from './helpers/menu.js';
 export { renderRichText } from './helpers/richtext.js';
 export * as seoHelpers from './helpers/seo.js';
+export * as trackingHelpers from './helpers/tracking.js';
