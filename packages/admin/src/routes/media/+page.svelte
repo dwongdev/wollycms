@@ -254,10 +254,13 @@
 
     <div class="media-grid">
       {#each items as item}
-        <div class="card media-card">
+        <div class="card media-card" onclick={() => editItem = { ...item }} role="button" tabindex="0" onkeydown={(e) => { if (e.key === 'Enter') editItem = { ...item }; }}>
           <div class="media-thumb">
             {#if item.mimeType?.startsWith('image/')}
               <img src="/api/content/media/{item.id}/thumbnail" alt={item.altText || ''} />
+              {#if !item.altText}
+                <span class="alt-badge" title="Missing alt text">No alt text</span>
+              {/if}
             {:else if item.mimeType?.startsWith('video/')}
               <div class="media-file-icon">
                 <span class="icon">&#127916;</span>
@@ -274,8 +277,8 @@
             <p class="media-title">{item.title || item.originalName}</p>
             <p class="media-meta">{formatSize(item.size)}{item.folder ? ` \u00B7 ${item.folder}` : ''}</p>
             <div class="media-actions">
-              <button class="btn btn-sm btn-outline" onclick={() => editItem = { ...item }}>Edit</button>
-              <button class="btn btn-sm btn-danger" onclick={() => deleteItem(item.id)}>Delete</button>
+              <button class="btn btn-sm btn-outline" onclick={(e) => { e.stopPropagation(); editItem = { ...item }; }}>Edit</button>
+              <button class="btn btn-sm btn-danger" onclick={(e) => { e.stopPropagation(); deleteItem(item.id); }}>Delete</button>
             </div>
           </div>
         </div>
@@ -484,15 +487,36 @@
   .media-card {
     padding: 0;
     overflow: hidden;
+    cursor: pointer;
+    transition: box-shadow 0.15s, border-color 0.15s;
+  }
+
+  .media-card:hover {
+    border-color: var(--c-accent, #3182ce);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   }
 
   .media-thumb {
+    position: relative;
     height: 140px;
     background: var(--c-bg);
     display: flex;
     align-items: center;
     justify-content: center;
     overflow: hidden;
+  }
+
+  .alt-badge {
+    position: absolute;
+    top: 0.35rem;
+    right: 0.35rem;
+    font-size: 0.6rem;
+    font-weight: 600;
+    padding: 0.15rem 0.4rem;
+    background: #fbbf24;
+    color: #78350f;
+    border-radius: 3px;
+    line-height: 1;
   }
   .media-thumb img {
     max-width: 100%;

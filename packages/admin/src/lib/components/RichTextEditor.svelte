@@ -26,6 +26,10 @@
   let slashFilter = $state('');
   let slashSelectedIndex = $state(0);
   let isInTable = $state(false);
+  let isImageSelected = $state(false);
+
+  // Image insertion state (two-step: pick → confirm with alt text)
+  let pendingImage = $state<{ id: number; src: string; alt: string; title: string } | null>(null);
 
   // Link dialog state
   let showLinkDialog = $state(false);
@@ -54,11 +58,10 @@
       : slashCommands
   );
 
-  /** Check heading order within this editor instance */
   function checkHeadings(doc: any) {
     const warnings: string[] = [];
     if (!doc?.content) { headingWarnings = warnings; return; }
-    let prev = 1; // assume page title is H1
+    let prev = 1;
     for (const node of doc.content) {
       if (node.type === 'heading' && node.attrs?.level) {
         const lvl = node.attrs.level;
@@ -71,7 +74,6 @@
     headingWarnings = warnings;
   }
 
-  // Paste cleanup: strip Word/Google Docs cruft
   const PasteCleanup = Extension.create({
     name: 'pasteCleanup',
     addProseMirrorPlugins() {
@@ -114,21 +116,18 @@
       content: content || '',
       onTransaction: () => {
         editor = editor;
-        // Track if cursor is in a table
         isInTable = !!editor?.isActive('table');
-        // Check heading hierarchy
+        isImageSelected = !!editor?.isActive('image');
         if (editor) checkHeadings(editor.getJSON());
       },
       onBlur: () => {
         if (editor) {
           onUpdate(editor.getJSON());
         }
-        // Delay hiding slash menu so clicks on it register
         setTimeout(() => { showSlashMenu = false; }, 200);
       },
     });
 
-    // Listen for / key to trigger slash menu
     editorEl!.addEventListener('keydown', handleSlashKey);
   });
 
@@ -194,7 +193,6 @@
     if (!cmd || !editor) return;
     showSlashMenu = false;
 
-    // Delete the "/" character if it was typed
     const { from } = editor.state.selection;
     const textBefore = editor.state.doc.textBetween(Math.max(0, from - 1), from);
     if (textBefore === '/') {
@@ -210,10 +208,25 @@
       case 'quote': editor.chain().focus().toggleBlockquote().run(); break;
       case 'code': editor.chain().focus().toggleCodeBlock().run(); break;
       case 'hr': editor.chain().focus().setHorizontalRule().run(); break;
-      case 'image': showImagePicker = true; break;
+      case 'image': showImagePicker = true; pendingImage = null; break;
       case 'document': linkTab = 'media'; openLinkDialog(); break;
       case 'table': editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run(); break;
       case 'link': openLinkDialog(); break;
+    }
+  }
+
+  // ---- Code toggle (smart: code block on empty line, inline code on selection) ----
+  function toggleCode() {
+    if (!editor) return;
+    if (editor.isActive('codeBlock')) {
+      editor.chain().focus().toggleCodeBlock().run();
+    } else {
+      const { from, to } = editor.state.selection;
+      if (from === to) {
+        editor.chain().focus().toggleCodeBlock().run();
+      } else {
+        editor.chain().focus().toggleCode().run();
+      }
     }
   }
 
@@ -228,7 +241,6 @@
       linkUrl = '';
     }
 
-    // Grab selected text for display text
     const { from, to } = editor.state.selection;
     linkText = from !== to ? editor.state.doc.textBetween(from, to, ' ') : '';
 
@@ -243,10 +255,8 @@
     const hasSelection = from !== to;
 
     if (hasSelection) {
-      // Apply link to selected text
       editor.chain().focus().setLink({ href: linkUrl }).run();
     } else if (linkText) {
-      // Insert new text with link
       editor.chain().focus()
         .insertContent({
           type: 'text',
@@ -255,7 +265,6 @@
         })
         .run();
     } else {
-      // No selection, no text — insert URL as both text and href
       editor.chain().focus()
         .insertContent({
           type: 'text',
@@ -283,19 +292,59 @@
     if (!linkText) {
       linkText = item.title || item.originalName || '';
     }
-    linkTab = 'url'; // Switch to URL tab to review before inserting
+    linkTab = 'url';
   }
 
-  // ---- Image picker ----
-  function insertImage() {
+  // ---- Image picker (two-step: pick → confirm with alt text) ----
+  function openImagePicker() {
+    pendingImage = null;
     showImagePicker = true;
   }
 
   function onImageSelect(mediaId: number | null) {
+    if (!mediaId) {
+      showImagePicker = false;
+      return;
+    }
+    // Wait for onSelectItem to get full data
+  }
+
+  function onImageSelectItem(item: any) {
+    pendingImage = {
+      id: item.id,
+      src: `/api/content/media/${item.id}/large`,
+      alt: item.altText || '',
+      title: item.title || item.originalName || '',
+    };
+  }
+
+  function confirmImageInsert() {
+    if (!editor || !pendingImage) return;
+    editor.chain().focus().setImage({
+      src: pendingImage.src,
+      alt: pendingImage.alt,
+    }).run();
+    pendingImage = null;
     showImagePicker = false;
-    if (!editor || !mediaId) return;
-    const src = `/api/content/media/${mediaId}/large`;
-    editor.chain().focus().setImage({ src }).run();
+  }
+
+  function backToImagePick() {
+    pendingImage = null;
+  }
+
+  function closeImagePicker() {
+    showImagePicker = false;
+    pendingImage = null;
+  }
+
+  // ---- Edit alt text on existing images ----
+  function editImageAlt() {
+    if (!editor) return;
+    const attrs = editor.getAttributes('image');
+    const alt = prompt('Alt text for this image:', attrs.alt || '');
+    if (alt !== null) {
+      editor.chain().focus().updateAttributes('image', { alt }).run();
+    }
   }
 
   function insertTable() {
@@ -319,7 +368,7 @@
     { label: 'I', action: () => editor?.chain().focus().toggleItalic().run(), isActive: () => !!editor?.isActive('italic') },
     { label: 'U', action: () => editor?.chain().focus().toggleUnderline().run(), isActive: () => !!editor?.isActive('underline') },
     { label: 'S', action: () => editor?.chain().focus().toggleStrike().run(), isActive: () => !!editor?.isActive('strike') },
-    { label: 'Code', action: () => editor?.chain().focus().toggleCode().run(), isActive: () => !!editor?.isActive('code') },
+    { label: 'Code', action: toggleCode, isActive: () => !!editor?.isActive('code') || !!editor?.isActive('codeBlock') },
     { divider: true },
     { label: 'H2', action: () => editor?.chain().focus().toggleHeading({ level: 2 }).run(), isActive: () => !!editor?.isActive('heading', { level: 2 }) },
     { label: 'H3', action: () => editor?.chain().focus().toggleHeading({ level: 3 }).run(), isActive: () => !!editor?.isActive('heading', { level: 3 }) },
@@ -331,7 +380,7 @@
     { label: 'HR', action: () => editor?.chain().focus().setHorizontalRule().run() },
     { divider: true },
     { label: 'Link', action: () => openLinkDialog(), isActive: () => !!editor?.isActive('link') },
-    { label: 'Img', action: insertImage },
+    { label: 'Img', action: openImagePicker },
     { label: 'Table', action: insertTable },
     { divider: true },
     { label: 'Undo', action: () => editor?.chain().focus().undo().run() },
@@ -376,6 +425,14 @@
     </div>
   {/if}
 
+  {#if isImageSelected}
+    <div class="rte-image-toolbar">
+      <span class="rte-image-label">Image:</span>
+      <button type="button" class="rte-btn-sm" onclick={editImageAlt}>Edit Alt Text</button>
+      <button type="button" class="rte-btn-sm rte-btn-danger" onclick={() => editor?.chain().focus().deleteSelection().run()}>Remove</button>
+    </div>
+  {/if}
+
   {#if headingWarnings.length > 0}
     <div class="rte-heading-warn" role="status">
       {#each headingWarnings as warn}
@@ -410,15 +467,36 @@
   </div>
 </div>
 
-<!-- Image picker modal -->
+<!-- Image picker modal (two-step: browse → confirm with alt text) -->
 {#if showImagePicker}
-  <div class="modal-overlay" onclick={() => showImagePicker = false} role="dialog" aria-modal="true" aria-labelledby="insert-image-title">
-    <div class="modal" onclick={(e) => e.stopPropagation()} style="max-width: 700px;" use:focusTrap onescape={() => showImagePicker = false}>
+  <div class="modal-overlay" onclick={closeImagePicker} role="dialog" aria-modal="true" aria-labelledby="insert-image-title">
+    <div class="modal" onclick={(e) => e.stopPropagation()} style="max-width: 700px;" use:focusTrap onescape={closeImagePicker}>
       <div class="modal-header">
-        <h2 id="insert-image-title">Insert Image</h2>
-        <button class="btn-icon" onclick={() => showImagePicker = false} aria-label="Close">&#10005;</button>
+        <h2 id="insert-image-title">{pendingImage ? 'Set Alt Text' : 'Insert Image'}</h2>
+        <button class="btn-icon" onclick={closeImagePicker} aria-label="Close">&#10005;</button>
       </div>
-      <MediaPicker inline allowUpload initialTypeFilter="image" value={null} onSelect={onImageSelect} />
+
+      {#if pendingImage}
+        <div class="image-confirm">
+          <div class="image-confirm-preview-wrap">
+            <img src={`/api/content/media/${pendingImage.id}/medium`} alt="" class="image-confirm-preview" />
+          </div>
+          <div class="image-confirm-form">
+            <label class="link-label" for="image-alt-input">Alt Text</label>
+            <input id="image-alt-input" type="text" class="link-input" bind:value={pendingImage.alt}
+              placeholder="Describe this image for screen readers" />
+            <p class="image-confirm-hint">Describes the image for screen readers and when images can't load.</p>
+          </div>
+          <div class="link-footer">
+            <button class="btn btn-outline" onclick={backToImagePick}>&larr; Back</button>
+            <div style="flex: 1;"></div>
+            <button class="btn btn-primary" onclick={confirmImageInsert}>Insert Image</button>
+          </div>
+        </div>
+      {:else}
+        <MediaPicker inline allowUpload initialTypeFilter="image" value={null}
+          onSelect={onImageSelect} onSelectItem={onImageSelectItem} />
+      {/if}
     </div>
   </div>
 {/if}
@@ -502,6 +580,23 @@
     font-size: 0.7rem;
     font-weight: 600;
     color: #2563eb;
+    margin-right: 4px;
+  }
+
+  .rte-image-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 3px;
+    padding: 4px 8px;
+    background: #f0fdf4;
+    border-bottom: 1px solid #bbf7d0;
+  }
+
+  .rte-image-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #16a34a;
     margin-right: 4px;
   }
 
@@ -647,6 +742,36 @@
     text-align: center;
   }
 
+  /* Image confirm step */
+  .image-confirm {
+    padding: 1.25rem;
+  }
+
+  .image-confirm-preview-wrap {
+    text-align: center;
+    margin-bottom: 1rem;
+    background: var(--c-bg, #f7f8fa);
+    border-radius: var(--radius, 6px);
+    padding: 0.75rem;
+  }
+
+  .image-confirm-preview {
+    max-width: 100%;
+    max-height: 200px;
+    object-fit: contain;
+    border-radius: 4px;
+  }
+
+  .image-confirm-form {
+    margin-bottom: 0.5rem;
+  }
+
+  .image-confirm-hint {
+    font-size: 0.75rem;
+    color: var(--c-text-light, #94a3b8);
+    margin-top: 0.35rem;
+  }
+
   /* Link dialog */
   .link-tabs {
     display: flex;
@@ -780,6 +905,11 @@
     border-radius: var(--radius, 6px);
   }
 
+  .rte-editor :global(.ProseMirror img.ProseMirror-selectednode) {
+    outline: 2px solid var(--c-accent, #3182ce);
+    outline-offset: 2px;
+  }
+
   .rte-editor :global(.ProseMirror table) {
     border-collapse: collapse;
     width: 100%;
@@ -799,7 +929,6 @@
     font-weight: 600;
   }
 
-  /* Dropcursor */
   .rte-editor :global(.ProseMirror-dropcursor) {
     border-color: #2563eb;
   }
