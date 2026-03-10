@@ -397,6 +397,16 @@ tr:hover td {
   background: var(--c-bg);
 }
 
+.btn-danger-outline {
+  background: transparent;
+  border: 1px solid var(--c-danger, #dc2626);
+  color: var(--c-danger, #dc2626);
+}
+
+.btn-danger-outline:hover {
+  background: #fef2f2;
+}
+
 .btn-sm {
   padding: 0.3rem 0.6rem;
   font-size: 0.8rem;

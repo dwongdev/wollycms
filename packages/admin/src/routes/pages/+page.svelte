@@ -111,10 +111,22 @@
     }
   }
 
+  async function archivePage(id: number) {
+    if (!confirm('Archive this page? It will be hidden from the live site.')) return;
+    try {
+      await api.put(`/pages/${id}`, { status: 'archived' });
+      toast.success('Page archived.');
+      load();
+    } catch (err: any) {
+      toast.error(err.message);
+    }
+  }
+
   async function deletePage(id: number) {
-    if (!confirm('Delete this page?')) return;
+    if (!confirm('Permanently delete this page? This cannot be undone.')) return;
     try {
       await api.del(`/pages/${id}`);
+      toast.success('Page deleted.');
       load();
     } catch (err: any) {
       error = err.message;
@@ -184,6 +196,7 @@
     <span style="margin-left: auto; font-size: 0.85rem; color: var(--c-text-light);">{selected.size} selected</span>
     <button class="btn btn-sm btn-outline" onclick={() => bulkAction('publish')}>Publish</button>
     <button class="btn btn-sm btn-outline" onclick={() => bulkAction('unpublish')}>Unpublish</button>
+    <button class="btn btn-sm btn-outline" onclick={() => bulkAction('archive')}>Archive</button>
     <button class="btn btn-sm btn-danger" onclick={() => bulkAction('delete')}>Delete</button>
   {/if}
 </div>
@@ -219,6 +232,9 @@
           <td style="text-align: right;">
             <a href="{base}/pages/{page.id}" class="btn btn-sm btn-outline">Edit</a>
             <button class="btn btn-sm btn-outline" onclick={() => duplicatePage(page.id)}>Duplicate</button>
+            {#if page.status !== 'archived'}
+              <button class="btn btn-sm btn-outline" onclick={() => archivePage(page.id)}>Archive</button>
+            {/if}
             <button class="btn btn-sm btn-danger" onclick={() => deletePage(page.id)}>Delete</button>
           </td>
         </tr>

@@ -1,12 +1,13 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { page as routePage } from '$app/state';
-  import { beforeNavigate } from '$app/navigation';
+  import { beforeNavigate, goto } from '$app/navigation';
+  import { base } from '$app/paths';
   import { api } from '$lib/api.js';
   import { toast } from '$lib/toast.svelte.js';
   import { auditPageAccessibility, type A11yIssue } from '$lib/a11y.js';
   import { scorePage, type SeoCheck } from '$lib/seo.js';
-  import { Circle, CheckCircle, Archive } from 'lucide-svelte';
+  import { Circle, CheckCircle, Archive, Trash2 } from 'lucide-svelte';
   import Breadcrumb from '$lib/components/Breadcrumb.svelte';
   import MediaPicker from '$lib/components/MediaPicker.svelte';
   import PageEditorSidebar from '$lib/components/PageEditorSidebar.svelte';
@@ -231,10 +232,21 @@
     try {
       await api.put(`/pages/${id}`, { status });
       pageData.status = status;
-      toast.success(status === 'published' ? 'Page published.' : 'Page unpublished.');
+      const labels: Record<string, string> = { published: 'Page published.', draft: 'Page unpublished.', archived: 'Page archived.' };
+      toast.success(labels[status] || `Status set to ${status}.`);
       takeSnapshot();
       dirty = false;
       if (showPreview) previewPanel?.refresh();
+    } catch (err: any) { toast.error(err.message); }
+  }
+
+  async function deleteCurrent() {
+    if (!confirm(`Permanently delete "${pageData.title}"? This cannot be undone.`)) return;
+    try {
+      await api.del(`/pages/${id}`);
+      toast.success('Page deleted.');
+      dirty = false;
+      goto(`${base}/pages`);
     } catch (err: any) { toast.error(err.message); }
   }
 
@@ -295,11 +307,21 @@
         onclick={() => showPreview = !showPreview}>
         {showPreview ? 'Hide Preview' : 'Preview'}
       </button>
-      {#if pageData.status === 'draft'}
-        <button class="btn btn-primary" onclick={() => setStatus('published')}>Publish</button>
-      {:else}
+      {#if pageData.status === 'published'}
         <button class="btn btn-outline" onclick={() => setStatus('draft')}>Unpublish</button>
+      {:else}
+        <button class="btn btn-primary" onclick={() => setStatus('published')}>Publish</button>
       {/if}
+      {#if pageData.status !== 'archived'}
+        <button class="btn btn-outline" onclick={() => setStatus('archived')} title="Archive page">
+          <Archive size={14} />
+        </button>
+      {:else}
+        <button class="btn btn-outline" onclick={() => setStatus('draft')}>Unarchive</button>
+      {/if}
+      <button class="btn btn-danger-outline" onclick={deleteCurrent} title="Delete page">
+        <Trash2 size={14} />
+      </button>
       <button class="btn btn-primary save-btn" class:dirty onclick={save} disabled={saving}>
         {#if dirty}<span class="dirty-dot"></span>{/if}
         {saving ? 'Saving...' : 'Save'}
