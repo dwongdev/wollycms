@@ -50,6 +50,13 @@
       "when": 1773022111434,
       "tag": "0006_jittery_the_initiative",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1773165927781,
+      "tag": "0007_add-revision-note",
+      "breakpoints": true
     }
   ]
 }

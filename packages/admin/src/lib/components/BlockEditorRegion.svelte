@@ -97,7 +97,7 @@
   }
 
   /** Scroll to and expand a block by its content-API pb_id (e.g. "pb_42") */
-  export function scrollToBlock(pbIdStr: string) {
+  export function scrollToBlock(pbIdStr: string, a11yCode?: string) {
     const numericId = parseInt(pbIdStr.replace('pb_', ''), 10);
     if (isNaN(numericId)) return;
 
@@ -106,11 +106,59 @@
     next.add(numericId);
     expandedBlocks = next;
 
-    // Scroll to it after DOM update
+    // Scroll to it after DOM update, then highlight the a11y issue element
     requestAnimationFrame(() => {
       const el = document.querySelector(`[data-block-pb-id="${numericId}"]`);
-      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      if (!el) return;
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+      if (a11yCode) {
+        // Wait for block body to render, then find the offending element
+        setTimeout(() => highlightA11yElement(el, a11yCode), 150);
+      }
     });
+  }
+
+  /** Find and flash-highlight the element matching the a11y issue inside a block */
+  function highlightA11yElement(blockEl: Element, code: string) {
+    let target: Element | null = null;
+    const prosemirror = blockEl.querySelector('.ProseMirror');
+
+    switch (code) {
+      case 'img-alt':
+        // Media picker field — highlight the media picker component
+        target = blockEl.querySelector('.media-picker, .form-group');
+        break;
+      case 'img-alt-inline':
+        // Find first img without alt inside the richtext editor
+        if (prosemirror) {
+          target = prosemirror.querySelector('img:not([alt]), img[alt=""]') || prosemirror.querySelector('img');
+        }
+        break;
+      case 'heading-skip':
+      case 'heading-empty':
+        // Find first heading in richtext
+        if (prosemirror) {
+          target = prosemirror.querySelector('h2, h3, h4, h5, h6');
+        }
+        break;
+      case 'link-empty':
+        // Find first link with empty text
+        if (prosemirror) {
+          const links = prosemirror.querySelectorAll('a');
+          for (const link of links) {
+            if (!link.textContent?.trim()) { target = link; break; }
+          }
+          if (!target && links.length > 0) target = links[0];
+        }
+        break;
+    }
+
+    if (target) {
+      target.classList.add('a11y-flash');
+      target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setTimeout(() => target!.classList.remove('a11y-flash'), 2000);
+    }
   }
 
   /** Extract plain text from TipTap JSON */
@@ -1086,5 +1134,15 @@
     padding: 0.75rem 1rem;
     border-top: 1px solid var(--c-border, #e2e8f0);
     background: var(--c-bg-alt, #f8fafc);
+  }
+
+  :global(.a11y-flash) {
+    animation: a11y-flash-pulse 0.5s ease-in-out 3;
+    border-radius: 3px;
+  }
+
+  @keyframes a11y-flash-pulse {
+    0%, 100% { outline: 2px solid transparent; background-color: transparent; }
+    50% { outline: 2px solid #f59e0b; background-color: rgba(245, 158, 11, 0.15); }
   }
 </style>

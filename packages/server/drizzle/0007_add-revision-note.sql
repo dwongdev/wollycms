@@ -1,0 +1,1 @@
+ALTER TABLE `page_revisions` ADD `note` text;

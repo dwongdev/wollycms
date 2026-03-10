@@ -7,7 +7,7 @@
     onNavigate,
   }: {
     issues: A11yIssue[];
-    onNavigate?: (pbId: number) => void;
+    onNavigate?: (pbId: number, code?: string) => void;
   } = $props();
 
   let expanded = $state(false);
@@ -58,7 +58,7 @@
             {#each codeIssues as issue}
               <button
                 class="a11y-issue"
-                onclick={() => { if (issue.blockPbId && onNavigate) onNavigate(issue.blockPbId); }}
+                onclick={() => { if (issue.blockPbId && onNavigate) onNavigate(issue.blockPbId, issue.code); }}
                 disabled={!issue.blockPbId}
                 title={issue.blockPbId ? 'Click to navigate to block' : ''}
               >

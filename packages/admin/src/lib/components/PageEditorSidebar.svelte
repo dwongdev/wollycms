@@ -55,7 +55,7 @@
     onMenuDetailsReload: () => Promise<void>;
     onRevisionsReload: () => Promise<void>;
     onPageReload: () => void;
-    onA11yNavigate?: (pbId: number) => void;
+    onA11yNavigate?: (pbId: number, code?: string) => void;
   } = $props();
 
   let showSerpPreview = $state(false);
@@ -376,6 +376,11 @@
             <div style="display: flex; justify-content: space-between; align-items: center;">
               <div>
                 <strong>{rev.title}</strong>
+                {#if rev.note}
+                  <div style="font-size: 0.78rem; color: var(--c-text); font-style: italic; margin-top: 0.1rem;">
+                    {rev.note}
+                  </div>
+                {/if}
                 <div style="font-size: 0.75rem; color: var(--c-text-light);">
                   {new Date(rev.createdAt).toLocaleString()}
                   {#if rev.blockCount > 0} &middot; {rev.blockCount} blocks{/if}
@@ -406,6 +411,9 @@
       </div>
       <div class="modal-body" style="max-height: 60vh; overflow-y: auto;">
         <p style="font-size: 0.85rem;"><strong>Slug:</strong> /{revisionDetail.slug} &middot; <strong>Status:</strong> <span class="badge badge-{revisionDetail.status}">{revisionDetail.status}</span></p>
+        {#if revisionDetail.note}
+          <p style="font-size: 0.85rem; font-style: italic; color: var(--c-text); margin: 0.35rem 0;"><strong>Note:</strong> {revisionDetail.note}</p>
+        {/if}
         {#if revisionDetail.fields && Object.keys(revisionDetail.fields).length > 0}
           <pre style="font-size: 0.75rem; background: var(--c-bg-subtle); padding: 0.5rem; border-radius: 4px; overflow-x: auto; margin: 0.5rem 0;">{JSON.stringify(revisionDetail.fields, null, 2)}</pre>
         {/if}

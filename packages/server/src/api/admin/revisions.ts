@@ -32,6 +32,7 @@ app.get('/:pageId/revisions', async (c) => {
       title: r.title,
       slug: r.slug,
       status: r.status,
+      note: r.note,
       createdAt: r.createdAt,
       createdBy: r.createdBy,
       blockCount: Array.isArray(r.blocks) ? r.blocks.length : 0,
@@ -91,6 +92,7 @@ app.post('/:pageId/revisions/:revId/restore', async (c) => {
       overrides: b.overrides, blockType: b.blockTypeSlug,
       title: b.blockTitle, fields: b.blockFields,
     })),
+    note: `Restored from revision #${revId}`,
     createdAt: now,
     createdBy: payload.sub,
   });

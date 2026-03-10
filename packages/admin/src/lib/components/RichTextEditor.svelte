@@ -37,6 +37,7 @@
   let showLinkDialog = $state(false);
   let linkUrl = $state('');
   let linkText = $state('');
+  let linkNewTab = $state(false);
   let linkTab = $state<'url' | 'media'>('url');
 
   // --- SVG icons ---
@@ -316,8 +317,14 @@
   // --- Link dialog ---
   function openLinkDialog() {
     if (!editor) return;
-    if (editor.isActive('link')) { linkUrl = editor.getAttributes('link').href || ''; }
-    else { linkUrl = ''; }
+    if (editor.isActive('link')) {
+      const attrs = editor.getAttributes('link');
+      linkUrl = attrs.href || '';
+      linkNewTab = attrs.target === '_blank';
+    } else {
+      linkUrl = '';
+      linkNewTab = false;
+    }
     const { from, to } = editor.state.selection;
     linkText = from !== to ? editor.state.doc.textBetween(from, to, ' ') : '';
     if (linkTab !== 'media') linkTab = 'url';
@@ -326,12 +333,15 @@
 
   function insertLink() {
     if (!editor || !linkUrl) return;
+    const linkAttrs: Record<string, any> = { href: linkUrl };
+    if (linkNewTab) linkAttrs.target = '_blank';
+    else linkAttrs.target = null;
     const { from, to } = editor.state.selection;
     if (from !== to) {
-      editor.chain().focus().setLink({ href: linkUrl }).run();
+      editor.chain().focus().setLink(linkAttrs).run();
     } else {
       const text = linkText || linkUrl;
-      editor.chain().focus().insertContent({ type: 'text', text, marks: [{ type: 'link', attrs: { href: linkUrl } }] }).run();
+      editor.chain().focus().insertContent({ type: 'text', text, marks: [{ type: 'link', attrs: linkAttrs }] }).run();
     }
     showLinkDialog = false;
   }
@@ -547,6 +557,10 @@
           <input id="link-url-input" type="text" class="link-input" bind:value={linkUrl} placeholder="https://example.com or /page-slug" />
           <label class="link-label link-label-spaced" for="link-text-input">Display Text</label>
           <input id="link-text-input" type="text" class="link-input" bind:value={linkText} placeholder="Link text (uses URL if empty)" />
+          <label class="link-checkbox-label">
+            <input type="checkbox" bind:checked={linkNewTab} />
+            Open in new tab
+          </label>
         </div>
       {:else}
         <MediaPicker inline allowUpload initialTypeFilter="document" value={null}
@@ -620,6 +634,8 @@
   .link-label-spaced { margin-top: 0.75rem; }
   .link-input { width: 100%; padding: 0.5rem 0.75rem; border: 1px solid var(--c-border, #e2e8f0); border-radius: var(--radius, 6px); font-size: 0.85rem; font-family: inherit; color: var(--c-text, #1e293b); background: var(--c-surface, #fff); box-sizing: border-box; }
   .link-input:focus { outline: none; border-color: var(--c-accent, #3182ce); box-shadow: 0 0 0 2px rgba(49,130,206,0.15); }
+  .link-checkbox-label { display: flex; align-items: center; gap: 0.4rem; margin-top: 0.75rem; font-size: 0.82rem; color: var(--c-text, #1e293b); cursor: pointer; user-select: none; }
+  .link-checkbox-label input[type="checkbox"] { accent-color: var(--c-accent, #3182ce); width: 15px; height: 15px; cursor: pointer; }
   .link-footer { display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.25rem; border-top: 1px solid var(--c-border, #e2e8f0); }
 
   /* ProseMirror content styles */

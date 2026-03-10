@@ -33,7 +33,9 @@ const pageSchema = z.object({
   robots: z.string().nullable().optional(),
 });
 
-const pageUpdateSchema = pageSchema.partial();
+const pageUpdateSchema = pageSchema.partial().extend({
+  revisionNote: z.string().optional(),
+});
 
 function slugify(text: string): string {
   return text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
@@ -270,11 +272,13 @@ app.put('/:id', async (c) => {
       overrides: b.overrides, blockId: b.isShared ? b.blockId : undefined,
       blockType: b.blockTypeSlug, title: b.blockTitle, fields: b.blockFields,
     })),
+    note: parsed.data.revisionNote || null,
     createdAt: now,
     createdBy: payload.sub,
   });
 
-  const updates: Record<string, unknown> = { ...parsed.data, updatedAt: now };
+  const { revisionNote: _note, ...pageFields } = parsed.data;
+  const updates: Record<string, unknown> = { ...pageFields, updatedAt: now };
   if (parsed.data.status === 'published' && !existing.publishedAt) {
     updates.publishedAt = now;
   }

@@ -36,6 +36,7 @@
 
   let cleanSnapshot = $state('');
   let mediaCache = $state(new Map<number, { altText?: string }>());
+  let revisionNote = $state('');
 
   const id = $derived(routePage.params.id ?? '');
 
@@ -187,8 +188,8 @@
     mediaCache = cache;
   }
 
-  function handleA11yNavigate(pbId: number) {
-    blockEditor?.scrollToBlock(`pb_${pbId}`);
+  function handleA11yNavigate(pbId: number, a11yCode?: string) {
+    blockEditor?.scrollToBlock(`pb_${pbId}`, a11yCode);
   }
 
   onMount(load);
@@ -208,6 +209,7 @@
         ogImage: pageData.ogImage || null,
         canonicalUrl: pageData.canonicalUrl || null,
         robots: pageData.robots || null,
+        revisionNote: revisionNote.trim() || undefined,
       });
       // Save any pending block field changes
       if (blockEditor?.hasUnsavedBlocks()) {
@@ -220,6 +222,7 @@
       }
       takeSnapshot();
       dirty = false;
+      revisionNote = '';
       if (showPreview) previewPanel?.refresh();
     } catch (err: any) {
       const msg = err.message?.includes('Slug already exists')
@@ -322,6 +325,13 @@
       <button class="btn btn-danger-outline" onclick={deleteCurrent} title="Delete page">
         <Trash2 size={14} />
       </button>
+      <input
+        class="revision-note-input"
+        type="text"
+        placeholder="Save note (optional)"
+        bind:value={revisionNote}
+        onkeydown={(e) => { if (e.key === 'Enter') { e.preventDefault(); if (pageData && !saving) save(); } }}
+      />
       <button class="btn btn-primary save-btn" class:dirty onclick={save} disabled={saving}>
         {#if dirty}<span class="dirty-dot"></span>{/if}
         {saving ? 'Saving...' : 'Save'}
@@ -516,6 +526,28 @@
     min-width: 400px;
     max-width: 50%;
     height: 100%;
+  }
+
+  .revision-note-input {
+    width: 180px;
+    padding: 0.35rem 0.5rem;
+    font-size: 0.8rem;
+    border: 1px solid var(--c-border, #e2e8f0);
+    border-radius: var(--radius, 6px);
+    background: var(--c-bg, #fff);
+    color: var(--c-text);
+    font-family: var(--font);
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  .revision-note-input:focus {
+    border-color: var(--c-accent, #3182ce);
+  }
+
+  .revision-note-input::placeholder {
+    color: var(--c-text-light, #94a3b8);
+    font-size: 0.75rem;
   }
 
   .save-btn {

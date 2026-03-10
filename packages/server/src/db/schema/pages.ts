@@ -36,6 +36,7 @@ export const pageRevisions = sqliteTable('page_revisions', {
   status: text('status').notNull(),
   fields: text('fields', { mode: 'json' }).$type<Record<string, unknown>>(),
   blocks: text('blocks', { mode: 'json' }).$type<unknown[]>(),
+  note: text('note'),
   createdAt: text('created_at').notNull(),
   createdBy: integer('created_by').references(() => users.id),
 }, (table) => [
