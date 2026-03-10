@@ -27,6 +27,8 @@
   let slashSelectedIndex = $state(0);
   let isInTable = $state(false);
   let isImageSelected = $state(false);
+  let showSource = $state(false);
+  let sourceHtml = $state('');
 
   // Image insertion state (two-step: pick → confirm with alt text)
   let pendingImage = $state<{ id: number; src: string; alt: string; title: string } | null>(null);
@@ -36,6 +38,80 @@
   let linkUrl = $state('');
   let linkText = $state('');
   let linkTab = $state<'url' | 'media'>('url');
+
+  // Current block format (reactive via editor reassignment in onTransaction)
+  let currentBlockFormat = $derived.by(() => {
+    if (!editor) return 'paragraph';
+    if (editor.isActive('heading', { level: 2 })) return 'h2';
+    if (editor.isActive('heading', { level: 3 })) return 'h3';
+    if (editor.isActive('heading', { level: 4 })) return 'h4';
+    return 'paragraph';
+  });
+
+  function setBlockFormat(format: string) {
+    if (!editor) return;
+    if (format === 'paragraph') {
+      editor.chain().focus().setParagraph().run();
+    } else if (format === 'h2') {
+      editor.chain().focus().toggleHeading({ level: 2 }).run();
+    } else if (format === 'h3') {
+      editor.chain().focus().toggleHeading({ level: 3 }).run();
+    } else if (format === 'h4') {
+      editor.chain().focus().toggleHeading({ level: 4 }).run();
+    }
+  }
+
+  // Current image attributes (reactive via editor reassignment in onTransaction)
+  let currentImageAttrs = $derived.by(() => {
+    if (!isImageSelected || !editor) return { width: '50%', float: 'none', caption: '' };
+    const attrs = editor.getAttributes('image');
+    return {
+      width: attrs.width || '50%',
+      float: attrs.float || 'none',
+      caption: attrs.caption || '',
+    };
+  });
+
+  // Custom Image extension with width, float, and caption
+  const CustomImage = Image.extend({
+    addAttributes() {
+      return {
+        ...this.parent?.(),
+        width: {
+          default: '50%',
+          parseHTML: (element: HTMLElement) => element.style.width || null,
+        },
+        float: {
+          default: 'none',
+          parseHTML: (element: HTMLElement) => element.style.float || element.getAttribute('data-float') || null,
+        },
+        caption: {
+          default: '',
+          parseHTML: (element: HTMLElement) => element.getAttribute('data-caption') || null,
+        },
+      };
+    },
+
+    renderHTML({ node }) {
+      const { src, alt, title, width, float: floatVal, caption } = node.attrs;
+      const styles: string[] = [];
+      if (width) styles.push(`width: ${width}`);
+      if (floatVal && floatVal !== 'none') {
+        styles.push(`float: ${floatVal}`);
+        if (floatVal === 'left') styles.push('margin: 0 1rem 0.5rem 0');
+        else styles.push('margin: 0 0 0.5rem 1rem');
+      }
+
+      const imgAttrs: Record<string, any> = {};
+      if (src) imgAttrs.src = src;
+      if (alt) imgAttrs.alt = alt;
+      if (title) imgAttrs.title = title;
+      if (styles.length) imgAttrs.style = styles.join('; ');
+      if (caption) imgAttrs['data-caption'] = caption;
+
+      return ['img', imgAttrs];
+    },
+  });
 
   const slashCommands = [
     { label: 'Heading 2', description: 'Large section heading', command: 'h2' },
@@ -104,7 +180,7 @@
         StarterKit,
         Underline,
         Link.configure({ openOnClick: false }),
-        Image,
+        CustomImage,
         Table.configure({ resizable: false }),
         TableRow,
         TableCell,
@@ -121,7 +197,7 @@
         if (editor) checkHeadings(editor.getJSON());
       },
       onBlur: () => {
-        if (editor) {
+        if (editor && !showSource) {
           onUpdate(editor.getJSON());
         }
         setTimeout(() => { showSlashMenu = false; }, 200);
@@ -137,6 +213,8 @@
   });
 
   function handleSlashKey(e: KeyboardEvent) {
+    if (showSource) return;
+
     if (showSlashMenu) {
       if (e.key === 'ArrowDown') {
         e.preventDefault();
@@ -215,18 +293,23 @@
     }
   }
 
-  // ---- Code toggle (smart: code block on empty line, inline code on selection) ----
-  function toggleCode() {
+  // ---- HTML Source toggle ----
+  function toggleSource() {
     if (!editor) return;
-    if (editor.isActive('codeBlock')) {
-      editor.chain().focus().toggleCodeBlock().run();
+    if (showSource) {
+      editor.commands.setContent(sourceHtml, false);
+      onUpdate(editor.getJSON());
+      showSource = false;
     } else {
-      const { from, to } = editor.state.selection;
-      if (from === to) {
-        editor.chain().focus().toggleCodeBlock().run();
-      } else {
-        editor.chain().focus().toggleCode().run();
-      }
+      sourceHtml = editor.getHTML();
+      showSource = true;
+    }
+  }
+
+  function onSourceBlur() {
+    if (editor && showSource) {
+      editor.commands.setContent(sourceHtml, false);
+      onUpdate(editor.getJSON());
     }
   }
 
@@ -306,7 +389,6 @@
       showImagePicker = false;
       return;
     }
-    // Wait for onSelectItem to get full data
   }
 
   function onImageSelectItem(item: any) {
@@ -337,13 +419,26 @@
     pendingImage = null;
   }
 
-  // ---- Edit alt text on existing images ----
+  // ---- Image toolbar actions ----
+  function setImageAttr(attr: string, value: any) {
+    editor?.chain().focus().updateAttributes('image', { [attr]: value }).run();
+  }
+
   function editImageAlt() {
     if (!editor) return;
     const attrs = editor.getAttributes('image');
     const alt = prompt('Alt text for this image:', attrs.alt || '');
     if (alt !== null) {
       editor.chain().focus().updateAttributes('image', { alt }).run();
+    }
+  }
+
+  function editImageCaption() {
+    if (!editor) return;
+    const attrs = editor.getAttributes('image');
+    const caption = prompt('Image caption:', attrs.caption || '');
+    if (caption !== null) {
+      editor.chain().focus().updateAttributes('image', { caption }).run();
     }
   }
 
@@ -368,11 +463,6 @@
     { label: 'I', action: () => editor?.chain().focus().toggleItalic().run(), isActive: () => !!editor?.isActive('italic') },
     { label: 'U', action: () => editor?.chain().focus().toggleUnderline().run(), isActive: () => !!editor?.isActive('underline') },
     { label: 'S', action: () => editor?.chain().focus().toggleStrike().run(), isActive: () => !!editor?.isActive('strike') },
-    { label: 'Code', action: toggleCode, isActive: () => !!editor?.isActive('code') || !!editor?.isActive('codeBlock') },
-    { divider: true },
-    { label: 'H2', action: () => editor?.chain().focus().toggleHeading({ level: 2 }).run(), isActive: () => !!editor?.isActive('heading', { level: 2 }) },
-    { label: 'H3', action: () => editor?.chain().focus().toggleHeading({ level: 3 }).run(), isActive: () => !!editor?.isActive('heading', { level: 3 }) },
-    { label: 'H4', action: () => editor?.chain().focus().toggleHeading({ level: 4 }).run(), isActive: () => !!editor?.isActive('heading', { level: 4 }) },
     { divider: true },
     { label: 'UL', action: () => editor?.chain().focus().toggleBulletList().run(), isActive: () => !!editor?.isActive('bulletList') },
     { label: 'OL', action: () => editor?.chain().focus().toggleOrderedList().run(), isActive: () => !!editor?.isActive('orderedList') },
@@ -390,24 +480,40 @@
 
 <div class="rte-wrap">
   <div class="rte-toolbar">
-    {#each toolbarItems as item}
-      {#if item.divider}
-        <span class="rte-divider"></span>
-      {:else}
-        <button
-          type="button"
-          class="rte-btn"
-          class:active={item.isActive?.() ?? false}
-          onclick={item.action}
-          title={item.label}
-        >
-          {item.label}
-        </button>
-      {/if}
-    {/each}
+    {#if showSource}
+      <button type="button" class="rte-btn active" onclick={toggleSource} title="Visual editor">&lt;/&gt;</button>
+      <span class="rte-source-label">HTML Source — click &lt;/&gt; to return to visual editor</span>
+    {:else}
+      <select class="rte-format-select" value={currentBlockFormat}
+        onchange={(e) => setBlockFormat((e.target as HTMLSelectElement).value)}
+        aria-label="Block format">
+        <option value="paragraph">Paragraph</option>
+        <option value="h2">Heading 2</option>
+        <option value="h3">Heading 3</option>
+        <option value="h4">Heading 4</option>
+      </select>
+      <span class="rte-divider"></span>
+      {#each toolbarItems as item}
+        {#if item.divider}
+          <span class="rte-divider"></span>
+        {:else}
+          <button
+            type="button"
+            class="rte-btn"
+            class:active={item.isActive?.() ?? false}
+            onclick={item.action}
+            title={item.label}
+          >
+            {item.label}
+          </button>
+        {/if}
+      {/each}
+      <span class="rte-divider"></span>
+      <button type="button" class="rte-btn" onclick={toggleSource} title="HTML source">&lt;/&gt;</button>
+    {/if}
   </div>
 
-  {#if isInTable}
+  {#if isInTable && !showSource}
     <div class="rte-table-toolbar">
       <span class="rte-table-label">Table:</span>
       <button type="button" class="rte-btn-sm" onclick={() => editor?.chain().focus().addRowBefore().run()}>+ Row Above</button>
@@ -425,15 +531,29 @@
     </div>
   {/if}
 
-  {#if isImageSelected}
+  {#if isImageSelected && !showSource}
     <div class="rte-image-toolbar">
-      <span class="rte-image-label">Image:</span>
-      <button type="button" class="rte-btn-sm" onclick={editImageAlt}>Edit Alt Text</button>
+      <span class="rte-image-label">Size:</span>
+      <button type="button" class="rte-btn-sm" class:active={currentImageAttrs.width === '25%'} onclick={() => setImageAttr('width', '25%')}>S</button>
+      <button type="button" class="rte-btn-sm" class:active={currentImageAttrs.width === '50%'} onclick={() => setImageAttr('width', '50%')}>M</button>
+      <button type="button" class="rte-btn-sm" class:active={currentImageAttrs.width === '75%'} onclick={() => setImageAttr('width', '75%')}>L</button>
+      <button type="button" class="rte-btn-sm" class:active={currentImageAttrs.width === '100%'} onclick={() => setImageAttr('width', '100%')}>Full</button>
+      <span class="rte-divider"></span>
+      <span class="rte-image-label">Wrap:</span>
+      <button type="button" class="rte-btn-sm" class:active={currentImageAttrs.float === 'left'} onclick={() => setImageAttr('float', 'left')}>&larr; Left</button>
+      <button type="button" class="rte-btn-sm" class:active={currentImageAttrs.float === 'none'} onclick={() => setImageAttr('float', 'none')}>None</button>
+      <button type="button" class="rte-btn-sm" class:active={currentImageAttrs.float === 'right'} onclick={() => setImageAttr('float', 'right')}>Right &rarr;</button>
+      <span class="rte-divider"></span>
+      <button type="button" class="rte-btn-sm" onclick={editImageAlt}>Alt</button>
+      <button type="button" class="rte-btn-sm" onclick={editImageCaption}>Caption</button>
       <button type="button" class="rte-btn-sm rte-btn-danger" onclick={() => editor?.chain().focus().deleteSelection().run()}>Remove</button>
     </div>
+    {#if currentImageAttrs.caption}
+      <div class="rte-image-caption-bar">Caption: <em>{currentImageAttrs.caption}</em></div>
+    {/if}
   {/if}
 
-  {#if headingWarnings.length > 0}
+  {#if headingWarnings.length > 0 && !showSource}
     <div class="rte-heading-warn" role="status">
       {#each headingWarnings as warn}
         <span class="rte-heading-warn-item">{warn}</span>
@@ -442,27 +562,31 @@
   {/if}
 
   <div class="rte-editor-wrap">
-    <div class="rte-editor" bind:this={editorEl}></div>
+    {#if showSource}
+      <textarea class="rte-source" bind:value={sourceHtml} onblur={onSourceBlur} spellcheck="false"></textarea>
+    {:else}
+      <div class="rte-editor" bind:this={editorEl}></div>
 
-    {#if showSlashMenu}
-      <div class="slash-menu-container" style="top: {slashMenuPos.top}px; left: {slashMenuPos.left}px;">
-        <div class="slash-menu">
-          {#each filteredSlashCommands as cmd, i}
-            <button
-              class="slash-menu-item"
-              class:selected={i === slashSelectedIndex}
-              onmousedown={(e) => { e.preventDefault(); executeSlashCommand(i); }}
-              onmouseenter={() => { slashSelectedIndex = i; }}
-            >
-              <span class="slash-menu-label">{cmd.label}</span>
-              <span class="slash-menu-desc">{cmd.description}</span>
-            </button>
-          {/each}
-          {#if filteredSlashCommands.length === 0}
-            <div class="slash-menu-empty">No matching commands</div>
-          {/if}
+      {#if showSlashMenu}
+        <div class="slash-menu-container" style="top: {slashMenuPos.top}px; left: {slashMenuPos.left}px;">
+          <div class="slash-menu">
+            {#each filteredSlashCommands as cmd, i}
+              <button
+                class="slash-menu-item"
+                class:selected={i === slashSelectedIndex}
+                onmousedown={(e) => { e.preventDefault(); executeSlashCommand(i); }}
+                onmouseenter={() => { slashSelectedIndex = i; }}
+              >
+                <span class="slash-menu-label">{cmd.label}</span>
+                <span class="slash-menu-desc">{cmd.description}</span>
+              </button>
+            {/each}
+            {#if filteredSlashCommands.length === 0}
+              <div class="slash-menu-empty">No matching commands</div>
+            {/if}
+          </div>
         </div>
-      </div>
+      {/if}
     {/if}
   </div>
 </div>
@@ -566,6 +690,30 @@
     border-bottom: 1px solid var(--c-border, #e2e8f0);
   }
 
+  .rte-format-select {
+    height: 28px;
+    padding: 0 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    font-family: var(--font, system-ui);
+    color: var(--c-text, #2d3748);
+    background: var(--c-surface, #fff);
+    border: 1px solid var(--c-border, #e2e8f0);
+    border-radius: 4px;
+    cursor: pointer;
+    outline: none;
+  }
+
+  .rte-format-select:focus {
+    border-color: var(--c-accent, #3182ce);
+  }
+
+  .rte-source-label {
+    font-size: 0.75rem;
+    color: var(--c-text-light, #64748b);
+    margin-left: 0.5rem;
+  }
+
   .rte-table-toolbar {
     display: flex;
     flex-wrap: wrap;
@@ -597,7 +745,16 @@
     font-size: 0.7rem;
     font-weight: 600;
     color: #16a34a;
-    margin-right: 4px;
+    margin-right: 2px;
+    margin-left: 2px;
+  }
+
+  .rte-image-caption-bar {
+    padding: 4px 10px;
+    background: #f0fdf4;
+    border-bottom: 1px solid #bbf7d0;
+    font-size: 0.72rem;
+    color: #166534;
   }
 
   .rte-btn-sm {
@@ -618,6 +775,7 @@
   }
 
   .rte-btn-sm:hover { background: #f1f5f9; }
+  .rte-btn-sm.active { background: #16a34a; color: #fff; border-color: #16a34a; }
 
   .rte-btn-danger { color: #dc2626; }
   .rte-btn-danger:hover { background: #fef2f2; border-color: #fca5a5; }
@@ -684,6 +842,23 @@
     font-size: 0.9rem;
     line-height: 1.6;
     color: var(--c-text, #2d3748);
+  }
+
+  .rte-source {
+    display: block;
+    width: 100%;
+    min-height: 300px;
+    padding: 12px 16px;
+    border: none;
+    outline: none;
+    resize: vertical;
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    font-size: 0.82rem;
+    line-height: 1.6;
+    color: var(--c-text, #2d3748);
+    background: #fefce8;
+    box-sizing: border-box;
+    tab-size: 2;
   }
 
   /* Slash command menu */
@@ -847,6 +1022,13 @@
   .rte-editor :global(.ProseMirror) {
     outline: none;
     min-height: 200px;
+  }
+
+  /* Clearfix for floated images */
+  .rte-editor :global(.ProseMirror)::after {
+    content: '';
+    display: table;
+    clear: both;
   }
 
   .rte-editor :global(.ProseMirror p.is-editor-empty:first-child::before) {
