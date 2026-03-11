@@ -275,6 +275,8 @@
     if (sourceRegion === targetRegion) {
       // Same-region reorder
       if (sourceIndex === targetIndex || sourceIndex + 1 === targetIndex) return;
+      // Collapse expanded blocks — TipTap editors don't survive DOM node moves
+      expandedBlocks = new Set();
       const reordered = [...sourceBlocks];
       const [moved] = reordered.splice(sourceIndex, 1);
       const insertAt = targetIndex > sourceIndex ? targetIndex - 1 : targetIndex;
@@ -290,7 +292,8 @@
         onReload();
       }
     } else {
-      // Cross-region move
+      // Cross-region move — collapse editors before DOM changes
+      expandedBlocks = new Set();
       try {
         await api.put(`/pages/${pageId}/blocks/${pbId}`, {
           region: targetRegion,
