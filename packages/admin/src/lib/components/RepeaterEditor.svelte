@@ -12,11 +12,18 @@
     onUpdate: (items: any[]) => void;
   } = $props();
 
+  let nextKey = $state(Date.now());
   let items = $state<any[]>([]);
+  let skipSync = false;
 
-  // Sync from prop
+  // Sync from prop — skip when the change originated from our own emitUpdate
   $effect(() => {
-    items = Array.isArray(value) ? value.map((item, i) => ({ ...item, _key: i })) : [];
+    const v = value;
+    if (skipSync) {
+      skipSync = false;
+      return;
+    }
+    items = Array.isArray(v) ? v.map((item) => ({ ...item, _key: nextKey++ })) : [];
   });
 
   const subFields: any[] = $derived(field.fields || []);
@@ -24,6 +31,7 @@
   const maxItems: number = $derived(field.max ?? 100);
 
   function emitUpdate() {
+    skipSync = true;
     const clean = items.map(({ _key, ...rest }) => rest);
     onUpdate(clean);
   }
@@ -37,7 +45,7 @@
       else if (sf.type === 'repeater') empty[sf.name] = [];
       else empty[sf.name] = sf.default ?? '';
     }
-    empty._key = Date.now();
+    empty._key = nextKey++;
     items = [...items, empty];
     emitUpdate();
   }
