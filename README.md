@@ -79,7 +79,7 @@ docker compose up -d
 | Admin UI | SvelteKit 5 (SPA mode) |
 | Rich Text | TipTap (JSON storage) |
 | Media Processing | Sharp |
-| Testing | Vitest (108 tests, all passing) |
+| Testing | Vitest (204 tests, all passing) |
 | Runtime | Node.js 22 LTS |
 
 ## Project Structure
@@ -87,13 +87,15 @@ docker compose up -d
 ```
 wollycms/
 ├── packages/
-│   ├── server/       # Hono API server + Drizzle schema
-│   ├── admin/        # SvelteKit admin SPA
-│   └── astro/        # @wollycms/astro integration
+│   ├── server/        # Hono API server + Drizzle schema
+│   ├── admin/         # SvelteKit admin SPA
+│   ├── astro/         # @wollycms/astro integration
+│   └── create-wolly/  # CLI scaffolding tool
 ├── examples/
-│   └── college-site/ # Reference Astro site
-├── docs/             # Architecture and planning docs
-└── scripts/          # Build/deploy scripts
+│   └── college-site/  # Reference Astro site
+├── docs/              # Architecture and planning docs
+├── deploy/            # Production deployment docs
+└── scripts/           # Build/deploy scripts
 ```
 
 ## Configuration
@@ -153,6 +155,14 @@ Phases 1-5 complete. See [Roadmap](docs/planning/roadmap.md) for details.
 | Phase 6 | Packaging & DX | In Progress |
 | Phase 7 | Content Features | In Progress |
 
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and guidelines.
+
+## Security
+
+See [SECURITY.md](SECURITY.md) for reporting vulnerabilities.
+
 ## License
 
-MIT
+[MIT](LICENSE)
