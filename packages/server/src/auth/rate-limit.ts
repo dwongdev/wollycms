@@ -11,12 +11,27 @@ setInterval(() => {
   }
 }, 300_000);
 
+/**
+ * Extract the real client IP from the request.
+ * Prefers platform-injected headers (Cloudflare, Fly.io) over
+ * user-controllable forwarding headers.
+ */
+function getClientIp(c: Context): string {
+  // Platform-injected headers (trusted, not spoofable by clients)
+  return c.req.header('cf-connecting-ip')
+    || c.req.header('fly-client-ip')
+    // Forwarding headers (only trustworthy behind a known proxy)
+    || c.req.header('x-forwarded-for')?.split(',')[0]?.trim()
+    || c.req.header('x-real-ip')
+    || 'unknown';
+}
+
 export function rateLimiter(opts?: { max?: number; windowMs?: number }) {
   const max = opts?.max ?? env.RATE_LIMIT_AUTH;
   const windowMs = opts?.windowMs ?? env.RATE_LIMIT_WINDOW_MS;
 
   return async (c: Context, next: Next) => {
-    const key = c.req.header('x-forwarded-for') || c.req.header('x-real-ip') || 'unknown';
+    const key = getClientIp(c);
     const now = Date.now();
     let entry = store.get(key);
 

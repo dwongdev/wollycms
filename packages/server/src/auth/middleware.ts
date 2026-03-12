@@ -16,8 +16,20 @@ export interface JwtPayload {
 const jwtMiddleware = jwt({ secret: env.JWT_SECRET, alg: 'HS256' });
 
 /**
+ * Map API key permission string to a role level.
+ * Permissions are comma-separated; the highest matching role wins.
+ */
+function permissionsToRole(permissions: string): 'admin' | 'editor' | 'viewer' {
+  const perms = permissions.split(',').map((p) => p.trim());
+  if (perms.includes('*') || perms.includes('admin:*')) return 'admin';
+  if (perms.includes('content:write')) return 'editor';
+  return 'viewer';
+}
+
+/**
  * Combined auth middleware: accepts API keys (sk_*) or JWT tokens.
- * API keys are validated against the database; JWTs use HS256 signature check.
+ * API keys are validated against the database and mapped to a role
+ * based on their stored permissions. JWTs use HS256 signature check.
  */
 export async function authMiddleware(c: Context, next: Next) {
   const authHeader = c.req.header('Authorization') || '';
@@ -47,7 +59,11 @@ export async function authMiddleware(c: Context, next: Next) {
     const userId = admin?.id ?? 1;
     const userEmail = admin?.email ?? `apikey:${key.name}`;
 
-    c.set('jwtPayload', { sub: userId, email: userEmail, role: 'admin', exp: 0 });
+    // Map stored permissions to a role — no more blanket admin access
+    const role = permissionsToRole(key.permissions);
+
+    c.set('jwtPayload', { sub: userId, email: userEmail, role, exp: 0 });
+    c.set('apiKeyPermissions', key.permissions);
     return next();
   }
 

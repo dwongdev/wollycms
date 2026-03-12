@@ -57,6 +57,18 @@ function readProcessEnv(): EnvConfig {
 
 export let env: EnvConfig = readProcessEnv();
 
+// Fail fast if production Node.js is running with the default JWT secret
+if (
+  env.NODE_ENV === 'production' &&
+  env.JWT_SECRET === 'dev-secret-change-me' &&
+  typeof process !== 'undefined'
+) {
+  throw new Error(
+    'FATAL: JWT_SECRET is not set (or still using the dev default). ' +
+    'Set a strong, random JWT_SECRET environment variable for production.',
+  );
+}
+
 /**
  * Initialize env from Cloudflare Workers bindings.
  * Call this once in the Workers entry point before handling requests.

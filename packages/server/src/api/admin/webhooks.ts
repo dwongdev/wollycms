@@ -124,7 +124,7 @@ app.post('/:id/test', rateLimiter({ max: 5, windowMs: 60_000 }), async (c) => {
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 10000);
-    const res = await fetch(hook.url, { method: 'POST', headers, body: payload, signal: controller.signal });
+    const res = await fetch(hook.url, { method: 'POST', headers, body: payload, signal: controller.signal, redirect: 'error' });
     clearTimeout(timeout);
     await db.update(webhooks).set({ lastTriggeredAt: new Date().toISOString(), lastStatus: res.status }).where(eq(webhooks.id, id));
     return c.json({ data: { status: res.status, ok: res.ok } });
