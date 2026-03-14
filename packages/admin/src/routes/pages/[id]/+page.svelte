@@ -39,6 +39,8 @@
   let revisionNote = $state('');
 
   const id = $derived(routePage.params.id ?? '');
+  let blocksDirtyTick = $state(0);
+  const hasUnsaved = $derived(dirty || blocksDirtyTick > 0);
 
   const a11yRegions = $derived<{ name: string; label: string }[]>(contentType?.regions || []);
   const a11yIssues = $derived<A11yIssue[]>(
@@ -98,14 +100,22 @@
     }
   });
 
-  beforeNavigate(({ cancel }) => {
-    if (dirty && !confirm('You have unsaved changes. Leave anyway?')) {
-      cancel();
+  beforeNavigate(({ cancel, type }) => {
+    if (hasUnsaved && type !== 'leave') {
+      if (!confirm('You have unsaved changes. Leave anyway?')) {
+        cancel();
+        // Restore URL if browser already updated it
+        history.replaceState({}, '', `${base}/pages/${id}`);
+        return;
+      }
+      // User confirmed — clean up to prevent further interference
+      dirty = false;
+      blocksDirtyTick = 0;
     }
   });
 
   function handleBeforeUnload(e: BeforeUnloadEvent) {
-    if (dirty) {
+    if (hasUnsaved) {
       e.preventDefault();
     }
   }
@@ -146,7 +156,7 @@
       await loadMenuDetails();
       await loadMediaCache();
       takeSnapshot();
-      dirty = false;
+      dirty = false; blocksDirtyTick = 0;
     } catch (err: any) { error = err.message; }
     finally { loading = false; }
   }
@@ -221,7 +231,7 @@
         toast.success('Page saved.');
       }
       takeSnapshot();
-      dirty = false;
+      dirty = false; blocksDirtyTick = 0;
       revisionNote = '';
       if (showPreview) previewPanel?.refresh();
     } catch (err: any) {
@@ -238,7 +248,7 @@
       const labels: Record<string, string> = { published: 'Page published.', draft: 'Page unpublished.', archived: 'Page archived.' };
       toast.success(labels[status] || `Status set to ${status}.`);
       takeSnapshot();
-      dirty = false;
+      dirty = false; blocksDirtyTick = 0;
       if (showPreview) previewPanel?.refresh();
     } catch (err: any) { toast.error(err.message); }
   }
@@ -248,7 +258,7 @@
     try {
       await api.del(`/pages/${id}`);
       toast.success('Page deleted.');
-      dirty = false;
+      dirty = false; blocksDirtyTick = 0;
       goto(`${base}/pages`);
     } catch (err: any) { toast.error(err.message); }
   }
@@ -332,8 +342,8 @@
         bind:value={revisionNote}
         onkeydown={(e) => { if (e.key === 'Enter') { e.preventDefault(); if (pageData && !saving) save(); } }}
       />
-      <button class="btn btn-primary save-btn" class:dirty onclick={save} disabled={saving}>
-        {#if dirty}<span class="dirty-dot"></span>{/if}
+      <button class="btn btn-primary save-btn" class:dirty={hasUnsaved} onclick={save} disabled={saving}>
+        {#if hasUnsaved}<span class="dirty-dot"></span>{/if}
         {saving ? 'Saving...' : 'Save'}
       </button>
     </div>
@@ -371,7 +381,7 @@
           <BlockEditorRegion bind:this={blockEditor} {pageData} pageId={id} {contentType} {blockTypes}
             bind:activeRegion bind:error onReload={load}
             onBlockExpand={(pbId) => { if (showPreview) previewPanel?.highlightBlock(pbId); }}
-            onBlockDirty={() => { dirty = true; }} />
+            onBlockDirty={() => { blocksDirtyTick++; }} />
         </div>
 
         <PageEditorSidebar
