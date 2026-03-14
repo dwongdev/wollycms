@@ -41,7 +41,7 @@ app.use('/*', previewAuth);
  * GET /pages/:slug - Get page with blocks regardless of status (for live preview).
  * Same response format as the public content API.
  */
-app.get('/pages/:slug', async (c) => {
+app.get('/pages/:slug{.+}', async (c) => {
   const db = getDb();
   const slug = c.req.param('slug');
 

@@ -121,7 +121,7 @@ app.get('/', async (c) => {
 /**
  * GET /:slug - Get single published page with resolved blocks per region.
  */
-app.get('/:slug', async (c) => {
+app.get('/:slug{.+}', async (c) => {
   const db = getDb();
   const slug = c.req.param('slug');
 
