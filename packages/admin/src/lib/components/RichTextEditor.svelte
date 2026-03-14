@@ -23,6 +23,7 @@
   let editorEl: HTMLDivElement | undefined = $state();
   let editor: Editor | undefined = $state();
   let hasUserEdit = false;
+  let isDestroying = false;
   let txCount = $state(0);
   let headingWarnings = $state<string[]>([]);
   let showImagePicker = $state(false);
@@ -227,6 +228,7 @@
       ],
       content: content || '',
       onTransaction: ({ transaction }) => {
+        if (isDestroying) return;
         txCount++;
         isInTable = !!editor?.isActive('table');
         isImageSelected = !!editor?.isActive('image');
@@ -234,17 +236,19 @@
         if (transaction.docChanged) hasUserEdit = true;
       },
       onBlur: () => {
+        if (isDestroying) return;
         if (editor && !showSource && hasUserEdit) {
           onUpdate(editor.getJSON());
           hasUserEdit = false;
         }
-        setTimeout(() => { showSlashMenu = false; }, 200);
+        setTimeout(() => { if (!isDestroying) showSlashMenu = false; }, 200);
       },
     });
     editorEl!.addEventListener('keydown', handleSlashKey);
   });
 
   onDestroy(() => {
+    isDestroying = true;
     editorEl?.removeEventListener('keydown', handleSlashKey);
     editor?.destroy();
   });
