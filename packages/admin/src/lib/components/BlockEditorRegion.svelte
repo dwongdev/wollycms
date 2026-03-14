@@ -201,6 +201,16 @@
     return block.fields;
   }
 
+  function fieldValuesEqual(a: unknown, b: unknown): boolean {
+    if (Object.is(a, b)) return true;
+    if (typeof a !== 'object' || a === null || typeof b !== 'object' || b === null) return false;
+    try {
+      return JSON.stringify(a) === JSON.stringify(b);
+    } catch {
+      return false;
+    }
+  }
+
   // Track recently dropped block for flash animation
   let justDroppedPbId = $state<number | null>(null);
 
@@ -354,6 +364,10 @@
       const regionBlocks = pageData.regions[r.name] || [];
       const block = regionBlocks.find((b: any) => b.pb_id === pbId);
       if (!block) continue;
+      const currentValue = block.fields?.[fieldName];
+      if (fieldValuesEqual(currentValue, value)) {
+        return;
+      }
       block.fields[fieldName] = value;
       dirtyBlockPbIds.add(pbId);
       dirtyBlockPbIds = dirtyBlockPbIds; // trigger reactivity
