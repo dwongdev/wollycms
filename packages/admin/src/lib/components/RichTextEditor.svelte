@@ -15,7 +15,6 @@
   import TableCell from '@tiptap/extension-table-cell';
   import TableHeader from '@tiptap/extension-table-header';
   import Placeholder from '@tiptap/extension-placeholder';
-  import Dropcursor from '@tiptap/extension-dropcursor';
   import MediaPicker from './MediaPicker.svelte';
 
   let { content, onUpdate }: { content: any; onUpdate: (json: any) => void } = $props();
@@ -223,7 +222,6 @@
         Table.configure({ resizable: false }),
         TableRow, TableCell, TableHeader,
         Placeholder.configure({ placeholder: 'Type / for commands...' }),
-        Dropcursor.configure({ color: '#2563eb', width: 2 }),
         PasteCleanup,
       ],
       content: content || '',
