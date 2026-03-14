@@ -21,6 +21,13 @@ export interface PageMeta {
 }
 
 /** Page summary (from list endpoint) */
+/** Taxonomy term attached to a page */
+export interface PageTerm {
+  taxonomy: string;
+  term: string;
+  weight: number;
+}
+
 export interface PageSummary {
   id: number;
   type: string;
@@ -28,6 +35,7 @@ export interface PageSummary {
   slug: string;
   status: 'draft' | 'published' | 'archived';
   fields: Record<string, unknown>;
+  terms?: PageTerm[];
   meta: PageMeta;
 }
 
