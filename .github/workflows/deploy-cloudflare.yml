@@ -86,6 +86,8 @@ jobs:
           TOML
 
       - name: Backup D1 before migrations
+        continue-on-error: true
+        id: d1_backup
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -94,6 +96,7 @@ jobs:
           command: d1 export ${{ vars.D1_DATABASE_NAME }} --remote --output d1-pre-deploy-backup.sql
 
       - name: Upload backup artifact
+        if: steps.d1_backup.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
           name: d1-backup-${{ github.sha }}
