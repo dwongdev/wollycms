@@ -232,6 +232,127 @@ app.post('/', async (c) => {
   return c.json({ data: row }, 201);
 });
 
+/** POST /upsert - Create or update page by slug */
+app.post('/upsert', async (c) => {
+  const body = await c.req.json().catch(() => null);
+  const parsed = pageSchema.safeParse(body);
+  if (!parsed.success) return c.json({ errors: parsed.error.issues.map((i) => ({ code: 'VALIDATION', message: i.message, path: i.path })) }, 400);
+
+  const db = getDb();
+  const payload = c.get('jwtPayload');
+  const now = new Date().toISOString();
+  const slug = parsed.data.slug || slugify(parsed.data.title);
+
+  const [existing] = await db.select().from(pages).where(eq(pages.slug, slug)).limit(1);
+
+  if (!existing) {
+    // Create — same logic as POST /
+    const [row] = await db.insert(pages).values({
+      typeId: parsed.data.typeId,
+      title: parsed.data.title,
+      slug,
+      status: parsed.data.status,
+      fields: parsed.data.fields,
+      scheduledAt: parsed.data.scheduledAt ?? null,
+      createdAt: now,
+      updatedAt: now,
+      publishedAt: parsed.data.status === 'published' ? now : null,
+      createdBy: payload.sub,
+    }).returning();
+
+    await logAudit(c, { action: 'create', entity: 'page', entityId: row.id, details: { title: row.title, slug } });
+    fireWebhooks('page.created', { id: row.id, title: row.title, slug });
+    if (row.status === 'published') {
+      fireWebhooks('page.published', { id: row.id, title: row.title, slug });
+    }
+    cacheInvalidate('pages:');
+    clearOgCache();
+
+    return c.json({ data: row, created: true }, 201);
+  }
+
+  // Update — same logic as PUT /:id
+  const id = existing.id;
+
+  // Snapshot current state as a revision
+  const currentBlocks = await db
+    .select({
+      region: pageBlocks.region, position: pageBlocks.position,
+      isShared: pageBlocks.isShared, overrides: pageBlocks.overrides,
+      blockId: blocks.id, blockTypeSlug: blockTypes.slug,
+      blockTitle: blocks.title, blockFields: blocks.fields,
+    })
+    .from(pageBlocks)
+    .innerJoin(blocks, eq(pageBlocks.blockId, blocks.id))
+    .innerJoin(blockTypes, eq(blocks.typeId, blockTypes.id))
+    .where(eq(pageBlocks.pageId, id))
+    .orderBy(asc(pageBlocks.region), asc(pageBlocks.position));
+
+  await db.insert(pageRevisions).values({
+    pageId: id,
+    title: existing.title,
+    slug: existing.slug,
+    status: existing.status!,
+    fields: existing.fields,
+    blocks: currentBlocks.map((b: typeof currentBlocks[0]) => ({
+      region: b.region, position: b.position, isShared: b.isShared,
+      overrides: b.overrides, blockId: b.isShared ? b.blockId : undefined,
+      blockType: b.blockTypeSlug, title: b.blockTitle, fields: b.blockFields,
+    })),
+    note: null,
+    createdAt: now,
+    createdBy: payload.sub,
+  });
+
+  const updates: Record<string, unknown> = {
+    typeId: parsed.data.typeId,
+    title: parsed.data.title,
+    slug,
+    status: parsed.data.status,
+    fields: parsed.data.fields,
+    scheduledAt: parsed.data.scheduledAt ?? null,
+    metaTitle: parsed.data.metaTitle ?? null,
+    metaDescription: parsed.data.metaDescription ?? null,
+    ogImage: parsed.data.ogImage ?? null,
+    canonicalUrl: parsed.data.canonicalUrl ?? null,
+    robots: parsed.data.robots ?? null,
+    updatedAt: now,
+  };
+  if (parsed.data.status === 'published' && !existing.publishedAt) {
+    updates.publishedAt = now;
+  }
+
+  await db.update(pages).set(updates).where(eq(pages.id, id));
+  const [updated] = await db.select().from(pages).where(eq(pages.id, id)).limit(1);
+
+  await logAudit(c, { action: 'update', entity: 'page', entityId: id, details: { title: updated.title } });
+  fireWebhooks('page.updated', { id, title: updated.title, slug: updated.slug });
+
+  // Detect publish/unpublish transitions
+  if (parsed.data.status === 'published' && existing.status !== 'published') {
+    fireWebhooks('page.published', { id, title: updated.title, slug: updated.slug });
+
+    // Auto-generate OG image on first publish if none exists
+    if (!updated.ogImage) {
+      const [ct] = await db.select({ name: contentTypes.name }).from(contentTypes).where(eq(contentTypes.id, updated.typeId)).limit(1);
+      import('../../og/generate.js').then(({ generateAndStoreOgImage }) => {
+        generateAndStoreOgImage(id, {
+          title: updated.metaTitle || updated.title,
+          description: updated.metaDescription,
+          siteName: 'WollyCMS',
+          contentType: ct?.name,
+        }, updated.slug).catch(() => { /* best-effort */ });
+      }).catch(() => {});
+    }
+  } else if (parsed.data.status !== 'published' && existing.status === 'published') {
+    fireWebhooks('page.unpublished', { id, title: updated.title, slug: updated.slug });
+  }
+
+  cacheInvalidate('pages:');
+  clearOgCache();
+  return c.json({ data: updated, created: false });
+});
+
 /** PUT /:id - Update page */
 app.put('/:id', async (c) => {
   const db = getDb();
