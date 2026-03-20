@@ -308,7 +308,7 @@ import { WollyImage } from '@wollycms/astro';
 <img
   src="/api/media/101/large"
   srcset="/api/media/101/medium 600w, /api/media/101/large 1200w"
-  alt="CITE datacenter lab"
+  alt="Campus computer lab"
   width="1200"
   height="400"
   loading="lazy"

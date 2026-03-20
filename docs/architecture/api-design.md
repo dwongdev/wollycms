@@ -42,8 +42,8 @@ GET /api/content/pages/:slug/blocks
 {
   "id": 42,
   "type": "secondary_page",
-  "title": "CITE Resource Wizard",
-  "slug": "cite-resource-wizard",
+  "title": "Technology Resources",
+  "slug": "technology-resources",
   "status": "published",
   "fields": {},
   "regions": {
@@ -52,8 +52,8 @@ GET /api/content/pages/:slug/blocks
         "id": "pb_0",
         "block_type": "hero",
         "fields": {
-          "heading": "CITE Resource Wizard",
-          "subtitle": "Center For Information Technology Excellence",
+          "heading": "Technology Resources",
+          "subtitle": "Campus Technology Center",
           "style": "interior",
           "image": 101
         }
@@ -83,11 +83,11 @@ GET /api/content/pages/:slug/blocks
         "is_shared": true,
         "block_id": 5,
         "fields": {
-          "name": "Lake Country Advanced Knowledge Center",
-          "address": "118 E Danville St",
-          "city": "South Hill",
+          "name": "Main Campus",
+          "address": "123 College Ave",
+          "city": "Springfield",
           "state": "VA",
-          "zip": "23970"
+          "zip": "22150"
         }
       },
       {

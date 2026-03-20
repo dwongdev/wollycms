@@ -101,16 +101,16 @@ The page editor shows available regions (defined by the content type). The edito
 drags/adds blocks into regions and orders them:
 
 ```
-Page: "CITE Resource Wizard"
+Page: "Technology Resources"
 Type: secondary_page (regions: content, sidebar, bottom)
 
 content region:
   [0] Rich Text block — "About the Program..." (inline)
-  [1] CTA Button block — "Información en español" (inline)
-  [2] Accordion block — "Consider a Career..." (inline)
+  [1] CTA Button block — "Learn More" (inline)
+  [2] Accordion block — "Frequently Asked Questions" (inline)
 
 sidebar region:
-  [0] Location block — "LCAKC Campus" (SHARED — reusable)
+  [0] Location block — "Main Campus" (SHARED — reusable)
   [1] Contact List block — "Important Contacts" (SHARED — reusable)
 
 bottom region:
@@ -169,10 +169,10 @@ for that page only:
 ```
 Shared block "Main Campus Location" (id: 5)
   → fields.heading = "Campus Location"
-  → fields.address = "118 E Danville St..."
+  → fields.address = "123 College Ave..."
 
-Page "CITE Program" references block 5 with override:
-  → overrides.heading = "CITE Location"
+Page "Technology Resources" references block 5 with override:
+  → overrides.heading = "Tech Center Location"
   → (address stays the same — inherited from shared block)
 
 Page "Nursing Program" references block 5 with override:

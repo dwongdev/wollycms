@@ -343,7 +343,7 @@ site. Options:
 
 ---
 
-## Scenario 3: SmartHomeDigest.com — Large Content Site
+## Scenario 3: TechBlog Example — Large Content Site
 
 **Setup**: A tech media site with hundreds of articles, product reviews,
 comparison pages, and dynamic features. Backend on a cloud server, frontend
@@ -358,7 +358,7 @@ on Cloudflare, but this site looks and works nothing like a college website.
 │  • Hono API on port 4321                        │
 │  • PostgreSQL database (managed, like Neon)     │
 │  • Media on Cloudflare R2                       │
-│  • Admin at admin.smarthomedigest.com           │
+│  • Admin at admin.techblog.example.com           │
 │  • Accessible to editorial team (auth required) │
 │                                                 │
 └────────────────┬────────────────────────────────┘
@@ -375,11 +375,11 @@ on Cloudflare, but this site looks and works nothing like a college website.
 │  • Category listings: SSR with edge caching     │
 │  • Preview mode: SSR (draft content for editors)│
 │                                                 │
-│  www.smarthomedigest.com                        │
+│  www.techblog.example.com                        │
 │                                                 │
 │  Cloudflare R2                                  │
 │  • All media (images, videos)                   │
-│  • media.smarthomedigest.com                    │
+│  • media.techblog.example.com                    │
 │                                                 │
 │  Cloudflare Workers (optional)                  │
 │  • API caching layer                            │
@@ -391,7 +391,7 @@ on Cloudflare, but this site looks and works nothing like a college website.
 
 ### How This Differs from Example College
 
-| Aspect | Example College | SmartHomeDigest.com |
+| Aspect | Example College | TechBlog Example |
 |---|---|---|
 | **Content types** | secondary_page, landing_page, home_page | article, review, comparison, product, home_page |
 | **Block types** | hero, rich_text, accordion, contact_list, location, etc. | hero, rich_text, product_card, comparison_table, affiliate_link, rating_widget, image_gallery, video_embed, related_articles |
@@ -407,7 +407,7 @@ on Cloudflare, but this site looks and works nothing like a college website.
 Completely different design, components, and structure:
 
 ```
-smarthomedigest/
+techblog-site/
 ├── src/
 │   ├── layouts/
 │   │   ├── Article.astro          ← article layout (author bio, date, tags)
@@ -438,7 +438,7 @@ smarthomedigest/
 │   │   ├── category/[slug].astro  ← category listing (SSR)
 │   │   └── search.astro           ← search results (SSR)
 │   └── styles/
-│       └── smarthomedigest.css    ← dark tech theme
+│       └── techblog.css    ← dark tech theme
 ├── astro.config.mjs               ← Cloudflare adapter
 └── package.json
 ```
@@ -522,7 +522,7 @@ infrequently and benefit from being static.
 
 ### Workflow: Publishing an Article
 
-1. Writer logs into `admin.smarthomedigest.com` (the WollyCMS admin UI)
+1. Writer logs into `admin.techblog.example.com` (the WollyCMS admin UI)
 2. Creates a new page with content type "article"
 3. Adds blocks: hero (featured image + title), rich_text (the article body),
    product_card blocks (affiliate links), related_articles block

@@ -363,7 +363,7 @@ rebuild, site updates automatically.
 
 ## Phase 6: Packaging & Developer Experience
 
-**Goal**: Make WollyCMS installable and usable by someone who isn't us.
+**Goal**: Make WollyCMS installable and usable by anyone.
 A developer should go from zero to running CMS in under 5 minutes.
 
 ### 6a. npm Publishing
@@ -575,11 +575,7 @@ new block type.
 **Phase 8** = Make it scalable (teams, multi-site, migrations, plugins)
 
 Recommended priority: **6 → 7 → 8**.
-Phases 1-5 complete. PostgreSQL support complete (dual SQLite/PG with
-auto-detection). S3-compatible media storage complete (Cloudflare R2
-recommended — zero egress, global CDN). Recommended production
-architecture: Cloudflare Tunnel + R2 + Cloudflare Pages. Next:
-packaging for distribution.
+Phases 1-5 complete. Next: packaging for distribution.
 
 ---
 

@@ -281,7 +281,7 @@ The schema system supports these field types:
 The `page_blocks` table is the join table that defines page composition:
 
 ```
-Page "About CITE Program"
+Page "About Technology Resources"
 ├── region: "content"
 │   ├── position 0: block #101 (rich_text) — inline, page-specific
 │   ├── position 1: block #102 (accordion) — inline, page-specific
