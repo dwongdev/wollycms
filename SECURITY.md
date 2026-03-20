@@ -13,7 +13,9 @@ WollyCMS is pre-1.0. Security fixes are applied to the `main` branch only.
 
 If you discover a security vulnerability, please report it responsibly.
 
-**Email**: chad@cwolly.com
+**Preferred**: Use [GitHub's private vulnerability reporting](https://github.com/wollycms/wollycms/security/advisories/new).
+
+**Email**: wollycms@cwolly.com
 
 **Do not** open a public GitHub issue for security vulnerabilities.
 
@@ -51,3 +53,4 @@ I will acknowledge receipt within 48 hours and provide a fix timeline within 7 d
 
 - The Embed block type renders raw HTML. This is intentional for admin-trusted content (iframes, third-party widgets). Restrict embed block creation to trusted roles.
 - Rich text content is stored as TipTap JSON and rendered server-side. No raw HTML injection path exists outside the embed block.
+- Tracking scripts (analytics, etc.) are admin-managed and executed as-is on frontend pages. Only trusted admins should manage tracking scripts.

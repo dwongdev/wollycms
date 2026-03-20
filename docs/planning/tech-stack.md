@@ -46,7 +46,7 @@
 | **Containerization** | Docker | Multi-stage builds, consistent deployments |
 | **Compose** | Docker Compose | Dev environment with CMS + DB + media |
 | **Monorepo** | npm workspaces | CMS server + admin UI + Astro integration |
-| **CI/CD** | Forgejo Actions | Self-hosted, matches git host |
+| **CI/CD** | GitHub Actions | Automated testing, Docker builds, Cloudflare deploys |
 | **Media Storage** | Local FS / S3-compatible | Pluggable: local for dev, R2/S3 for prod |
 
 ---
@@ -88,7 +88,7 @@ WollyCMS/
 │       └── package.json
 │
 ├── examples/
-│   └── college-site/     # Reference Astro site (SVCC-inspired)
+│   └── college-site/     # Reference Astro site
 │       ├── src/
 │       │   ├── blocks/   # Block components
 │       │   ├── layouts/  # Page layouts

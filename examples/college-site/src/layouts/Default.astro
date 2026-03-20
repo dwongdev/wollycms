@@ -12,7 +12,7 @@ interface Props {
 }
 
 const { title, menu, footerMenu, config } = Astro.props;
-const siteName = config?.siteName ?? 'Southside Virginia Community College';
+const siteName = config?.siteName ?? 'WollyCMS Example Site';
 ---
 
 <!DOCTYPE html>
@@ -20,7 +20,7 @@ const siteName = config?.siteName ?? 'Southside Virginia Community College';
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>{title} | SVCC</title>
+    <title>{title} | {siteName}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
@@ -32,14 +32,14 @@ const siteName = config?.siteName ?? 'Southside Virginia Community College';
         <div class="container">
           <ul class="header-top-links">
             <li><a href="/apply-now">Apply Now</a></li>
-            <li><a href="#">mySVCC</a></li>
+            <li><a href="#">My Account</a></li>
             <li><a href="#">Give</a></li>
           </ul>
         </div>
       </div>
       <div class="container header-inner">
         <a href="/" class="site-logo">
-          <img src="/svcc-logo.png" alt={siteName} width="285" height="73" />
+          <img src="/logo.png" alt={siteName} width="285" height="73" />
         </a>
         <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu" aria-expanded="false">
           <span></span><span></span><span></span>

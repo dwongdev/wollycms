@@ -194,7 +194,7 @@ services:
 
 ---
 
-## Scenario 2: Southside.edu — College Website
+## Scenario 2: Example College — College Website
 
 **Setup**: A college wants their CMS backend on-premises (on the college
 network for security/policy reasons) but their public website hosted on
@@ -209,7 +209,7 @@ Cloudflare for speed and reliability.
 │  • Hono API on internal IP (10.0.1.50:4321)    │
 │  • PostgreSQL database (college DB server)     │
 │  • Media on S3-compatible storage (MinIO)      │
-│  • Admin UI at cms.internal.southside.edu      │
+│  • Admin UI at cms.internal.example-college.edu      │
 │  • Only accessible from campus network/VPN     │
 │                                                │
 │  Staff access the admin from their desks       │
@@ -239,7 +239,7 @@ Cloudflare for speed and reliability.
 ┌─── Cloudflare (public internet) ───────────────┐
 │                                                 │
 │  Cloudflare Pages                               │
-│  • www.southside.edu → static HTML              │
+│  • www.example-college.edu → static HTML              │
 │  • Global CDN (fast everywhere)                 │
 │  • DDoS protection included                     │
 │  • Free or cheap hosting                        │
@@ -253,7 +253,7 @@ Cloudflare for speed and reliability.
 
 ### How Content Gets Published
 
-1. A staff member at the college opens `cms.internal.southside.edu` from
+1. A staff member at the college opens `cms.internal.example-college.edu` from
    their office computer (or via VPN from home)
 2. They edit the "Admissions" page — update text, add a new accordion block
 3. They click "Publish"
@@ -264,14 +264,14 @@ Cloudflare for speed and reliability.
 7. Astro fetches all published pages, menus, taxonomies from the API
 8. Astro generates static HTML — every page becomes a `.html` file
 9. The build output is deployed to Cloudflare Pages
-10. Within ~30 seconds, www.southside.edu is updated globally
+10. Within ~30 seconds, www.example-college.edu is updated globally
 
 ### The Astro Project
 
 This is a full college website — much more complex than a blog:
 
 ```
-southside-site/
+college-site/
 ├── src/
 │   ├── layouts/
 │   │   ├── Default.astro          ← standard page layout
@@ -297,7 +297,7 @@ southside-site/
 │   │   ├── index.astro            ← homepage
 │   │   └── [...slug].astro        ← all CMS pages
 │   └── styles/
-│       └── southside.css          ← maroon + gold design
+│       └── college.css          ← maroon + gold design
 ├── astro.config.mjs
 └── package.json
 ```
@@ -324,7 +324,7 @@ Images uploaded through the CMS admin need to be accessible on the public
 site. Options:
 
 1. **Cloudflare R2** — WollyCMS uploads processed images to an R2 bucket.
-   Astro references `https://media.southside.edu/...` URLs. Best option.
+   Astro references `https://media.example-college.edu/...` URLs. Best option.
 2. **Build-time download** — During `astro build`, download all media from
    the CMS API and include them in the static build output. Simple but makes
    builds slower for large media libraries.
@@ -389,9 +389,9 @@ on Cloudflare, but this site looks and works nothing like a college website.
 └─────────────────────────────────────────────────┘
 ```
 
-### How This Differs from Southside.edu
+### How This Differs from Example College
 
-| Aspect | Southside.edu | SmartHomeDigest.com |
+| Aspect | Example College | SmartHomeDigest.com |
 |---|---|---|
 | **Content types** | secondary_page, landing_page, home_page | article, review, comparison, product, home_page |
 | **Block types** | hero, rich_text, accordion, contact_list, location, etc. | hero, rich_text, product_card, comparison_table, affiliate_link, rating_widget, image_gallery, video_embed, related_articles |

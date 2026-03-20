@@ -9,7 +9,7 @@ interface Props {
 
 const { menu, config } = Astro.props;
 const year = new Date().getFullYear();
-const siteName = config?.siteName ?? 'Southside Virginia Community College';
+const siteName = config?.siteName ?? 'WollyCMS Example Site';
 ---
 
 <footer class="site-footer">
@@ -17,7 +17,7 @@ const siteName = config?.siteName ?? 'Southside Virginia Community College';
     <div class="pre-footer">
       <div class="footer-brand">
         <span class="footer-brand-name">{siteName}</span>
-        <span class="footer-brand-sub">A part of the Virginia Community College System</span>
+        <span class="footer-brand-sub">Powered by WollyCMS</span>
       </div>
       <ul class="footer-social">
         <li><a href="#" aria-label="Facebook">Facebook</a></li>
@@ -77,7 +77,7 @@ const siteName = config?.siteName ?? 'Southside Virginia Community College';
         </nav>
       )}
       <p class="footer-copy">
-        &copy; {year} {config?.footer?.text ?? 'Southside Virginia Community College. All rights reserved.'}
+        &copy; {year} {config?.footer?.text ?? 'WollyCMS Example Site. All rights reserved.'}
       </p>
     </div>
   </div>

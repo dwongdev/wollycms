@@ -96,7 +96,7 @@ async function createInlineBlocks(
 ) {
   const vals: (typeof blocks.$inferInsert)[] = [
     // Hero blocks
-    { typeId: bt.hero, title: 'Home Hero', fields: { heading: 'Your Future Starts Here', eyebrow: 'FEATURED PROGRAM', description: 'Explore workforce-ready degrees and certificates in welding, HVAC, nursing, IT, and more — with tuition assistance through Virginia\'s G3 program.', cta_text: 'G3 Program — Apply Today', cta_url: '/apply-now', style: 'home' }, isReusable: false, createdAt: now, updatedAt: now, createdBy: adminId },
+    { typeId: bt.hero, title: 'Home Hero', fields: { heading: 'Welcome to WollyCMS', eyebrow: 'GETTING STARTED', description: 'A self-hosted headless CMS for Astro.js with composable block-based page building, reusable content blocks, and hierarchical menu management.', cta_text: 'View Documentation', cta_url: '/docs', style: 'home' }, isReusable: false, createdAt: now, updatedAt: now, createdBy: adminId },
     { typeId: bt.hero, title: 'About Hero', fields: { heading: 'About Us', subtitle: 'Our Mission & History', style: 'interior' }, isReusable: false, createdAt: now, updatedAt: now, createdBy: adminId },
     { typeId: bt.hero, title: 'Admissions Hero', fields: { heading: 'Admissions', subtitle: 'Begin Your Journey', cta_text: 'Apply Now', cta_url: '/apply-now', style: 'interior' }, isReusable: false, createdAt: now, updatedAt: now, createdBy: adminId },
     { typeId: bt.hero, title: 'Programs Hero', fields: { heading: 'Academic Programs', subtitle: 'Explore Our Degrees', style: 'interior' }, isReusable: false, createdAt: now, updatedAt: now, createdBy: adminId },

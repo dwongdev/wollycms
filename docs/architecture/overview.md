@@ -185,10 +185,10 @@ frontend.
     "title": "Important Contacts",
     "contacts": [
       {
-        "name": "Wendy Ezell",
-        "role": "CITE Coordinator & Associate Professor",
-        "phone": "434-949-1076",
-        "email": "wendy.ezell@southside.edu"
+        "name": "Jane Smith",
+        "role": "Program Coordinator",
+        "phone": "555-555-1076",
+        "email": "jsmith@example-college.edu"
       }
     ]
   }

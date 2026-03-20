@@ -17,7 +17,7 @@
 **Why it falls short:**
 - **SaaS-only** — no self-hosting, data lives on their servers
 - **Pricing scales with content**: Free tier is 1 space, limited components.
-  Business tier starts at $2,999/year. For a site like southside.edu with 1,500+
+  Business tier starts at $2,999/year. For a mid-size institutional site with 1,500+
   pages, costs escalate quickly
 - **Vendor lock-in** — content model is proprietary, migration is painful
 - **Menu system is basic** — no native deep hierarchical menu support

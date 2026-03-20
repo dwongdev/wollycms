@@ -7,19 +7,20 @@ import { siteConfig } from '../../db/schema/index.js';
 
 const app = new Hono();
 
-// Config updates require admin role
+// Config reads require at least viewer role; updates require admin
+app.get('/*', requireRole('viewer'));
 app.put('/*', requireRole('admin'));
 
 const defaultConfig = {
-  siteName: 'Southside Virginia Community College',
-  tagline: 'Your Future Starts Here',
+  siteName: 'My Site',
+  tagline: 'Welcome to your site',
   logo: null as string | null,
   adminBrandName: 'WollyCMS' as string | null,
-  footer: { text: 'Southside Virginia Community College. All rights reserved.' },
+  footer: { text: 'Built with WollyCMS' },
   social: {
-    facebook: 'https://www.facebook.com/SouthsideVirginiaCommunityCollege/' as string | null,
+    facebook: null as string | null,
     twitter: null as string | null,
-    instagram: 'https://www.instagram.com/southsidevacc/' as string | null,
+    instagram: null as string | null,
   },
 };
 

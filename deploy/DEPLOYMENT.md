@@ -21,27 +21,25 @@ wollycms.internal:4321               your-site.example.com
 
 ## Prerequisites
 
-- Git repo hosting (Forgejo, Gitea, GitHub, etc.)
+- Git repo hosting (GitHub, Gitea, Forgejo, etc.)
 - CI runner operational
-- `REGISTRY_TOKEN` secret set in repo settings
 - Docker + Docker Compose on your server
 
 ## Step 1: Set Up CI
 
-The workflow at `.forgejo/workflows/build-push.yml` handles this automatically.
+The workflow at `.github/workflows/build-push.yml` handles this automatically.
 On push to `main`:
 1. Runs tests (npm test)
 2. Builds Docker image from Dockerfile
-3. Pushes to your container registry
+3. Pushes to GitHub Container Registry (ghcr.io)
 
-### Required CI Secrets
+### Required CI Configuration
 
-In your repo settings, add:
+The GitHub Actions workflow uses `GITHUB_TOKEN` (automatic) to push to ghcr.io. No additional secrets are needed for the default setup.
+
+For a custom container registry, update the workflow and add:
 - `REGISTRY_TOKEN`: Access token with `package:write` scope
-
-### Required CI Variables
-
-- `REGISTRY_HOST`: Your container registry hostname (e.g., `registry.example.com`)
+- `REGISTRY_HOST` variable: Your container registry hostname
 
 ## Step 2: Deploy on Server
 

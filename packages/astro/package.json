@@ -1,8 +1,19 @@
 {
   "name": "@wollycms/astro",
   "version": "0.1.0",
-  "private": true,
   "type": "module",
+  "description": "Astro.js integration for WollyCMS — components, helpers, and route generation",
+  "author": "Chad Wollenberg",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/wollycms/wollycms.git",
+    "directory": "packages/astro"
+  },
+  "homepage": "https://github.com/wollycms/wollycms",
+  "bugs": {
+    "url": "https://github.com/wollycms/wollycms/issues"
+  },
   "exports": {
     ".": "./src/index.ts",
     "./components/BlockRenderer.astro": "./src/components/BlockRenderer.astro",
@@ -19,7 +30,9 @@
     "withastro",
     "astro-component",
     "cms",
-    "wollycms"
+    "wollycms",
+    "headless-cms",
+    "block-editor"
   ],
   "peerDependencies": {
     "astro": "^5.0.0"

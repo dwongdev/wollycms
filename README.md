@@ -2,9 +2,19 @@
 
 A self-hosted, open-source headless CMS designed for [Astro.js](https://astro.build) with composable block-based page building, reusable content blocks, and hierarchical menu management.
 
-## Why WollyCMS?
+[![CI](https://github.com/wollycms/wollycms/actions/workflows/build-push.yml/badge.svg)](https://github.com/wollycms/wollycms/actions/workflows/build-push.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Node.js](https://img.shields.io/badge/Node.js-22_LTS-green.svg)](https://nodejs.org/)
+
+## About
 
 WollyCMS fills the gap between simple headless CMS tools (Strapi, Directus) that lack page composition, and expensive SaaS platforms (Storyblok) that lock you in. It brings Drupal's powerful content composition model — paragraphs, reusable blocks, multi-region layouts — into a modern, lightweight, Astro-native package.
+
+**Built with Claude Code** — This project was built entirely using [Claude Code](https://claude.com/claude-code), Anthropic's AI-powered development tool. It is designed to work with Claude's APIs for building out any Astro deployment.
+
+**Origin story** — WollyCMS started as a simple blog engine but evolved into a tool for migrating Drupal sites to Astro.js, with composable block-based content modeling that maps naturally to Drupal's content architecture (paragraphs, block references, multi-region layouts).
+
+> **Maintenance notice**: This is a personal side project. I am not a full-time maintainer. Bug reports and feature requests are welcome, but expect slow response times. PRs are appreciated — please read [CONTRIBUTING.md](CONTRIBUTING.md) first.
 
 ## Features
 
@@ -22,12 +32,12 @@ WollyCMS fills the gap between simple headless CMS tools (Strapi, Directus) that
 - **SEO** — Meta title/description, OG image, canonical URL, robots, XML sitemap, JSON-LD helpers
 - **Global Search** — Ctrl+K to search across pages, blocks, media, and menus
 - **Scheduled Publishing** — Set a publish date and content goes live automatically
-- **Self-Hosted** — Runs anywhere Node.js runs. SQLite for dev, PostgreSQL support planned.
+- **Self-Hosted** — Runs anywhere Node.js runs. SQLite for dev, PostgreSQL for production.
 
 ## Quick Start
 
 ```bash
-git clone <repo-url> wollycms && cd wollycms
+git clone https://github.com/wollycms/wollycms.git && cd wollycms
 cp .env.example .env
 npm install
 npm run db:migrate
@@ -75,7 +85,7 @@ docker compose up -d
 | Component | Technology |
 |---|---|
 | API Server | Hono 4.x (TypeScript, ESM) |
-| Database | SQLite (Drizzle ORM) |
+| Database | SQLite (dev) / PostgreSQL (prod) via Drizzle ORM |
 | Admin UI | SvelteKit 5 (SPA mode) |
 | Rich Text | TipTap (JSON storage) |
 | Media Processing | Sharp |
@@ -107,7 +117,7 @@ All configuration is via environment variables. See [`.env.example`](.env.exampl
 | `DATABASE_URL` | `sqlite:./data/wolly.db` | Database connection string |
 | `PORT` | `4321` | Server port |
 | `JWT_SECRET` | — | **Required in production.** Secret for JWT signing |
-| `CORS_ORIGINS` | `*` | Allowed origins (comma-separated) |
+| `CORS_ORIGINS` | `*` | Allowed origins (comma-separated). **Set this in production** — `*` is for development only. Example: `https://your-site.com,https://admin.your-site.com` |
 | `MEDIA_DIR` | `./uploads` | Local media storage path |
 | `SITE_URL` | `http://localhost:4322` | Frontend URL for webhooks/preview |
 | `RATE_LIMIT_AUTH` | `10` | Max login attempts per window |
@@ -126,6 +136,14 @@ npm run db:generate       # Generate migration from schema changes
 npm run db:migrate        # Run pending migrations
 npm run db:seed           # Populate sample data
 ```
+
+## Deployment
+
+WollyCMS can be deployed via:
+
+- **Docker** — Multi-stage production image with Caddy reverse proxy. See [Deployment Guide](docs/guides/deployment.md).
+- **Cloudflare Workers** — D1 database + R2 storage. See [`wrangler.toml.example`](wrangler.toml.example).
+- **Bare Node.js** — SQLite or PostgreSQL, behind nginx/Caddy.
 
 ## Documentation
 

@@ -2,10 +2,20 @@
 
 Thanks for your interest in contributing to WollyCMS.
 
+## Maintenance Note
+
+WollyCMS is a side project maintained in spare time. Please set expectations accordingly:
+
+- Issue and PR response times may be days to weeks
+- Feature requests are tracked but may not be implemented quickly
+- PRs that include tests and follow existing patterns are most likely to be merged
+
+This project was built entirely with [Claude Code](https://claude.com/claude-code).
+
 ## Getting Started
 
 ```bash
-git clone https://github.com/Leafrider/wollycms.git && cd wollycms
+git clone https://github.com/wollycms/wollycms.git && cd wollycms
 cp .env.example .env
 npm install
 npm run db:migrate
@@ -73,7 +83,7 @@ test: add security tests for API key permissions
 
 ## Reporting Bugs
 
-Open a [GitHub issue](https://github.com/Leafrider/wollycms/issues) with:
+Open a [GitHub issue](https://github.com/wollycms/wollycms/issues) with:
 - What you expected to happen
 - What actually happened
 - Steps to reproduce
