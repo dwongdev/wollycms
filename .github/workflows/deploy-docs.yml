@@ -10,7 +10,7 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment: docs
+    environment: wollycmsdocs
     defaults:
       run:
         working-directory: apps/docs
