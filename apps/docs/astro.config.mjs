@@ -73,6 +73,15 @@ export default defineConfig({
 					],
 				},
 				{
+					label: 'Migration',
+					items: [
+						{ label: 'Overview', slug: 'migration/overview' },
+						{ label: 'From Drupal', slug: 'migration/from-drupal' },
+						{ label: 'From WordPress', slug: 'migration/from-wordpress' },
+						{ label: 'Case Study: Community College', slug: 'migration/case-study-community-college' },
+					],
+				},
+				{
 					label: 'API Reference',
 					autogenerate: { directory: 'api' },
 				},
