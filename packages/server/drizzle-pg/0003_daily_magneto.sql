@@ -1,0 +1,1 @@
+ALTER TABLE "content_types" ADD COLUMN "default_blocks" jsonb;

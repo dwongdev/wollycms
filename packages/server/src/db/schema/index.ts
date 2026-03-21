@@ -14,4 +14,4 @@ export const { media } = mod;
 export const { siteConfig, redirects, users } = mod;
 export const { webhooks, apiKeys, auditLogs } = mod;
 export const { trackingScripts } = mod;
-export type { FieldDefinition, RegionDefinition } from './_sqlite.js';
+export type { FieldDefinition, RegionDefinition, DefaultBlockDefinition } from './_sqlite.js';

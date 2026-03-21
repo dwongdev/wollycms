@@ -1,6 +1,6 @@
 import type { AppDatabase } from '../index.js';
 import { contentTypes } from '../schema/index.js';
-import type { FieldDefinition, RegionDefinition } from '../schema/index.js';
+import type { FieldDefinition, RegionDefinition, DefaultBlockDefinition } from '../schema/index.js';
 
 export async function seedContentTypes(db: AppDatabase) {
   const types: {
@@ -9,6 +9,7 @@ export async function seedContentTypes(db: AppDatabase) {
     description: string;
     fieldsSchema: FieldDefinition[];
     regions: RegionDefinition[];
+    defaultBlocks: DefaultBlockDefinition[] | null;
     settings: Record<string, unknown>;
   }[] = [
     {
@@ -21,6 +22,10 @@ export async function seedContentTypes(db: AppDatabase) {
         { name: 'content', label: 'Content' },
         { name: 'sidebar', label: 'Sidebar' },
         { name: 'bottom', label: 'Bottom' },
+      ],
+      defaultBlocks: [
+        { region: 'hero', blockTypeSlug: 'hero', position: 0 },
+        { region: 'content', blockTypeSlug: 'rich_text', position: 0 },
       ],
       settings: { icon: 'file-text' },
     },
@@ -35,6 +40,11 @@ export async function seedContentTypes(db: AppDatabase) {
         { name: 'features', label: 'Features' },
         { name: 'bottom', label: 'Bottom' },
       ],
+      defaultBlocks: [
+        { region: 'hero', blockTypeSlug: 'hero', position: 0 },
+        { region: 'content', blockTypeSlug: 'rich_text', position: 0 },
+        { region: 'content', blockTypeSlug: 'cta_button', position: 1 },
+      ],
       settings: { icon: 'layout' },
     },
     {
@@ -48,6 +58,7 @@ export async function seedContentTypes(db: AppDatabase) {
         { name: 'features', label: 'Features' },
         { name: 'bottom', label: 'Bottom' },
       ],
+      defaultBlocks: null,
       settings: { icon: 'home', singleton: true },
     },
   ];

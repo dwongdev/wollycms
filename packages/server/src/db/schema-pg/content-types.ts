@@ -1,7 +1,7 @@
 import { pgTable, text, serial, jsonb } from 'drizzle-orm/pg-core';
-import type { FieldDefinition, RegionDefinition } from '../schema/content-types.ts';
+import type { FieldDefinition, RegionDefinition, DefaultBlockDefinition } from '../schema/content-types.ts';
 
-export type { FieldDefinition, RegionDefinition } from '../schema/content-types.ts';
+export type { FieldDefinition, RegionDefinition, DefaultBlockDefinition } from '../schema/content-types.ts';
 
 export const contentTypes = pgTable('content_types', {
   id: serial('id').primaryKey(),
@@ -10,6 +10,7 @@ export const contentTypes = pgTable('content_types', {
   description: text('description'),
   fieldsSchema: jsonb('fields_schema').$type<FieldDefinition[]>(),
   regions: jsonb('regions').$type<RegionDefinition[]>(),
+  defaultBlocks: jsonb('default_blocks').$type<DefaultBlockDefinition[]>(),
   settings: jsonb('settings').$type<Record<string, unknown>>(),
 });
 

@@ -187,7 +187,8 @@ describe('Admin Pages', () => {
   it('GET /:id shows added block in region', async () => {
     const res = await authed(`/pages/${testPageId}`);
     const body = await res.json();
-    expect(body.data.regions.content.length).toBe(1);
+    // 1 default block (rich_text) + 1 manually added = 2
+    expect(body.data.regions.content.length).toBe(2);
   });
 
   it('DELETE /:id/blocks/:pbId removes block', async () => {

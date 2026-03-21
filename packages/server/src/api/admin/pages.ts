@@ -221,6 +221,39 @@ app.post('/', async (c) => {
     createdBy: payload.sub,
   }).returning();
 
+  // Auto-populate default blocks from content type
+  const [ct] = await db.select({ defaultBlocks: contentTypes.defaultBlocks })
+    .from(contentTypes).where(eq(contentTypes.id, parsed.data.typeId)).limit(1);
+  const defaults = (ct?.defaultBlocks as import('../../db/schema/content-types.js').DefaultBlockDefinition[] | null) ?? [];
+  if (defaults.length > 0) {
+    // Resolve block type slugs to IDs
+    const slugs = [...new Set(defaults.map((d) => d.blockTypeSlug))];
+    const btRows = await db.select({ id: blockTypes.id, slug: blockTypes.slug })
+      .from(blockTypes).where(inArray(blockTypes.slug, slugs));
+    const slugToId = Object.fromEntries(btRows.map((bt: typeof btRows[number]) => [bt.slug, bt.id]));
+
+    for (const def of defaults) {
+      const typeId = slugToId[def.blockTypeSlug];
+      if (!typeId) continue; // skip if block type not found
+      const [newBlock] = await db.insert(blocks).values({
+        typeId,
+        title: null,
+        fields: def.fields ?? {},
+        isReusable: false,
+        createdAt: now,
+        updatedAt: now,
+        createdBy: payload.sub,
+      }).returning();
+      await db.insert(pageBlocks).values({
+        pageId: row.id,
+        blockId: newBlock.id,
+        region: def.region,
+        position: def.position,
+        isShared: false,
+      });
+    }
+  }
+
   await logAudit(c, { action: 'create', entity: 'page', entityId: row.id, details: { title: row.title, slug } });
   fireWebhooks('page.created', { id: row.id, title: row.title, slug });
   if (row.status === 'published') {
@@ -259,6 +292,38 @@ app.post('/upsert', async (c) => {
       publishedAt: parsed.data.status === 'published' ? now : null,
       createdBy: payload.sub,
     }).returning();
+
+    // Auto-populate default blocks from content type
+    const [ct] = await db.select({ defaultBlocks: contentTypes.defaultBlocks })
+      .from(contentTypes).where(eq(contentTypes.id, parsed.data.typeId)).limit(1);
+    const defaults = (ct?.defaultBlocks as import('../../db/schema/content-types.js').DefaultBlockDefinition[] | null) ?? [];
+    if (defaults.length > 0) {
+      const slugs = [...new Set(defaults.map((d) => d.blockTypeSlug))];
+      const btRows = await db.select({ id: blockTypes.id, slug: blockTypes.slug })
+        .from(blockTypes).where(inArray(blockTypes.slug, slugs));
+      const slugToId = Object.fromEntries(btRows.map((bt: typeof btRows[number]) => [bt.slug, bt.id]));
+
+      for (const def of defaults) {
+        const typeId = slugToId[def.blockTypeSlug];
+        if (!typeId) continue;
+        const [newBlock] = await db.insert(blocks).values({
+          typeId,
+          title: null,
+          fields: def.fields ?? {},
+          isReusable: false,
+          createdAt: now,
+          updatedAt: now,
+          createdBy: payload.sub,
+        }).returning();
+        await db.insert(pageBlocks).values({
+          pageId: row.id,
+          blockId: newBlock.id,
+          region: def.region,
+          position: def.position,
+          isShared: false,
+        });
+      }
+    }
 
     await logAudit(c, { action: 'create', entity: 'page', entityId: row.id, details: { title: row.title, slug } });
     fireWebhooks('page.created', { id: row.id, title: row.title, slug });

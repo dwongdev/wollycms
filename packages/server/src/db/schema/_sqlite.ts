@@ -1,5 +1,5 @@
 export { contentTypes, blockTypes } from './content-types.ts';
-export type { FieldDefinition, RegionDefinition } from './content-types.ts';
+export type { FieldDefinition, RegionDefinition, DefaultBlockDefinition } from './content-types.ts';
 export { pages, pageRevisions } from './pages.ts';
 export { blocks, pageBlocks } from './blocks.ts';
 export { taxonomies, terms, contentTerms } from './taxonomies.ts';

@@ -105,14 +105,14 @@ app.post('/:pageId/revisions/:revId/restore', async (c) => {
     updatedAt: now,
   }).where(eq(pages.id, pageId));
 
-  // Restore blocks: remove current inline blocks and page_blocks, then recreate
+  // Restore blocks: remove page_blocks first, then orphaned inline blocks
   const currentPbs = await db.select().from(pageBlocks).where(eq(pageBlocks.pageId, pageId));
+  await db.delete(pageBlocks).where(eq(pageBlocks.pageId, pageId));
   for (const pb of currentPbs) {
     if (!pb.isShared) {
       await db.delete(blocks).where(eq(blocks.id, pb.blockId));
     }
   }
-  await db.delete(pageBlocks).where(eq(pageBlocks.pageId, pageId));
 
   if (Array.isArray(rev.blocks)) {
     for (const b of rev.blocks as any[]) {

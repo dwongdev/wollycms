@@ -7,6 +7,7 @@ export const contentTypes = sqliteTable('content_types', {
   description: text('description'),
   fieldsSchema: text('fields_schema', { mode: 'json' }).$type<FieldDefinition[]>(),
   regions: text('regions', { mode: 'json' }).$type<RegionDefinition[]>(),
+  defaultBlocks: text('default_blocks', { mode: 'json' }).$type<DefaultBlockDefinition[]>(),
   settings: text('settings', { mode: 'json' }).$type<Record<string, unknown>>(),
 });
 
@@ -36,4 +37,11 @@ export interface RegionDefinition {
   name: string;
   label: string;
   allowed_types?: string[];
+}
+
+export interface DefaultBlockDefinition {
+  region: string;
+  blockTypeSlug: string;
+  position: number;
+  fields?: Record<string, unknown>;
 }

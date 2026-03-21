@@ -30,12 +30,20 @@ const regionSchema = z.object({
   allowed_types: z.array(z.string()).nullable().optional(),
 });
 
+const defaultBlockSchema = z.object({
+  region: z.string().min(1),
+  blockTypeSlug: z.string().min(1),
+  position: z.number().int().min(0),
+  fields: z.record(z.unknown()).optional(),
+});
+
 const contentTypeSchema = z.object({
   name: z.string().min(1),
   slug: z.string().min(1),
   description: z.string().nullable().default(null),
   fieldsSchema: z.array(fieldDefSchema).default([]),
   regions: z.array(regionSchema).default([]),
+  defaultBlocks: z.array(defaultBlockSchema).nullable().default(null),
   settings: z.record(z.unknown()).nullable().default(null),
 });
 

@@ -20,6 +20,7 @@ app.get('/', async (c) => {
         description: contentTypes.description,
         fieldsSchema: contentTypes.fieldsSchema,
         regions: contentTypes.regions,
+        defaultBlocks: contentTypes.defaultBlocks,
       })
       .from(contentTypes),
     db
