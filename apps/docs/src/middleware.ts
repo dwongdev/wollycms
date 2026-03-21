@@ -1,6 +1,6 @@
 import { defineMiddleware } from 'astro:middleware';
 
-export const onRequest = defineMiddleware(async (_context, next) => {
+export const onRequest = defineMiddleware(async (context, next) => {
 	const response = await next();
 
 	const contentType = response.headers.get('content-type') || '';
@@ -8,10 +8,11 @@ export const onRequest = defineMiddleware(async (_context, next) => {
 
 	let gaId: string | undefined;
 	try {
-		const { env } = await import('cloudflare:workers');
-		gaId = (env as Record<string, string>).GA_MEASUREMENT_ID;
+		// Astro on Cloudflare exposes worker bindings via locals.runtime.env
+		const runtime = (context.locals as Record<string, any>).runtime;
+		gaId = runtime?.env?.GA_MEASUREMENT_ID;
 	} catch {
-		// Not running on Workers (local dev without wrangler)
+		// Not running on Workers
 	}
 
 	if (!gaId) return response;
