@@ -70,6 +70,38 @@
     try { await api.del(`/content-types/${id}`); load(); }
     catch (err: any) { error = err.message; }
   }
+
+  function parseJson(str: string, fallback: any[] = []): any[] {
+    try { return JSON.parse(str || '[]'); } catch { return fallback; }
+  }
+
+  function updateDefaultBlock(item: any, index: number, key: string, value: string) {
+    const arr = parseJson(item.defaultBlocks);
+    arr[index][key] = value;
+    item.defaultBlocks = JSON.stringify(arr, null, 2);
+  }
+
+  function moveDefaultBlock(item: any, index: number, direction: number) {
+    const arr = parseJson(item.defaultBlocks);
+    const target = index + direction;
+    [arr[index], arr[target]] = [arr[target], arr[index]];
+    arr.forEach((b: any, idx: number) => b.position = idx);
+    item.defaultBlocks = JSON.stringify(arr, null, 2);
+  }
+
+  function removeDefaultBlock(item: any, index: number) {
+    const arr = parseJson(item.defaultBlocks);
+    arr.splice(index, 1);
+    arr.forEach((b: any, idx: number) => b.position = idx);
+    item.defaultBlocks = JSON.stringify(arr, null, 2);
+  }
+
+  function addDefaultBlock(item: any) {
+    const arr = parseJson(item.defaultBlocks);
+    const regions = parseJson(item.regions);
+    arr.push({ region: regions[0]?.name || 'content', blockTypeSlug: blockTypesList[0]?.slug || '', position: arr.length });
+    item.defaultBlocks = JSON.stringify(arr, null, 2);
+  }
 </script>
 
 <div class="page-header">
@@ -123,56 +155,28 @@
         <div class="form-group">
           <label>Default Blocks</label>
           <p style="font-size: 0.8rem; color: var(--c-text-light); margin: 0 0 0.5rem;">Blocks automatically added when a new page of this type is created. Users can still remove, reorder, or add more.</p>
-          {@const parsedDefaults = (() => { try { return JSON.parse(item.defaultBlocks || '[]'); } catch { return []; } })()}
-          {@const parsedRegions = (() => { try { return JSON.parse(item.regions || '[]'); } catch { return []; } })()}
-          {#each parsedDefaults as block, i}
+          {#each parseJson(item.defaultBlocks) as block, i}
+            {@const regions = parseJson(item.regions)}
+            {@const total = parseJson(item.defaultBlocks).length}
             <div style="display: flex; gap: 0.5rem; align-items: center; margin-bottom: 0.35rem; padding: 0.35rem 0.5rem; background: var(--c-bg-alt, #f8fafc); border-radius: var(--radius, 6px); border: 1px solid var(--c-border, #e2e8f0);">
-              <select class="form-control" style="max-width: 140px; font-size: 0.8rem;" value={block.region} onchange={(e) => {
-                const arr = JSON.parse(item.defaultBlocks || '[]');
-                arr[i].region = (e.target as HTMLSelectElement).value;
-                item.defaultBlocks = JSON.stringify(arr, null, 2);
-              }}>
-                {#each parsedRegions as r}
+              <select class="form-control" style="max-width: 140px; font-size: 0.8rem;" value={block.region} onchange={(e) => updateDefaultBlock(item, i, 'region', (e.target as HTMLSelectElement).value)}>
+                {#each regions as r}
                   <option value={r.name}>{r.label || r.name}</option>
                 {/each}
               </select>
-              <select class="form-control" style="flex: 1; font-size: 0.8rem;" value={block.blockTypeSlug} onchange={(e) => {
-                const arr = JSON.parse(item.defaultBlocks || '[]');
-                arr[i].blockTypeSlug = (e.target as HTMLSelectElement).value;
-                item.defaultBlocks = JSON.stringify(arr, null, 2);
-              }}>
+              <select class="form-control" style="flex: 1; font-size: 0.8rem;" value={block.blockTypeSlug} onchange={(e) => updateDefaultBlock(item, i, 'blockTypeSlug', (e.target as HTMLSelectElement).value)}>
                 <option value="">Select block type...</option>
                 {#each blockTypesList as bt}
                   <option value={bt.slug}>{bt.name}</option>
                 {/each}
               </select>
               <span style="font-size: 0.75rem; color: var(--c-text-light); min-width: 20px; text-align: center;">#{block.position}</span>
-              <button type="button" class="btn-icon" style="font-size: 0.85rem;" aria-label="Move up" disabled={i === 0} onclick={() => {
-                const arr = JSON.parse(item.defaultBlocks || '[]');
-                [arr[i - 1], arr[i]] = [arr[i], arr[i - 1]];
-                arr.forEach((b: any, idx: number) => b.position = idx);
-                item.defaultBlocks = JSON.stringify(arr, null, 2);
-              }}>&#8593;</button>
-              <button type="button" class="btn-icon" style="font-size: 0.85rem;" aria-label="Move down" disabled={i === parsedDefaults.length - 1} onclick={() => {
-                const arr = JSON.parse(item.defaultBlocks || '[]');
-                [arr[i], arr[i + 1]] = [arr[i + 1], arr[i]];
-                arr.forEach((b: any, idx: number) => b.position = idx);
-                item.defaultBlocks = JSON.stringify(arr, null, 2);
-              }}>&#8595;</button>
-              <button type="button" class="btn-icon" style="color: var(--c-danger, #e53e3e); font-size: 0.85rem;" aria-label="Remove default block" onclick={() => {
-                const arr = JSON.parse(item.defaultBlocks || '[]');
-                arr.splice(i, 1);
-                arr.forEach((b: any, idx: number) => b.position = idx);
-                item.defaultBlocks = JSON.stringify(arr, null, 2);
-              }}>&#10005;</button>
+              <button type="button" class="btn-icon" style="font-size: 0.85rem;" aria-label="Move up" disabled={i === 0} onclick={() => moveDefaultBlock(item, i, -1)}>&#8593;</button>
+              <button type="button" class="btn-icon" style="font-size: 0.85rem;" aria-label="Move down" disabled={i === total - 1} onclick={() => moveDefaultBlock(item, i, 1)}>&#8595;</button>
+              <button type="button" class="btn-icon" style="color: var(--c-danger, #e53e3e); font-size: 0.85rem;" aria-label="Remove default block" onclick={() => removeDefaultBlock(item, i)}>&#10005;</button>
             </div>
           {/each}
-          <button type="button" class="btn btn-sm btn-outline" style="margin-top: 0.25rem;" onclick={() => {
-            const arr = JSON.parse(item.defaultBlocks || '[]');
-            const regions = (() => { try { return JSON.parse(item.regions || '[]'); } catch { return []; } })();
-            arr.push({ region: regions[0]?.name || 'content', blockTypeSlug: blockTypesList[0]?.slug || '', position: arr.length });
-            item.defaultBlocks = JSON.stringify(arr, null, 2);
-          }}>+ Add Default Block</button>
+          <button type="button" class="btn btn-sm btn-outline" style="margin-top: 0.25rem;" onclick={() => addDefaultBlock(item)}>+ Add Default Block</button>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-outline" onclick={() => { showCreate = false; editType = null; }}>Cancel</button>
