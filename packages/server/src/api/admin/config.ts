@@ -24,6 +24,13 @@ const defaultConfig = {
   },
   defaultLocale: 'en',
   supportedLocales: ['en'] as string[],
+  workflow: {
+    stages: [
+      { slug: 'draft', label: 'Draft', color: '#d69e2e' as string | undefined, transitions: ['published'], requiredRole: null as string | null | undefined },
+      { slug: 'published', label: 'Published', color: '#38a169' as string | undefined, transitions: ['draft', 'archived'], requiredRole: null as string | null | undefined },
+      { slug: 'archived', label: 'Archived', color: '#718096' as string | undefined, transitions: ['draft'], requiredRole: null as string | null | undefined },
+    ],
+  },
 };
 
 export async function loadConfig(): Promise<typeof defaultConfig> {
@@ -38,7 +45,7 @@ export async function loadConfig(): Promise<typeof defaultConfig> {
   }
 }
 
-async function saveConfig(config: typeof defaultConfig): Promise<void> {
+async function saveConfig(config: Record<string, unknown>): Promise<void> {
   const db = getDb();
   const json = JSON.stringify(config);
   // Upsert: insert or update the single config row
@@ -79,6 +86,15 @@ app.put('/', async (c) => {
     }).optional(),
     defaultLocale: z.string().min(2).max(10).optional(),
     supportedLocales: z.array(z.string().min(2).max(10)).min(1).optional(),
+    workflow: z.object({
+      stages: z.array(z.object({
+        slug: z.string().min(1),
+        label: z.string().min(1),
+        color: z.string().optional(),
+        transitions: z.array(z.string()),
+        requiredRole: z.string().nullable().optional(),
+      })).min(2),
+    }).optional(),
   }).safeParse(body);
   if (!parsed.success) return c.json({ errors: parsed.error.issues.map((i) => ({ code: 'VALIDATION', message: i.message })) }, 400);
 

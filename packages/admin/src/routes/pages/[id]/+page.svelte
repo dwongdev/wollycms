@@ -33,6 +33,7 @@
   let revisions = $state<any[]>([]);
   let translations = $state<any[]>([]);
   let supportedLocales = $state<string[]>(['en']);
+  let workflowStages = $state<Array<{ slug: string; label: string; color?: string; transitions: string[]; requiredRole?: string | null }>>([]);
   let previewPanel = $state<PreviewPanel | null>(null);
   let blockEditor = $state<BlockEditorRegion | null>(null);
 
@@ -64,11 +65,22 @@
   ]);
 
   const statusConfig = $derived.by(() => {
+    const stage = workflowStages.find((s) => s.slug === pageData?.status);
+    if (stage) return { label: stage.label, color: stage.color || 'var(--c-text-light)', icon: pageData?.status === 'published' ? CheckCircle : pageData?.status === 'archived' ? Archive : Circle };
     switch (pageData?.status) {
       case 'published': return { label: 'Published', color: 'var(--c-success)', icon: CheckCircle };
       case 'archived': return { label: 'Archived', color: 'var(--c-text-light)', icon: Archive };
-      default: return { label: 'Draft', color: 'var(--c-warning)', icon: Circle };
+      default: return { label: pageData?.status || 'Draft', color: 'var(--c-warning)', icon: Circle };
     }
+  });
+
+  const availableTransitions = $derived.by(() => {
+    if (!pageData?.status || workflowStages.length === 0) return [];
+    const current = workflowStages.find((s) => s.slug === pageData.status);
+    if (!current) return [];
+    return current.transitions
+      .map((slug) => workflowStages.find((s) => s.slug === slug))
+      .filter(Boolean) as typeof workflowStages;
   });
 
   function takeSnapshot() {
@@ -195,6 +207,7 @@
     try {
       const res = await api.get<{ data: any }>('/config');
       supportedLocales = res.data.supportedLocales || ['en'];
+      workflowStages = res.data.workflow?.stages || [];
     } catch { /* ignore */ }
   }
 
@@ -353,17 +366,24 @@
         onclick={() => showPreview = !showPreview}>
         {showPreview ? 'Hide Preview' : 'Preview'}
       </button>
-      {#if pageData.status === 'published'}
-        <button class="btn btn-outline" onclick={() => setStatus('draft')}>Unpublish</button>
+      {#if availableTransitions.length > 0}
+        {#each availableTransitions as transition}
+          <button
+            class="btn"
+            class:btn-primary={transition.slug === 'published'}
+            class:btn-outline={transition.slug !== 'published'}
+            onclick={() => setStatus(transition.slug)}
+            title="{transition.label}"
+          >
+            {transition.label}
+          </button>
+        {/each}
       {:else}
-        <button class="btn btn-primary" onclick={() => setStatus('published')}>Publish</button>
-      {/if}
-      {#if pageData.status !== 'archived'}
-        <button class="btn btn-outline" onclick={() => setStatus('archived')} title="Archive page">
-          <Archive size={14} />
-        </button>
-      {:else}
-        <button class="btn btn-outline" onclick={() => setStatus('draft')}>Unarchive</button>
+        {#if pageData.status === 'published'}
+          <button class="btn btn-outline" onclick={() => setStatus('draft')}>Unpublish</button>
+        {:else}
+          <button class="btn btn-primary" onclick={() => setStatus('published')}>Publish</button>
+        {/if}
       {/if}
       <button class="btn btn-danger-outline" onclick={deleteCurrent} title="Delete page">
         <Trash2 size={14} />

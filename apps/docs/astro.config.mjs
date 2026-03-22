@@ -53,6 +53,7 @@ export default defineConfig({
 						{ label: 'OAuth Login', slug: 'concepts/oauth' },
 						{ label: 'API Keys', slug: 'concepts/api-keys' },
 						{ label: 'Webhooks', slug: 'concepts/webhooks' },
+						{ label: 'Content Workflows', slug: 'concepts/workflows' },
 						{ label: 'Lifecycle Hooks', slug: 'concepts/lifecycle-hooks' },
 						{ label: 'Tracking Scripts', slug: 'concepts/tracking' },
 						{ label: 'Localization (i18n)', slug: 'concepts/i18n' },
