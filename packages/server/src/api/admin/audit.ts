@@ -3,7 +3,12 @@ import { desc, eq, and, sql } from 'drizzle-orm';
 import { getDb } from '../../db/index.js';
 import { auditLogs } from '../../db/schema/index.js';
 
+import { requireRole } from '../../auth/rbac.js';
+
 const app = new Hono();
+
+// Audit logs are admin-only
+app.use('/*', requireRole('admin'));
 
 /** GET / - List audit logs with filtering */
 app.get('/', async (c) => {

@@ -8,10 +8,8 @@ import { requireRole } from '../../auth/rbac.js';
 
 const app = new Hono();
 
-// All user mutations require admin role
-app.post('/*', requireRole('admin'));
-app.put('/*', requireRole('admin'));
-app.delete('/*', requireRole('admin'));
+// All user routes require admin role (including listing)
+app.use('/*', requireRole('admin'));
 
 const userSchema = z.object({
   email: z.string().email(),

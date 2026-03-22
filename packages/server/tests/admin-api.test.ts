@@ -708,10 +708,10 @@ describe('Role-Based Access Control', () => {
     return app.request(`/api/admin${path}`, { ...init, headers });
   }
 
-  // Editors CAN read admin-only resources
-  it('editor can read users list', async () => {
+  // Users list is admin-only (security: prevents email enumeration)
+  it('editor cannot read users list', async () => {
     const res = await editorReq('/users');
-    expect(res.status).toBe(200);
+    expect(res.status).toBe(403);
   });
 
   it('editor can read content types', async () => {
