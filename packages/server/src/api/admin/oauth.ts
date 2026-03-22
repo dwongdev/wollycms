@@ -63,7 +63,8 @@ app.get('/:provider', async (c) => {
   }
 
   const state = generateOAuthState();
-  const stateToken = await signOAuthState(state);
+  const returnTo = c.req.query('returnTo') || undefined;
+  const stateToken = await signOAuthState(state, returnTo);
 
   setCookie(c, OAUTH_STATE_COOKIE, stateToken, {
     path: '/',
@@ -104,8 +105,11 @@ app.get('/:provider/callback', async (c) => {
   }
 
   let expectedState: string;
+  let returnTo: string | null = null;
   try {
-    expectedState = await verifyOAuthState(stateCookie);
+    const stateResult = await verifyOAuthState(stateCookie);
+    expectedState = stateResult.state;
+    returnTo = stateResult.returnTo;
   } catch {
     return c.redirect('/admin/login#oauth_error=invalid_state');
   }
@@ -219,7 +223,11 @@ app.get('/:provider/callback', async (c) => {
     details: { provider: provider.name },
   });
 
-  // Redirect to admin with token in URL fragment (not sent to server)
+  // Redirect: if connecting from account page, go back there.
+  // Otherwise, go to login with token in fragment.
+  if (returnTo && returnTo.startsWith('/admin/')) {
+    return c.redirect(returnTo);
+  }
   return c.redirect(`/admin/login#oauth_token=${token}`);
 });
 

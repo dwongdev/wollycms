@@ -209,23 +209,24 @@ export function generateOAuthState(): string {
 }
 
 /** Create a signed state JWT for the OAuth cookie (5-minute expiry). */
-export async function signOAuthState(state: string): Promise<string> {
+export async function signOAuthState(state: string, returnTo?: string): Promise<string> {
   const now = Math.floor(Date.now() / 1000);
   return sign(
-    { state, purpose: 'oauth-state', exp: now + 300 },
+    { state, purpose: 'oauth-state', returnTo: returnTo || null, exp: now + 300 },
     env.JWT_SECRET,
     'HS256',
   );
 }
 
-/** Verify the signed state JWT from the cookie. Returns the state string. */
-export async function verifyOAuthState(token: string): Promise<string> {
+/** Verify the signed state JWT from the cookie. Returns state + returnTo. */
+export async function verifyOAuthState(token: string): Promise<{ state: string; returnTo: string | null }> {
   const payload = (await verify(token, env.JWT_SECRET, 'HS256')) as {
     state: string;
     purpose?: string;
+    returnTo?: string | null;
   };
   if (payload.purpose !== 'oauth-state') {
     throw new Error('Invalid state token');
   }
-  return payload.state;
+  return { state: payload.state, returnTo: payload.returnTo || null };
 }

@@ -200,7 +200,7 @@
 
   {#each Object.entries(oauthProviders) as [name, configured]}
     {#if configured && !oauthConnections.some((c) => c.provider === name)}
-      <a href="/api/admin/auth/oauth/{name}" class="btn btn-outline oauth-connect-btn">
+      <a href="/api/admin/auth/oauth/{name}?returnTo=/admin/account" class="btn btn-outline oauth-connect-btn">
         Connect {providerLabels[name] || name}
       </a>
     {/if}
