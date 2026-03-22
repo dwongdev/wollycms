@@ -6,13 +6,18 @@
 
   let stats = $state<any>(null);
   let recentPages = $state<any[]>([]);
+  let siteUrl = $state('');
   let error = $state('');
 
   onMount(async () => {
     try {
-      const res = await api.get<{ data: any }>('/dashboard');
-      stats = res.data.stats;
-      recentPages = res.data.recentPages;
+      const [dashRes, configRes] = await Promise.all([
+        api.get<{ data: any }>('/dashboard'),
+        api.get<{ data: any }>('/config'),
+      ]);
+      stats = dashRes.data.stats;
+      recentPages = dashRes.data.recentPages;
+      siteUrl = configRes.data.siteUrl || '';
     } catch (err: any) {
       error = err.message;
     }
@@ -36,10 +41,12 @@
     <span class="qa-icon"><Upload size={22} /></span>
     <span class="qa-label">Upload Media</span>
   </a>
-  <a href="http://localhost:4322" target="_blank" rel="noopener" class="quick-action-card" style="--qa-color: var(--c-warning, #d69e2e);">
-    <span class="qa-icon"><ExternalLink size={22} /></span>
-    <span class="qa-label">View Site</span>
-  </a>
+  {#if siteUrl}
+    <a href={siteUrl} target="_blank" rel="noopener" class="quick-action-card" style="--qa-color: var(--c-warning, #d69e2e);">
+      <span class="qa-icon"><ExternalLink size={22} /></span>
+      <span class="qa-label">View Site</span>
+    </a>
+  {/if}
 </div>
 
 {#if stats}

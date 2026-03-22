@@ -32,6 +32,7 @@
 }
 
 [data-theme="dark"] {
+  color-scheme: dark;
   --c-primary: #2b6cb0;
   --c-primary-light: #3182ce;
   --c-accent: #63b3ed;
