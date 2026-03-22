@@ -22,7 +22,7 @@ export const users = sqliteTable('users', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   email: text('email').notNull().unique(),
   name: text('name').notNull(),
-  passwordHash: text('password_hash').notNull(),
+  passwordHash: text('password_hash'),
   role: text('role', { enum: ['admin', 'editor', 'viewer'] }).notNull().default('editor'),
   createdAt: text('created_at').notNull(),
 });
@@ -51,3 +51,15 @@ export const userRecoveryCodes = sqliteTable('user_recovery_codes', {
   usedAt: text('used_at'),
   createdAt: text('created_at').notNull(),
 });
+
+export const userOauth = sqliteTable('user_oauth', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  userId: integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  provider: text('provider').notNull(),
+  providerId: text('provider_id').notNull(),
+  email: text('email'),
+  name: text('name'),
+  createdAt: text('created_at').notNull(),
+}, (table) => [
+  uniqueIndex('user_oauth_provider_unique').on(table.provider, table.providerId),
+]);
