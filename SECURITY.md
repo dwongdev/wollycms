@@ -30,6 +30,7 @@ I will acknowledge receipt within 48 hours and provide a fix timeline within 7 d
 ### Authentication
 
 - **Admin UI**: JWT (HS256) with configurable secret. Sessions expire after 24 hours.
+- **Two-Factor Authentication (TOTP)**: Optional per-user 2FA using RFC 6238 TOTP. Secrets are AES-256-GCM encrypted at rest. Recovery codes are SHA-256 hashed. Trusted device cookies (30-day, HttpOnly) allow skipping 2FA on verified browsers.
 - **API Keys**: SHA-256 hashed, stored in the database. Keys map to permission-based roles (`content:read` → viewer, `content:write` → editor, `*` → admin).
 - **Preview**: Short-lived JWT tokens for cross-origin preview.
 

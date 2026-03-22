@@ -26,3 +26,28 @@ export const users = sqliteTable('users', {
   role: text('role', { enum: ['admin', 'editor', 'viewer'] }).notNull().default('editor'),
   createdAt: text('created_at').notNull(),
 });
+
+export const userTotp = sqliteTable('user_totp', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  userId: integer('user_id').notNull().unique().references(() => users.id, { onDelete: 'cascade' }),
+  secret: text('secret').notNull(),
+  verified: integer('verified', { mode: 'boolean' }).notNull().default(false),
+  createdAt: text('created_at').notNull(),
+});
+
+export const trustedDevices = sqliteTable('trusted_devices', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  userId: integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  tokenHash: text('token_hash').notNull().unique(),
+  label: text('label'),
+  expiresAt: text('expires_at').notNull(),
+  createdAt: text('created_at').notNull(),
+});
+
+export const userRecoveryCodes = sqliteTable('user_recovery_codes', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  userId: integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  codeHash: text('code_hash').notNull(),
+  usedAt: text('used_at'),
+  createdAt: text('created_at').notNull(),
+});
