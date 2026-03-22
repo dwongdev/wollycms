@@ -15,6 +15,41 @@ import { requireRole } from '../../auth/rbac.js';
 import { loadConfig } from './config.js';
 import { hooks } from '../../hooks.js';
 
+/** Validate a workflow status transition. Returns error message or null if valid. */
+async function validateTransition(
+  fromStatus: string,
+  toStatus: string,
+  userRole: string,
+): Promise<string | null> {
+  if (fromStatus === toStatus) return null; // No transition
+  const config = await loadConfig();
+  const stages = config.workflow?.stages;
+  if (!stages || stages.length === 0) return null; // No workflow configured
+
+  const fromStage = stages.find((s: { slug: string }) => s.slug === fromStatus);
+  if (!fromStage) return null; // Unknown source status, allow (backward compat)
+
+  const toStage = stages.find((s: { slug: string }) => s.slug === toStatus);
+  if (!toStage) return `Invalid status: "${toStatus}"`;
+
+  // Check transition is allowed
+  if (!fromStage.transitions.includes(toStatus)) {
+    return `Cannot transition from "${fromStage.label}" to "${toStage.label}"`;
+  }
+
+  // Check role requirement
+  if (toStage.requiredRole) {
+    const roleWeight: Record<string, number> = { viewer: 0, editor: 1, admin: 2 };
+    const userWeight = roleWeight[userRole] ?? 0;
+    const requiredWeight = roleWeight[toStage.requiredRole] ?? 0;
+    if (userWeight < requiredWeight) {
+      return `"${toStage.label}" requires ${toStage.requiredRole} role`;
+    }
+  }
+
+  return null;
+}
+
 const app = new Hono();
 
 app.post('/*', requireRole('editor'));
@@ -25,7 +60,7 @@ const pageSchema = z.object({
   title: z.string().min(1),
   slug: z.string().min(1).optional(),
   typeId: z.number().int().positive(),
-  status: z.enum(['draft', 'published', 'archived']).default('draft'),
+  status: z.string().min(1).default('draft'),
   fields: z.record(z.unknown()).default({}),
   scheduledAt: z.string().nullable().optional(),
   unpublishAt: z.string().nullable().optional(),
@@ -472,6 +507,12 @@ app.put('/:id', async (c) => {
 
   const now = new Date().toISOString();
   const payload = c.get('jwtPayload');
+
+  // Validate workflow transition
+  if (parsed.data.status && parsed.data.status !== existing.status) {
+    const transErr = await validateTransition(existing.status!, parsed.data.status, payload.role);
+    if (transErr) return c.json({ errors: [{ code: 'WORKFLOW', message: transErr }] }, 400);
+  }
 
   // Snapshot current state as a revision
   const currentBlocks = await db

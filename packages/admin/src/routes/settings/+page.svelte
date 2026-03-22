@@ -117,6 +117,49 @@
     </div>
 
     <hr style="margin: 1.5rem 0; border: none; border-top: 1px solid var(--c-border);" />
+    <h2 style="font-size: 1.1rem; margin-bottom: 1rem;">Workflow</h2>
+    <p style="font-size: 0.85rem; color: var(--c-text-light); margin-bottom: 0.75rem;">
+      Define the stages content goes through before publishing. Each stage has allowed transitions and optional role requirements.
+    </p>
+    {#each (config.workflow?.stages || []) as stage, i}
+      <div style="display: flex; gap: 0.5rem; align-items: center; margin-bottom: 0.5rem; padding: 0.5rem; background: var(--c-bg-subtle); border-radius: var(--radius);">
+        <input class="form-control" style="max-width: 100px; font-size: 0.85rem;" bind:value={stage.slug} placeholder="slug" />
+        <input class="form-control" style="max-width: 120px; font-size: 0.85rem;" bind:value={stage.label} placeholder="Label" />
+        <input type="color" style="width: 32px; height: 32px; border: none; cursor: pointer; border-radius: 4px;" bind:value={stage.color} />
+        <select class="form-control" style="max-width: 100px; font-size: 0.85rem;" bind:value={stage.requiredRole}>
+          <option value={null}>Any role</option>
+          <option value="editor">Editor</option>
+          <option value="admin">Admin</option>
+        </select>
+        {#if !['draft', 'published'].includes(stage.slug)}
+          <button
+            type="button"
+            class="btn-icon"
+            style="color: var(--c-danger);"
+            onclick={() => { config.workflow.stages = config.workflow.stages.filter((_: any, j: number) => j !== i); }}
+            aria-label="Remove stage"
+          >&times;</button>
+        {/if}
+      </div>
+    {/each}
+    <button
+      type="button"
+      class="btn btn-sm btn-outline"
+      onclick={() => {
+        if (!config.workflow) config.workflow = { stages: [] };
+        const newSlug = 'review_' + Date.now().toString(36);
+        config.workflow.stages = [
+          ...config.workflow.stages.slice(0, -1),
+          { slug: newSlug, label: 'New Stage', color: '#805ad5', transitions: ['draft', 'published'], requiredRole: null },
+          ...config.workflow.stages.slice(-1),
+        ];
+      }}
+    >+ Add Stage</button>
+    <p style="font-size: 0.75rem; color: var(--c-text-light); margin-top: 0.5rem;">
+      "draft" and "published" are required stages. Add custom stages between them (e.g., In Review, Approved). Transition rules are configured via the API.
+    </p>
+
+    <hr style="margin: 1.5rem 0; border: none; border-top: 1px solid var(--c-border);" />
     <h2 style="font-size: 1.1rem; margin-bottom: 1rem;">Social Links</h2>
     <div class="form-group">
       <label>Facebook</label>
