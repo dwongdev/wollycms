@@ -76,7 +76,7 @@ The sidebar organizes admin features into sections:
 - **Schema** — Content Types, Block Types
 - **System** — Users, Webhooks, API Keys, Tracking Scripts, Audit Log, Account, Settings
 
-On narrow screens (< 1024px), the sidebar collapses to icon-only mode with hover tooltips.
+On tablets (< 1024px), the sidebar collapses to icon-only mode with hover tooltips. On phones (< 768px), the sidebar is hidden behind a hamburger menu that slides out as an overlay with full labels. Tables scroll horizontally and grid layouts stack vertically.
 
 ## Page editor
 
