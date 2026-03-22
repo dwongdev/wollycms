@@ -60,6 +60,7 @@ app.use('/media/*', writeLimiter);
 app.use('/export', rateLimiter({ max: 10, windowMs: 60_000 }));
 app.use('/import', rateLimiter({ max: 10, windowMs: 60_000 }));
 
+app.use('/ai/*', rateLimiter({ max: 20, windowMs: 60_000 }));
 app.route('/ai', aiRouter);
 app.route('/pages', pagesRouter);
 app.route('/pages', revisionsRouter);

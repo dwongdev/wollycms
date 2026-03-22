@@ -7,6 +7,7 @@ import { Hono } from 'hono';
 import {
   graphql,
   buildSchema,
+  NoSchemaIntrospectionCustomRule,
   type GraphQLResolveInfo,
 } from 'graphql';
 import { eq, and, desc, asc, sql } from 'drizzle-orm';
@@ -16,6 +17,7 @@ import {
   menus, menuItems, taxonomies, terms,
 } from '../../db/schema/index.js';
 import { loadConfig } from '../admin/config.js';
+import { isProduction } from '../../env.js';
 
 const app = new Hono();
 
@@ -339,14 +341,15 @@ const root = {
   },
 };
 
-/**
- * POST /graphql — Execute a GraphQL query.
- * GET /graphql?query=... — Execute via query string (for tools like GraphiQL).
- */
+/** POST /graphql — Execute a GraphQL query. */
 app.post('/', async (c) => {
   const body = await c.req.json().catch(() => null);
   if (!body?.query) {
     return c.json({ errors: [{ message: 'Query is required' }] }, 400);
+  }
+
+  if (body.query.length > 5000) {
+    return c.json({ errors: [{ message: 'Query too large (max 5000 characters)' }] }, 400);
   }
 
   const result = await graphql({
@@ -354,21 +357,7 @@ app.post('/', async (c) => {
     source: body.query,
     rootValue: root,
     variableValues: body.variables || {},
-  });
-
-  return c.json(result);
-});
-
-app.get('/', async (c) => {
-  const query = c.req.query('query');
-  if (!query) {
-    return c.json({ errors: [{ message: 'Query parameter required' }] }, 400);
-  }
-
-  const result = await graphql({
-    schema,
-    source: query,
-    rootValue: root,
+    ...(isProduction() ? { validationRules: [NoSchemaIntrospectionCustomRule] } : {}),
   });
 
   return c.json(result);

@@ -80,7 +80,8 @@ async function openaiComplete(
 
   if (!res.ok) {
     const text = await res.text().catch(() => '');
-    throw new Error(`AI request failed (${res.status}): ${text.slice(0, 200)}`);
+    console.error(`AI request failed (${res.status}):`, text.slice(0, 500));
+    throw new Error('AI request failed — check server logs for details');
   }
 
   const data = await res.json() as {
@@ -132,7 +133,8 @@ async function anthropicComplete(
 
   if (!res.ok) {
     const text = await res.text().catch(() => '');
-    throw new Error(`AI request failed (${res.status}): ${text.slice(0, 200)}`);
+    console.error(`AI request failed (${res.status}):`, text.slice(0, 500));
+    throw new Error('AI request failed — check server logs for details');
   }
 
   const data = await res.json() as {

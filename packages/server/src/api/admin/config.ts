@@ -68,12 +68,11 @@ async function saveConfig(config: Record<string, unknown>): Promise<void> {
 app.get('/', async (c) => {
   const { env: serverEnv } = await import('../../env.js');
   const config = await loadConfig();
-  return c.json({
-    data: {
-      ...config,
-      siteUrl: serverEnv.SITE_URL,
-    },
-  });
+  const safeConfig = { ...config };
+  if (safeConfig.ai?.apiKey) {
+    safeConfig.ai = { ...safeConfig.ai, apiKey: safeConfig.ai.apiKey ? '••••••••' : '' };
+  }
+  return c.json({ data: { ...safeConfig, siteUrl: serverEnv.SITE_URL } });
 });
 
 /** PUT / - Update site config */

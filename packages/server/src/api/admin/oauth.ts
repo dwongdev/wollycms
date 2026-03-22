@@ -89,9 +89,6 @@ app.get('/:provider/callback', async (c) => {
   const state = c.req.query('state');
   const errorParam = c.req.query('error');
 
-  // Clear the state cookie on all paths
-  setCookie(c, OAUTH_STATE_COOKIE, '', { path: '/', maxAge: 0 });
-
   if (errorParam) {
     return c.redirect('/admin/login#oauth_error=' + encodeURIComponent(errorParam));
   }
@@ -116,6 +113,9 @@ app.get('/:provider/callback', async (c) => {
   if (state !== expectedState) {
     return c.redirect('/admin/login#oauth_error=state_mismatch');
   }
+
+  // Clear the state cookie now that verification passed
+  setCookie(c, OAUTH_STATE_COOKIE, '', { path: '/', maxAge: 0 });
 
   // Exchange code for tokens
   let tokens: { access_token: string };

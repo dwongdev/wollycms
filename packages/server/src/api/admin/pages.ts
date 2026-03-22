@@ -28,7 +28,7 @@ async function validateTransition(
   if (!stages || stages.length === 0) return null; // No workflow configured
 
   const fromStage = stages.find((s: { slug: string }) => s.slug === fromStatus);
-  if (!fromStage) return null; // Unknown source status, allow (backward compat)
+  if (!fromStage) return `Cannot transition from unknown status "${fromStatus}"`;
 
   const toStage = stages.find((s: { slug: string }) => s.slug === toStatus);
   if (!toStage) return `Invalid status: "${toStatus}"`;

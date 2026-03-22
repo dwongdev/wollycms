@@ -50,7 +50,7 @@ app.get('/', async (c) => {
       eq(pages.status, 'published'),
       eq(pages.locale, locale),
       sql`(${pages.scheduledAt} IS NULL OR ${pages.scheduledAt} <= ${now})`,
-      sql`${pages.id} IN (${sql.raw(matchedIds.join(','))})`,
+      inArray(pages.id, matchedIds),
     ];
 
     if (typeFilter) {
