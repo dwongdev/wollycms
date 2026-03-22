@@ -69,10 +69,11 @@ export const api = {
     return res.data;
   },
 
-  verify2fa: async (challengeToken: string, code: string) => {
+  verify2fa: async (challengeToken: string, code: string, rememberDevice = false) => {
     const res = await request<{ data: { token: string; user: any } }>('POST', '/auth/verify-2fa', {
       challengeToken,
       code,
+      rememberDevice,
     });
     setToken(res.data.token);
     return res.data;

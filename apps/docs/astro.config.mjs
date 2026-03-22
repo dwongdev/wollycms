@@ -49,6 +49,7 @@ export default defineConfig({
 						{ label: 'Preview', slug: 'concepts/preview' },
 						{ label: 'Revisions', slug: 'concepts/revisions' },
 						{ label: 'Accessibility', slug: 'concepts/accessibility' },
+						{ label: 'Two-Factor Auth', slug: 'concepts/two-factor-auth' },
 						{ label: 'API Keys', slug: 'concepts/api-keys' },
 						{ label: 'Webhooks', slug: 'concepts/webhooks' },
 						{ label: 'Tracking Scripts', slug: 'concepts/tracking' },

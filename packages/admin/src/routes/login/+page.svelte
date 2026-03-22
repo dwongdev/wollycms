@@ -15,6 +15,7 @@
   let challengeToken = $state('');
   let code = $state('');
   let useRecovery = $state(false);
+  let rememberDevice = $state(true);
 
   async function handleLogin(e: Event) {
     e.preventDefault();
@@ -41,7 +42,7 @@
     error = '';
     loading = true;
     try {
-      const result = await api.verify2fa(challengeToken, code);
+      const result = await api.verify2fa(challengeToken, code, rememberDevice);
       auth.user = result.user;
       goto(`${base}/`);
     } catch (err: any) {
@@ -108,6 +109,11 @@
           maxlength={useRecovery ? 9 : 6}
         />
       </div>
+
+      <label class="remember-device">
+        <input type="checkbox" bind:checked={rememberDevice} />
+        Remember this device for 30 days
+      </label>
 
       <button type="submit" class="btn btn-primary login-btn" disabled={loading}>
         {loading ? 'Verifying...' : 'Verify'}
@@ -186,5 +192,19 @@
 
   .btn-link:hover {
     text-decoration: underline;
+  }
+
+  .remember-device {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    color: var(--c-text-light);
+    cursor: pointer;
+    margin-top: 0.75rem;
+  }
+
+  .remember-device input {
+    cursor: pointer;
   }
 </style>

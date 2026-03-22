@@ -35,6 +35,15 @@ export const userTotp = pgTable('user_totp', {
   createdAt: text('created_at').notNull(),
 });
 
+export const trustedDevices = pgTable('trusted_devices', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  tokenHash: text('token_hash').notNull().unique(),
+  label: text('label'),
+  expiresAt: text('expires_at').notNull(),
+  createdAt: text('created_at').notNull(),
+});
+
 export const userRecoveryCodes = pgTable('user_recovery_codes', {
   id: serial('id').primaryKey(),
   userId: integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
