@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import QRCode from 'qrcode';
   import { api } from '$lib/api.js';
   import { getAuth } from '$lib/auth.svelte.js';
 
@@ -11,6 +12,7 @@
   let setupStep = $state<'idle' | 'qr' | 'verify' | 'codes'>('idle');
   let totpSecret = $state('');
   let totpUri = $state('');
+  let qrDataUrl = $state('');
   let verifyCode = $state('');
   let recoveryCodes = $state<string[]>([]);
   let password = $state('');
@@ -82,6 +84,7 @@
       const res = await api.post<{ data: { secret: string; uri: string } }>('/auth/2fa/setup');
       totpSecret = res.data.secret;
       totpUri = res.data.uri;
+      qrDataUrl = await QRCode.toDataURL(res.data.uri, { width: 200, margin: 2 });
       setupStep = 'qr';
     } catch (err: any) {
       error = err.message;
@@ -244,7 +247,7 @@
     <p>Scan this QR code with your authenticator app (Google Authenticator, Authy, 1Password, etc.):</p>
 
     <div class="qr-section">
-      <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data={encodeURIComponent(totpUri)}" alt="QR Code" class="qr-code" />
+      <img src={qrDataUrl} alt="QR Code" class="qr-code" />
 
       <details class="manual-entry">
         <summary>Can't scan? Enter manually</summary>

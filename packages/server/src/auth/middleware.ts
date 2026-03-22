@@ -1,5 +1,5 @@
 import type { Context, Next } from 'hono';
-import { jwt } from 'hono/jwt';
+import { verify } from 'hono/jwt';
 import { eq } from 'drizzle-orm';
 import { env } from '../env.js';
 import { getDb } from '../db/index.js';
@@ -13,7 +13,7 @@ export interface JwtPayload {
   exp: number;
 }
 
-const jwtMiddleware = jwt({ secret: env.JWT_SECRET, alg: 'HS256' });
+// JWT verification is done manually in authMiddleware to check token purpose
 
 /**
  * Map API key permission string to a role level.
@@ -67,6 +67,19 @@ export async function authMiddleware(c: Context, next: Next) {
     return next();
   }
 
-  // Fall back to JWT validation
-  return jwtMiddleware(c, next);
+  // Fall back to JWT validation with purpose check
+  try {
+    const payload = (await verify(token, env.JWT_SECRET, 'HS256')) as unknown as JwtPayload & { purpose?: string };
+
+    // Reject purpose-scoped tokens (2FA challenge, preview, OAuth state)
+    // Only full session tokens (no purpose field) should access admin routes
+    if (payload.purpose) {
+      return c.json({ errors: [{ code: 'UNAUTHORIZED', message: 'Invalid token type' }] }, 401);
+    }
+
+    c.set('jwtPayload', payload);
+    return next();
+  } catch {
+    return c.json({ errors: [{ code: 'UNAUTHORIZED', message: 'Invalid or expired token' }] }, 401);
+  }
 }
