@@ -27,8 +27,10 @@
 
   function buildPreviewUrl(s: string): string {
     if (!siteUrl || !previewToken) return 'about:blank';
-    // Token is sent via httpOnly cookie (wolly_preview), not in URL
-    return `${siteUrl}/preview/${s}`;
+    // Token passed via query param for cross-origin iframe preview.
+    // Safe because preview tokens are purpose-scoped (can't access admin routes)
+    // and short-lived (10 minutes).
+    return `${siteUrl}/preview/${s}?token=${previewToken}`;
   }
 
   let previewUrl = $state('about:blank');

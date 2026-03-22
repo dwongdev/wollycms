@@ -19,15 +19,20 @@ import {
  * cookies can't be shared). Query-param tokens are short-lived (10 min).
  */
 const previewAuth = createMiddleware(async (c, next) => {
-  const token = c.req.header('Authorization')?.replace('Bearer ', '')
+  const headerOrCookieToken = c.req.header('Authorization')?.replace('Bearer ', '')
     || getCookie(c, 'wolly_preview');
+  const queryToken = c.req.query('token');
+  const token = headerOrCookieToken || queryToken;
   if (!token) {
     return c.json({ errors: [{ code: 'UNAUTHORIZED', message: 'Preview requires authentication' }] }, 401);
   }
   try {
     const payload = (await verify(token, env.JWT_SECRET, 'HS256')) as unknown as { purpose?: string };
-    // Accept both preview-scoped tokens and full session tokens
-    // (editors need to preview from the admin panel using their session)
+    // Query-param tokens MUST be preview-scoped (prevents session token leakage via URL)
+    if (queryToken && payload.purpose !== 'preview') {
+      return c.json({ errors: [{ code: 'UNAUTHORIZED', message: 'Invalid token type' }] }, 401);
+    }
+    // Header/cookie tokens: accept preview-scoped or full session tokens
     if (payload.purpose && payload.purpose !== 'preview') {
       return c.json({ errors: [{ code: 'UNAUTHORIZED', message: 'Invalid token type' }] }, 401);
     }
