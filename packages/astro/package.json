@@ -1,18 +1,18 @@
 {
   "name": "@wollycms/astro",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
   "description": "Astro.js integration for WollyCMS — components, helpers, and route generation",
   "author": "Chad Wollenberg",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/wollycms/wollycms.git",
+    "url": "https://github.com/WollyCMS/wollycms.git",
     "directory": "packages/astro"
   },
-  "homepage": "https://github.com/wollycms/wollycms",
+  "homepage": "https://wollycms.com",
   "bugs": {
-    "url": "https://github.com/wollycms/wollycms/issues"
+    "url": "https://github.com/WollyCMS/wollycms/issues"
   },
   "exports": {
     ".": "./src/index.ts",
