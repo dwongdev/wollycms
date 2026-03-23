@@ -33,7 +33,8 @@ jobs:
       - run: npm ci
 
       - name: Configure npm auth
-        run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
+        run: |
+          echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > "$NPM_CONFIG_USERCONFIG"
 
       - name: Build server
         run: npm run build --workspace=packages/server
