@@ -106,7 +106,7 @@ const { fields } = Astro.props;
 </div>
 ```
 
-The `RichText` component converts TipTap JSON to HTML, handling paragraphs, headings, lists, links, images, code blocks, tables, and text marks (bold, italic, underline, strikethrough, code).
+The `RichText` component converts TipTap JSON to HTML. See the [Rich Text guide](/astro/rich-text/) for the full list of supported node types, image attributes, and details on writing custom renderers.
 
 ## Unknown block types
 

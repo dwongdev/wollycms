@@ -68,6 +68,7 @@ export default defineConfig({
 					items: [
 						{ label: 'Setup', slug: 'astro/setup' },
 						{ label: 'BlockRenderer', slug: 'astro/block-renderer' },
+						{ label: 'Rich Text', slug: 'astro/rich-text' },
 						{ label: 'Menu Helpers', slug: 'astro/menus' },
 						{ label: 'Images', slug: 'astro/images' },
 						{ label: 'SEO', slug: 'astro/seo' },
