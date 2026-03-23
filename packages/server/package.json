@@ -1,8 +1,28 @@
 {
   "name": "@wollycms/server",
   "version": "0.1.0",
-  "private": true,
   "type": "module",
+  "description": "Self-hosted headless CMS for Astro.js — block-based page building, media management, and content API",
+  "author": "Chad Wollenberg",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/WollyCMS/wollycms.git",
+    "directory": "packages/server"
+  },
+  "homepage": "https://wollycms.com",
+  "bugs": {
+    "url": "https://github.com/WollyCMS/wollycms/issues"
+  },
+  "keywords": [
+    "cms",
+    "headless-cms",
+    "wollycms",
+    "astro",
+    "hono",
+    "block-editor",
+    "content-management"
+  ],
   "bin": {
     "wolly": "dist/cli.js"
   },
@@ -10,6 +30,11 @@
     ".": "./dist/index.js",
     "./app": "./dist/app.js"
   },
+  "files": [
+    "dist",
+    "drizzle",
+    "drizzle-pg"
+  ],
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
