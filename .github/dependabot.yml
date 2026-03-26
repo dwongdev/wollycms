@@ -12,6 +12,12 @@ updates:
         update-types:
           - "minor"
           - "patch"
+      tiptap:
+        patterns:
+          - "@tiptap/*"
+      typescript:
+        patterns:
+          - "typescript"
     labels:
       - "dependencies"
 
@@ -27,6 +33,9 @@ updates:
         update-types:
           - "minor"
           - "patch"
+      typescript:
+        patterns:
+          - "typescript"
     labels:
       - "dependencies"
 
@@ -42,6 +51,16 @@ updates:
         update-types:
           - "minor"
           - "patch"
+      tiptap:
+        patterns:
+          - "@tiptap/*"
+      typescript:
+        patterns:
+          - "typescript"
+      svelte:
+        patterns:
+          - "@sveltejs/*"
+          - "svelte"
     labels:
       - "dependencies"
 
@@ -89,6 +108,10 @@ updates:
           - "patch"
     labels:
       - "dependencies"
+    ignore:
+      # Astro manages its own Vite version — don't upgrade independently
+      - dependency-name: "vite"
+        update-types: ["version-update:semver-major"]
 
   # GitHub Actions
   - package-ecosystem: "github-actions"
@@ -96,6 +119,10 @@ updates:
     schedule:
       interval: "weekly"
       day: "monday"
+    groups:
+      actions:
+        patterns:
+          - "*"
     labels:
       - "dependencies"
       - "ci"
