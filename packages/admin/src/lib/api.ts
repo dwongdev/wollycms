@@ -55,6 +55,75 @@ interface LoginResult {
   challengeToken?: string;
 }
 
+/**
+ * Generate resized image variants in the browser using Canvas.
+ * Produces WebP blobs for thumbnail (150x150 cover), medium (600x600),
+ * and large (1200x1200). Skips variants larger than the original.
+ */
+async function generateClientVariants(
+  file: File,
+): Promise<Record<string, Blob>> {
+  if (!file.type.startsWith('image/') || file.type.includes('svg')) return {};
+
+  const img = await createImageBitmap(file);
+  const { width: origW, height: origH } = img;
+  const variants: Record<string, Blob> = {};
+
+  const configs = [
+    { name: 'thumbnail', w: 150, h: 150, fit: 'cover' as const },
+    { name: 'medium', w: 600, h: 600, fit: 'inside' as const },
+    { name: 'large', w: 1200, h: 1200, fit: 'inside' as const },
+  ];
+
+  for (const cfg of configs) {
+    // Skip if original is smaller than target (no enlargement)
+    if (origW <= cfg.w && origH <= cfg.h && cfg.fit === 'inside') continue;
+
+    let drawW: number, drawH: number, sx: number, sy: number, sw: number, sh: number;
+
+    if (cfg.fit === 'cover') {
+      // Crop to fill the target dimensions
+      const scale = Math.max(cfg.w / origW, cfg.h / origH);
+      sw = cfg.w / scale;
+      sh = cfg.h / scale;
+      sx = (origW - sw) / 2;
+      sy = (origH - sh) / 2;
+      drawW = cfg.w;
+      drawH = cfg.h;
+    } else {
+      // Fit inside: scale down preserving aspect ratio
+      const scale = Math.min(cfg.w / origW, cfg.h / origH, 1);
+      drawW = Math.round(origW * scale);
+      drawH = Math.round(origH * scale);
+      sx = 0;
+      sy = 0;
+      sw = origW;
+      sh = origH;
+    }
+
+    const canvas = new OffscreenCanvas(drawW, drawH);
+    const ctx = canvas.getContext('2d');
+    if (!ctx) continue;
+    ctx.drawImage(img, sx, sy, sw, sh, 0, 0, drawW, drawH);
+
+    try {
+      const blob = await canvas.convertToBlob({ type: 'image/webp', quality: 0.8 });
+      variants[cfg.name] = blob;
+    } catch {
+      // Browser may not support WebP encoding — try PNG fallback
+      try {
+        const blob = await canvas.convertToBlob({ type: 'image/png' });
+        variants[cfg.name] = blob;
+      } catch {
+        // Skip this variant
+      }
+    }
+  }
+
+  img.close();
+  return variants;
+}
+
 export const api = {
   get: <T>(path: string) => request<T>('GET', path),
   post: <T>(path: string, body?: unknown) => request<T>('POST', path, body),
@@ -85,6 +154,13 @@ export const api = {
     if (title) form.append('title', title);
     if (altText) form.append('altText', altText);
     if (folder) form.append('folder', folder);
+
+    // Generate resized variants client-side (browser Canvas)
+    const variants = await generateClientVariants(file);
+    for (const [name, blob] of Object.entries(variants)) {
+      form.append(`variant_${name}`, blob, `${name}.webp`);
+    }
+
     return request<{ data: any }>('POST', '/media', form);
   },
 };

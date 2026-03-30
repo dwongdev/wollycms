@@ -177,21 +177,47 @@ app.post('/', async (c) => {
   let imageMetadata: Record<string, unknown> = {};
 
   if (isProcessableImage(file.type)) {
-    try {
-      const result = await processImage(buffer, filename.replace(ext, ''));
-      if (result) {
-        width = result.width;
-        height = result.height;
-        imageMetadata = result.metadata;
+    const baseFilename = filename.replace(ext, '');
 
-        // Upload each variant to storage
-        for (const variant of result.variants) {
-          const variantPath = await storage.uploadVariant(variant.filename, variant.buffer, 'image/webp');
-          variants[variant.name] = variantPath;
-        }
+    // Check for client-generated variants (sent from admin UI)
+    const clientVariantNames = ['thumbnail', 'medium', 'large'];
+    const clientVariants: { name: string; file: File }[] = [];
+    for (const vName of clientVariantNames) {
+      const vFile = body[`variant_${vName}`];
+      if (vFile && typeof vFile !== 'string') {
+        clientVariants.push({ name: vName, file: vFile as File });
       }
-    } catch (err) {
-      console.error('Image processing failed, saving original only:', err);
+    }
+
+    if (clientVariants.length > 0) {
+      // Use client-generated variants
+      for (const cv of clientVariants) {
+        const vBuffer = Buffer.from(await cv.file.arrayBuffer());
+        const vMime = cv.file.type || 'image/webp';
+        const vExt = vMime.includes('webp') ? '.webp' : '.png';
+        const vFilename = `${baseFilename}-${cv.name}${vExt}`;
+        const variantPath = await storage.uploadVariant(vFilename, vBuffer, vMime);
+        variants[cv.name] = variantPath;
+      }
+    }
+
+    // Fall back to server-side Sharp processing if no client variants
+    if (Object.keys(variants).length === 0) {
+      try {
+        const result = await processImage(buffer, baseFilename);
+        if (result) {
+          width = result.width;
+          height = result.height;
+          imageMetadata = result.metadata;
+
+          for (const variant of result.variants) {
+            const variantPath = await storage.uploadVariant(variant.filename, variant.buffer, 'image/webp');
+            variants[variant.name] = variantPath;
+          }
+        }
+      } catch (err) {
+        console.error('Image processing failed, saving original only:', err);
+      }
     }
   }
 

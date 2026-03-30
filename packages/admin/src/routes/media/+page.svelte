@@ -324,6 +324,20 @@
     <div class="modal" onclick={(e) => e.stopPropagation()} use:focusTrap onescape={() => editItem = null}>
       <div class="modal-header"><h2 id="edit-media-title">Edit Media</h2><button class="btn-icon" onclick={() => editItem = null} aria-label="Close">&#10005;</button></div>
       <form class="modal-body" onsubmit={(e) => { e.preventDefault(); saveEdit(); }}>
+        {#if editItem.mimeType?.startsWith('image/')}
+          <div class="edit-preview">
+            <img src="/api/content/media/{editItem.id}/{editItem.variantUrls?.medium ? 'medium' : 'original'}" alt={editItem.altText || editItem.title || ''} />
+          </div>
+          <div class="edit-variants">
+            <span class="edit-variants__label">Variants:</span>
+            {#each ['thumbnail', 'medium', 'large'] as v}
+              <span class="edit-variant-badge" class:exists={editItem.variants?.[v]} title={editItem.variants?.[v] ? v + ' generated' : v + ' missing'}>
+                {#if editItem.variants?.[v]}<span class="variant-check">&#10003;</span>{:else}<span class="variant-dash">&#8211;</span>{/if}
+                {v}
+              </span>
+            {/each}
+          </div>
+        {/if}
         <div class="form-group">
           <label for="edit-media-title-input">Title</label>
           <input id="edit-media-title-input" class="form-control" bind:value={editItem.title} />
@@ -342,6 +356,12 @@
               {/each}
             </select>
           </div>
+        </div>
+        <div class="edit-meta">
+          <span>{editItem.originalName}</span>
+          <span>{formatSize(editItem.size)}</span>
+          {#if editItem.width && editItem.height}<span>{editItem.width} &times; {editItem.height}</span>{/if}
+          <span>{editItem.mimeType}</span>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-outline" onclick={() => editItem = null}>Cancel</button>
@@ -574,6 +594,66 @@
     text-align: center;
     padding: 3rem 1rem;
     color: var(--c-text-light);
+  }
+
+  .edit-preview {
+    background: var(--c-bg, #f7f8fa);
+    border-radius: var(--radius, 6px);
+    padding: 0.75rem;
+    margin-bottom: 1rem;
+    text-align: center;
+  }
+  .edit-preview img {
+    max-width: 100%;
+    max-height: 300px;
+    object-fit: contain;
+    border-radius: 4px;
+  }
+
+  .edit-variants {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+  }
+  .edit-variants__label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--c-text-light);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+  .edit-variant-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.75rem;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    background: var(--c-bg, #f1f5f9);
+    color: var(--c-text-light);
+  }
+  .edit-variant-badge.exists {
+    background: #ecfdf5;
+    color: #065f46;
+  }
+  .variant-check { font-weight: 700; }
+  .variant-dash { opacity: 0.4; }
+
+  .edit-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    font-size: 0.75rem;
+    color: var(--c-text-light);
+    margin-bottom: 1rem;
+    padding: 0.5rem 0;
+    border-top: 1px solid var(--c-border, #e2e8f0);
+  }
+  .edit-meta span:not(:last-child)::after {
+    content: '\00B7';
+    margin-left: 0.5rem;
   }
 
   @media (max-width: 768px) {
