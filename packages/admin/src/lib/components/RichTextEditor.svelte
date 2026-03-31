@@ -12,6 +12,7 @@
   import { focusTrap } from '$lib/focusTrap.js';
   import { Table, TableRow, TableCell, TableHeader } from '@tiptap/extension-table';
   import Placeholder from '@tiptap/extension-placeholder';
+  import { TextStyle, Color } from '@tiptap/extension-text-style';
   import MediaPicker from './MediaPicker.svelte';
 
   let { content, onUpdate }: { content: any; onUpdate: (json: any) => void } = $props();
@@ -37,6 +38,7 @@
   let linkText = $state('');
   let linkNewTab = $state(false);
   let linkTab = $state<'url' | 'media'>('url');
+  let textColor = $state('#000000');
 
   // --- SVG icons ---
   const s = (d: string) => `<svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
@@ -86,6 +88,7 @@
       alignLeft: !editor.isActive({ textAlign: 'center' }) && !editor.isActive({ textAlign: 'right' }),
       alignCenter: editor.isActive({ textAlign: 'center' }),
       alignRight: editor.isActive({ textAlign: 'right' }),
+      textColor: editor.getAttributes('textStyle').color || '',
       blockFormat:
         editor.isActive('heading', { level: 2 }) ? 'h2'
         : editor.isActive('heading', { level: 3 }) ? 'h3'
@@ -225,6 +228,8 @@
         CustomImage,
         Table.configure({ resizable: false }),
         TableRow, TableCell, TableHeader,
+        TextStyle,
+        Color,
         Placeholder.configure({ placeholder: 'Type / for commands...' }),
         PasteCleanup,
       ],
@@ -452,6 +457,16 @@
       <button type="button" class="rte-btn" class:active={active.strike} onclick={() => editor?.chain().focus().toggleStrike().run()} title="Strikethrough">{@html ico.strike}</button>
       <button type="button" class="rte-btn" class:active={active.subscript} onclick={() => editor?.chain().focus().toggleSubscript().run()} title="Subscript">{@html ico.sub}</button>
       <button type="button" class="rte-btn" class:active={active.superscript} onclick={() => editor?.chain().focus().toggleSuperscript().run()} title="Superscript">{@html ico.sup}</button>
+      <span class="rte-color-wrap" title="Text Color">
+        <span class="rte-color-label" style="border-bottom-color: {active.textColor || 'currentColor'}">A</span>
+        <input type="color" class="rte-color-input" value={active.textColor || '#000000'}
+          oninput={(e) => { const c = (e.target as HTMLInputElement).value; editor?.chain().focus().setColor(c).run(); }}
+        />
+        {#if active.textColor}
+          <button type="button" class="rte-color-clear" title="Remove color"
+            onclick={() => editor?.chain().focus().unsetColor().run()}>×</button>
+        {/if}
+      </span>
       <span class="rte-divider"></span>
       <button type="button" class="rte-btn" class:active={active.alignLeft} onclick={() => editor?.chain().focus().setTextAlign('left').run()} title="Align Left">{@html ico.alignLeft}</button>
       <button type="button" class="rte-btn" class:active={active.alignCenter} onclick={() => editor?.chain().focus().setTextAlign('center').run()} title="Align Center">{@html ico.alignCenter}</button>
@@ -635,6 +650,12 @@
   .rte-btn:hover { background: var(--c-border, #e2e8f0); }
   .rte-btn.active { background: var(--c-accent, #3182ce); color: #fff; border-color: var(--c-accent, #3182ce); }
   .rte-divider { display: inline-block; width: 1px; height: 20px; background: var(--c-border, #e2e8f0); margin: 0 3px; }
+
+  .rte-color-wrap { position: relative; display: inline-flex; align-items: center; min-width: 28px; height: 28px; padding: 0 4px; border-radius: 4px; cursor: pointer; }
+  .rte-color-wrap:hover { background: var(--c-border, #e2e8f0); }
+  .rte-color-label { font-size: 14px; font-weight: 700; font-family: serif; border-bottom: 3px solid currentColor; line-height: 1; padding-bottom: 1px; }
+  .rte-color-input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+  .rte-color-clear { position: absolute; top: -4px; right: -4px; width: 14px; height: 14px; border-radius: 50%; background: var(--c-danger, #e53e3e); color: #fff; font-size: 10px; line-height: 14px; text-align: center; border: none; cursor: pointer; padding: 0; }
 
   .rte-table-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 3px; padding: 4px 8px; background: color-mix(in srgb, var(--c-accent), transparent 90%); border-bottom: 1px solid color-mix(in srgb, var(--c-accent), transparent 60%); }
   .rte-table-label { font-size: 0.7rem; font-weight: 600; color: var(--c-accent); margin-right: 4px; }

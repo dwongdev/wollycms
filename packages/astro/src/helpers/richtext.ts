@@ -50,6 +50,11 @@ function renderMarks(text: string, marks?: TipTapNode['marks']): string {
       case 'superscript':
         result = `<sup>${result}</sup>`;
         break;
+      case 'textStyle': {
+        const color = mark.attrs?.color ? escapeHtml(String(mark.attrs.color)) : '';
+        if (color) result = `<span style="color: ${color}">${result}</span>`;
+        break;
+      }
     }
   }
   return result;
