@@ -2,6 +2,9 @@
   "name": "@wollycms/server",
   "version": "0.2.1",
   "type": "module",
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "description": "Self-hosted headless CMS for Astro.js — block-based page building, media management, and content API",
   "author": "Chad Wollenberg",
   "license": "MIT",

@@ -3,6 +3,10 @@ title: Quick Start
 description: Get WollyCMS running in under 5 minutes.
 ---
 
+## Prerequisites
+
+- **Node.js 22 LTS** — WollyCMS uses `better-sqlite3` which requires native compilation. Node 22 LTS is tested and recommended. If you hit build errors on newer Node versions (e.g. v25), switch to Node 22 or use PostgreSQL instead (`DATABASE_URL=postgresql://...` in your `.env`).
+
 ## Create a new project
 
 ```bash

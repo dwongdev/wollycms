@@ -24,7 +24,8 @@ function parseArgs() {
 }
 
 async function main() {
-  console.log('\n  🚀 Create WollyCMS Project\n');
+  console.log('\n  🚀 Create WollyCMS Project');
+  console.log('  Requires Node.js 22 LTS\n');
 
   const parsed = parseArgs();
   const projectName = parsed.name || await ask('  Project name: ');
@@ -76,7 +77,7 @@ async function main() {
       'types:generate': 'wolly types generate',
     },
     dependencies: {
-      '@wollycms/server': '^0.1.0',
+      '@wollycms/server': '^0.2.0',
     },
   }, null, 2) + '\n');
 

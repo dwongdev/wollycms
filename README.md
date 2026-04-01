@@ -75,6 +75,8 @@ WollyCMS fills the gap between simple headless CMS tools that lack page composit
 
 ## Quick Start
 
+> **Requires Node.js 22 LTS.** WollyCMS uses `better-sqlite3` which needs native compilation. Node 22 LTS is tested and recommended. If you hit build errors on newer Node versions, use PostgreSQL instead (`DATABASE_URL=postgresql://...`).
+
 Create a new project with a single command:
 
 ```bash
