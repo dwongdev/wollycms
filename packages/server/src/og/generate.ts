@@ -34,11 +34,13 @@ function loadFonts() {
   return fontsCache;
 }
 
-/** Try to load sharp. Returns null if unavailable (Workers). */
+/** Try to load sharp. Returns null if unavailable (Workers stubs return {}). */
 async function loadSharp(): Promise<any | null> {
   try {
     const mod = await import('sharp');
-    return mod.default ?? mod;
+    const sharpFn = mod.default ?? mod;
+    if (typeof sharpFn !== 'function') return null;
+    return sharpFn;
   } catch {
     return null;
   }

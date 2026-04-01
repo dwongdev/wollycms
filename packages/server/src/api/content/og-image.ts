@@ -13,12 +13,14 @@ const CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
 /** Default site name for branding */
 const SITE_NAME = 'WollyCMS';
 
-/** Try to load sharp. Returns null if not available (e.g. Workers). */
+/** Try to load sharp. Returns null if not available (e.g. Workers stubs return {}). */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function loadSharp(): Promise<any | null> {
   try {
     const mod = await import('sharp');
-    return mod.default ?? mod;
+    const sharpFn = mod.default ?? mod;
+    if (typeof sharpFn !== 'function') return null;
+    return sharpFn;
   } catch {
     return null;
   }
