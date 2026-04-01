@@ -12,40 +12,132 @@
  *   npx wolly health      Check server health
  */
 
+import { dirname, resolve } from 'path';
+import { fileURLToPath, pathToFileURL } from 'url';
+import { readFileSync, mkdirSync, existsSync } from 'fs';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 const command = process.argv[2];
+
+/* ------------------------------------------------------------------ */
+/*  Helpers                                                           */
+/* ------------------------------------------------------------------ */
+
+function getVersion(): string {
+  try {
+    const pkgPath = resolve(__dirname, '../package.json');
+    const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8'));
+    return pkg.version || '0.0.0';
+  } catch {
+    return '0.0.0';
+  }
+}
+
+function getMigrationsFolder(dialect: string): string {
+  const folder = dialect === 'postgresql' ? '../drizzle-pg' : '../drizzle';
+  return resolve(__dirname, folder);
+}
+
+/**
+ * Verify that the required native module (better-sqlite3) is loadable.
+ * Prints actionable troubleshooting guidance on failure.
+ */
+async function checkSqliteDeps(): Promise<void> {
+  try {
+    await import('better-sqlite3');
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error(`\nERROR: Could not load better-sqlite3.\n`);
+    console.error(`This is a native Node.js module that requires compilation.`);
+    console.error(`Common fixes:\n`);
+    console.error(`  1. Use Node.js 22 LTS (current: ${process.version})`);
+    console.error(`     nvm install 22 && nvm use 22`);
+    console.error(`  2. Rebuild native modules:`);
+    console.error(`     npm rebuild better-sqlite3`);
+    console.error(`  3. Install build tools (if rebuild fails):`);
+    console.error(`     Ubuntu/Debian: sudo apt install build-essential python3`);
+    console.error(`     macOS:         xcode-select --install`);
+    console.error(`     Windows:       npm install -g windows-build-tools`);
+    console.error(`  4. Or switch to PostgreSQL (no native modules needed):`);
+    console.error(`     Set DATABASE_URL=postgresql://user:pass@localhost/wollycms in .env\n`);
+    console.error(`Original error: ${msg}`);
+    process.exit(1);
+  }
+}
+
+/**
+ * Verify that the migrations folder exists before trying to run migrations.
+ */
+function checkMigrationsFolder(folder: string): void {
+  if (!existsSync(folder)) {
+    console.error(`\nERROR: Migrations folder not found at:\n  ${folder}\n`);
+    console.error(`This usually means @wollycms/server wasn't installed correctly.`);
+    console.error(`Try: npm install @wollycms/server\n`);
+    process.exit(1);
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/*  Commands                                                          */
+/* ------------------------------------------------------------------ */
 
 async function main() {
   switch (command) {
     case 'migrate': {
-      const { migrate } = await import('drizzle-orm/better-sqlite3/migrator');
-      const { getDb } = await import('./db/index.js');
-      const { env } = await import('./env.js');
-      const { mkdirSync } = await import('fs');
-      const { dirname, resolve } = await import('path');
-      const { fileURLToPath } = await import('url');
+      const { getDialect, env } = await import('./env.js');
+      const dialect = getDialect();
+      const migrationsFolder = getMigrationsFolder(dialect);
 
-      const __dirname = dirname(fileURLToPath(import.meta.url));
-      const dbPath = env.DATABASE_URL.replace('sqlite:', '');
-      mkdirSync(dirname(dbPath), { recursive: true });
-      const db = getDb();
-      console.log('Running migrations...');
-      migrate(db, { migrationsFolder: resolve(__dirname, '../drizzle') });
+      checkMigrationsFolder(migrationsFolder);
+
+      if (dialect === 'postgresql') {
+        const { getDb } = await import('./db/index.js');
+        const db = getDb();
+        const { migrate } = await import('drizzle-orm/node-postgres/migrator');
+        console.log('Running PostgreSQL migrations...');
+        await migrate(db, { migrationsFolder });
+      } else {
+        await checkSqliteDeps();
+        const { getDb } = await import('./db/index.js');
+        const dbPath = env.DATABASE_URL.replace('sqlite:', '');
+        mkdirSync(dirname(dbPath), { recursive: true });
+        const db = getDb();
+        const { migrate } = await import('drizzle-orm/better-sqlite3/migrator');
+        console.log('Running SQLite migrations...');
+        migrate(db, { migrationsFolder });
+      }
+
       console.log('Migrations complete.');
       break;
     }
 
     case 'seed': {
-      // Dynamically import the seed script
+      const { getDialect } = await import('./env.js');
+      const dialect = getDialect();
+      if (dialect !== 'postgresql') {
+        await checkSqliteDeps();
+      }
       await import('./db/seed.js');
       break;
     }
 
     case 'start': {
+      const { getDialect } = await import('./env.js');
+      const dialect = getDialect();
+      if (dialect !== 'postgresql') {
+        await checkSqliteDeps();
+      }
       await import('./index.js');
       break;
     }
 
     case 'export': {
+      const { getDialect } = await import('./env.js');
+      const dialect = getDialect();
+      if (dialect !== 'postgresql') {
+        await checkSqliteDeps();
+      }
+
       const { getDb } = await import('./db/index.js');
       const { sql } = await import('drizzle-orm');
       const db = getDb();
@@ -58,7 +150,12 @@ async function main() {
       const data: Record<string, unknown[]> = {};
       for (const table of tables) {
         try {
-          data[table] = db.all(sql.raw(`SELECT * FROM ${table}`));
+          if (dialect === 'postgresql') {
+            const result = await db.execute(sql.raw(`SELECT * FROM "${table}"`));
+            data[table] = result.rows ?? [];
+          } else {
+            data[table] = db.all(sql.raw(`SELECT * FROM ${table}`));
+          }
         } catch {
           data[table] = [];
         }
@@ -76,6 +173,12 @@ async function main() {
 
       const outputIdx = process.argv.indexOf('--output');
       const outputPath = outputIdx > -1 ? process.argv[outputIdx + 1] : './wolly-types.d.ts';
+
+      const { getDialect } = await import('./env.js');
+      const dialect = getDialect();
+      if (dialect !== 'postgresql') {
+        await checkSqliteDeps();
+      }
 
       const { getDb } = await import('./db/index.js');
       const schema = await import('./db/schema/index.js');
@@ -166,14 +269,21 @@ async function main() {
         console.error('Usage: wolly import <file.json>');
         process.exit(1);
       }
-      const { readFileSync } = await import('fs');
+
+      const { getDialect } = await import('./env.js');
+      const dialect = getDialect();
+      if (dialect !== 'postgresql') {
+        await checkSqliteDeps();
+      }
+
+      const { readFileSync: readFile } = await import('fs');
       const { getDb } = await import('./db/index.js');
       const { eq } = await import('drizzle-orm');
       const schema = await import('./db/schema/index.js');
 
       let data: Record<string, unknown>;
       try {
-        data = JSON.parse(readFileSync(filePath, 'utf-8'));
+        data = JSON.parse(readFile(filePath, 'utf-8'));
       } catch {
         console.error(`Failed to read or parse ${filePath}`);
         process.exit(1);
@@ -219,6 +329,12 @@ async function main() {
     }
 
     case 'og:generate': {
+      const { getDialect } = await import('./env.js');
+      const dialect = getDialect();
+      if (dialect !== 'postgresql') {
+        await checkSqliteDeps();
+      }
+
       const { getDb } = await import('./db/index.js');
       const { bulkGenerateOgImages } = await import('./og/generate.js');
       getDb(); // ensure DB is initialized
@@ -264,6 +380,12 @@ async function main() {
     }
 
     case 'search:rebuild': {
+      const { getDialect } = await import('./env.js');
+      const dialect = getDialect();
+      if (dialect !== 'postgresql') {
+        await checkSqliteDeps();
+      }
+
       const { getDb: getDbForSearch } = await import('./db/index.js');
       const { rebuildSearchIndex } = await import('./search-index.js');
       getDbForSearch();
@@ -274,7 +396,7 @@ async function main() {
     }
 
     default:
-      console.log(`WollyCMS CLI v0.1.0
+      console.log(`WollyCMS CLI v${getVersion()}
 
 Usage: wolly <command>
 
@@ -308,6 +430,22 @@ Examples:
 }
 
 main().catch((err) => {
-  console.error(err);
+  const msg = err instanceof Error ? err.message : String(err);
+
+  // Catch common environment issues and provide guidance
+  if (msg.includes('better-sqlite3') || msg.includes('better_sqlite3')) {
+    console.error(`\nERROR: better-sqlite3 failed to load.\n`);
+    console.error(`Run: npm rebuild better-sqlite3`);
+    console.error(`Or switch to PostgreSQL: DATABASE_URL=postgresql://... in .env`);
+  } else if (msg.includes('ENOENT') && msg.includes('.env')) {
+    console.error(`\nERROR: .env file not found.\n`);
+    console.error(`Create one from the example: cp .env.example .env`);
+  } else if (msg.includes('EACCES') || msg.includes('permission denied')) {
+    console.error(`\nERROR: Permission denied.\n`);
+    console.error(`Check that the data/ and uploads/ directories are writable.`);
+  } else {
+    console.error(err);
+  }
+
   process.exit(1);
 });

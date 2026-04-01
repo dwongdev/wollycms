@@ -115,6 +115,73 @@ const { fields } = Astro.props;
 </section>
 ```
 
+## Troubleshooting
+
+### `npm install` fails with `better-sqlite3` errors
+
+WollyCMS uses [better-sqlite3](https://github.com/WiseLibs/better-sqlite3), a native Node.js module that requires compilation. If the prebuilt binary isn't available for your platform, it falls back to compiling from source.
+
+**Fix: Use Node.js 22 LTS** (the tested and recommended version):
+
+```bash
+nvm install 22
+nvm use 22
+npm install    # retry
+```
+
+**Fix: Install build tools** (if compilation is needed):
+
+```bash
+# Ubuntu / Debian
+sudo apt install build-essential python3
+
+# macOS
+xcode-select --install
+
+# Windows
+npm install -g windows-build-tools
+```
+
+**Fix: Rebuild native modules** (if `npm install` succeeded but commands still fail):
+
+```bash
+npm rebuild better-sqlite3
+```
+
+**Alternative: Use PostgreSQL instead** (no native modules required):
+
+Edit `.env` and change `DATABASE_URL`:
+
+```
+DATABASE_URL=postgresql://user:password@localhost:5432/wollycms
+```
+
+PostgreSQL support is built in — no additional packages needed.
+
+### `npm run migrate` fails with "migrations folder not found"
+
+This usually means `@wollycms/server` wasn't installed correctly. Try:
+
+```bash
+rm -rf node_modules package-lock.json
+npm install
+npm run migrate
+```
+
+### Commands fail with `MODULE_NOT_FOUND` or `Cannot find module`
+
+Check your Node.js version:
+
+```bash
+node -v    # Should be v22.x.x
+```
+
+WollyCMS requires Node.js 22 LTS. Other versions may have incompatible native module binaries.
+
+### Server starts but admin UI shows a blank page
+
+Clear your browser cache or try an incognito window. The admin UI is a SvelteKit SPA bundled with the server — it should load at `http://localhost:4321/admin`.
+
 ## Next steps
 
 - [Core Concepts](/concepts/pages/) — Learn about pages, blocks, and regions
