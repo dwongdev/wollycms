@@ -615,7 +615,9 @@ select.form-control {
   width: 90%;
   max-width: 600px;
   max-height: 90vh;
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .modal-header {
@@ -624,6 +626,7 @@ select.form-control {
   justify-content: space-between;
   padding: 1rem 1.5rem;
   border-bottom: 1px solid var(--c-border);
+  flex-shrink: 0;
 }
 
 .modal-header h2 {
@@ -632,6 +635,9 @@ select.form-control {
 
 .modal-body {
   padding: 1.5rem;
+  overflow-y: auto;
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 .modal-footer {
@@ -640,6 +646,7 @@ select.form-control {
   gap: 0.5rem;
   padding: 1rem 1.5rem;
   border-top: 1px solid var(--c-border);
+  flex-shrink: 0;
 }
 
 /* Toast / Alert */
