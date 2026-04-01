@@ -872,12 +872,12 @@
     transition: border-color 0.15s, box-shadow 0.15s, opacity 0.15s;
     overflow: hidden;
   }
-
   .block-card:hover {
     border-color: var(--c-border);
   }
 
   .block-card.is-expanded {
+    overflow: visible;
     border-color: var(--c-border);
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
   }
