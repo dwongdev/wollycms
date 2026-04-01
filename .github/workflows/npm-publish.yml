@@ -39,6 +39,12 @@ jobs:
       - name: Build server
         run: npm run build --workspace=packages/server
 
+      - name: Build admin UI
+        run: npx --workspace=packages/admin svelte-kit sync && npm run build --workspace=packages/admin
+
+      - name: Bundle admin UI into server package
+        run: cp -r packages/admin/build packages/server/admin-ui
+
       - name: Publish @wollycms/server
         run: npm publish --workspace=packages/server --access public
 

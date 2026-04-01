@@ -195,9 +195,18 @@ if (getStorage().isExternal) {
 // On Workers, admin assets are served via wrangler [assets] config.
 if (env.NODE_ENV === 'production' && typeof process !== 'undefined' && process.release?.name === 'node') {
   const { serveStatic } = await import('@hono/node-server/serve-static');
-  app.use('/admin/*', serveStatic({ root: './packages/admin/build', rewriteRequestPath: (p) => p.replace('/admin', '') }));
-  app.get('/admin/*', serveStatic({ root: './packages/admin/build', path: '/index.html' }));
-  app.get('/admin', serveStatic({ root: './packages/admin/build', path: '/index.html' }));
+  const { dirname, resolve } = await import('node:path');
+  const { fileURLToPath } = await import('node:url');
+  const { existsSync } = await import('node:fs');
+
+  // npm-installed: admin-ui/ alongside dist/ in the package
+  // monorepo/Docker: packages/admin/build/ relative to CWD
+  const pkgAdminDir = resolve(dirname(fileURLToPath(import.meta.url)), '../admin-ui');
+  const adminRoot = existsSync(pkgAdminDir) ? pkgAdminDir : './packages/admin/build';
+
+  app.use('/admin/*', serveStatic({ root: adminRoot, rewriteRequestPath: (p) => p.replace('/admin', '') }));
+  app.get('/admin/*', serveStatic({ root: adminRoot, path: '/index.html' }));
+  app.get('/admin', serveStatic({ root: adminRoot, path: '/index.html' }));
 }
 
 export default app;

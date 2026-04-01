@@ -21,13 +21,15 @@ async function main() {
       const { getDb } = await import('./db/index.js');
       const { env } = await import('./env.js');
       const { mkdirSync } = await import('fs');
-      const { dirname } = await import('path');
+      const { dirname, resolve } = await import('path');
+      const { fileURLToPath } = await import('url');
 
+      const __dirname = dirname(fileURLToPath(import.meta.url));
       const dbPath = env.DATABASE_URL.replace('sqlite:', '');
       mkdirSync(dirname(dbPath), { recursive: true });
       const db = getDb();
       console.log('Running migrations...');
-      migrate(db, { migrationsFolder: './drizzle' });
+      migrate(db, { migrationsFolder: resolve(__dirname, '../drizzle') });
       console.log('Migrations complete.');
       break;
     }

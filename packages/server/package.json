@@ -1,6 +1,6 @@
 {
   "name": "@wollycms/server",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "type": "module",
   "description": "Self-hosted headless CMS for Astro.js — block-based page building, media management, and content API",
   "author": "Chad Wollenberg",
@@ -33,7 +33,8 @@
   "files": [
     "dist",
     "drizzle",
-    "drizzle-pg"
+    "drizzle-pg",
+    "admin-ui"
   ],
   "scripts": {
     "dev": "tsx watch src/index.ts",
