@@ -13,6 +13,7 @@ import { verifyTotp } from '../../auth/totp.js';
 import { decrypt } from '../../auth/encryption.js';
 import { hashRecoveryCode } from '../../auth/recovery-codes.js';
 import { logAudit } from '../../audit.js';
+import { issueSession, refreshSession, revokeSession, cleanupExpiredTokens } from '../../auth/session.js';
 
 const app = new Hono();
 
@@ -29,16 +30,6 @@ const verify2faSchema = z.object({
   code: z.string().min(1),
   rememberDevice: z.boolean().optional(),
 });
-
-/** Issue a full 24h session JWT. */
-async function issueSessionToken(user: { id: number; email: string; role: string }) {
-  const now = Math.floor(Date.now() / 1000);
-  return sign(
-    { sub: user.id, email: user.email, role: user.role, exp: now + 86400 },
-    env.JWT_SECRET,
-    'HS256',
-  );
-}
 
 /** Check if the current request has a valid trusted device cookie. */
 async function isTrustedDevice(c: import('hono').Context, userId: number): Promise<boolean> {
@@ -120,7 +111,7 @@ app.post('/login', async (c) => {
     // Check for trusted device cookie — skip 2FA if trusted
     const trusted = await isTrustedDevice(c, user.id);
     if (trusted) {
-      const token = await issueSessionToken(user);
+      const token = await issueSession(c, user);
       return c.json({
         data: {
           token,
@@ -144,8 +135,8 @@ app.post('/login', async (c) => {
     });
   }
 
-  // No 2FA — issue session token directly
-  const token = await issueSessionToken(user);
+  // No 2FA — issue session directly
+  const token = await issueSession(c, user);
   return c.json({
     data: {
       token,
@@ -228,7 +219,7 @@ app.post('/verify-2fa', async (c) => {
     await setTrustedDevice(c, user.id);
   }
 
-  const token = await issueSessionToken(user);
+  const token = await issueSession(c, user);
   await logAudit(c, {
     action: isRecovery ? '2fa-recovery-used' : '2fa-verified',
     entity: 'user',
@@ -297,6 +288,21 @@ app.post('/preview-session', authMiddleware, async (c) => {
     sameSite: 'Lax',
   });
   return c.json({ data: { ok: true, token, expiresIn: 600 } });
+});
+
+/** Refresh the session — issue a new access token using the refresh cookie. */
+app.post('/refresh', async (c) => {
+  const result = await refreshSession(c);
+  if (!result) {
+    return c.json({ errors: [{ code: 'UNAUTHORIZED', message: 'Session expired — please sign in again' }] }, 401);
+  }
+  return c.json({ data: { token: result.accessToken, user: result.user } });
+});
+
+/** Logout — revoke the refresh token and clear cookies. */
+app.post('/logout', async (c) => {
+  await revokeSession(c);
+  return c.json({ data: { ok: true } });
 });
 
 export default app;

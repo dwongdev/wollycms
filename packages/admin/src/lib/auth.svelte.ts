@@ -28,8 +28,8 @@ export function getAuth() {
     loaded = true;
   }
 
-  function logout() {
-    clearToken();
+  async function logout() {
+    await api.logout();
     user = null;
     window.location.href = '/admin/login';
   }

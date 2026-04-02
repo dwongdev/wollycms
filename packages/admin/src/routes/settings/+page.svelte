@@ -16,6 +16,7 @@
       if (!config.workflow) config.workflow = { stages: [] };
       if (!config.footer) config.footer = { text: '' };
       if (!config.social) config.social = { facebook: null, twitter: null, instagram: null };
+      if (!config.session) config.session = { duration: '24h' };
     } catch (err: any) { error = err.message; }
   });
 
@@ -27,6 +28,7 @@
       config = res.data;
       if (!config.ai) config.ai = { provider: '', apiKey: '', model: '', baseUrl: '' };
       if (!config.workflow) config.workflow = { stages: [] };
+      if (!config.session) config.session = { duration: '24h' };
       toast.success('Settings saved.');
     } catch (err: any) { error = err.message; }
     finally { saving = false; }
@@ -171,6 +173,22 @@
         />
         <span class="field-hint" style="margin-top: 0;">Press Enter to add</span>
       </div>
+    </div>
+  </div>
+
+  <!-- Security -->
+  <div class="card settings-card">
+    <h2>Security</h2>
+    <p class="section-hint">Controls how long users stay signed in before needing to log in again.</p>
+    <div class="form-group">
+      <label>Session Duration</label>
+      <select class="form-control" style="max-width: 220px;" bind:value={config.session.duration}>
+        <option value="24h">24 hours</option>
+        <option value="7d">1 week</option>
+        <option value="14d">2 weeks</option>
+        <option value="30d">30 days</option>
+      </select>
+      <p class="field-hint">Applies to all users on next login. Does not end active sessions.</p>
     </div>
   </div>
 

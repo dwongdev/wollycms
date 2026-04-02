@@ -37,6 +37,9 @@ const defaultConfig = {
       { slug: 'archived', label: 'Archived', color: '#718096' as string | undefined, transitions: ['draft'], requiredRole: null as string | null | undefined },
     ],
   },
+  session: {
+    duration: '24h' as string,
+  },
 };
 
 export async function loadConfig(): Promise<typeof defaultConfig> {
@@ -105,6 +108,9 @@ app.put('/', async (c) => {
         transitions: z.array(z.string()),
         requiredRole: z.string().nullable().optional(),
       })).min(2),
+    }).optional(),
+    session: z.object({
+      duration: z.enum(['24h', '7d', '14d', '30d']).optional(),
     }).optional(),
   }).safeParse(body);
   if (!parsed.success) return c.json({ errors: parsed.error.issues.map((i) => ({ code: 'VALIDATION', message: i.message })) }, 400);
