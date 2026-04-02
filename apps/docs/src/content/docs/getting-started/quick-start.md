@@ -158,14 +158,30 @@ DATABASE_URL=postgresql://user:password@localhost:5432/wollycms
 
 PostgreSQL support is built in — no additional packages needed.
 
-### `npm run migrate` fails with "migrations folder not found"
+### `npm run migrate` fails with "Can't find meta/_journal.json" or "migrations folder not found"
 
-This usually means `@wollycms/server` wasn't installed correctly. Try:
+This means the migration files inside `@wollycms/server` weren't extracted correctly during install. This can happen on Windows, especially with spaces in the project path.
+
+**Fix: Reinstall from scratch:**
 
 ```bash
 rm -rf node_modules package-lock.json
 npm install
 npm run migrate
+```
+
+**Fix: Move your project to a path without spaces** (if reinstall doesn't help):
+
+```bash
+# Instead of C:\Web Dev\Projects\my-site
+# Use something like C:\projects\my-site
+```
+
+**Verify the file exists:**
+
+```bash
+# The journal file should be at:
+node_modules/@wollycms/server/drizzle/meta/_journal.json
 ```
 
 ### Commands fail with `MODULE_NOT_FOUND` or `Cannot find module`

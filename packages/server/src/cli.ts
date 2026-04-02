@@ -66,13 +66,19 @@ async function checkSqliteDeps(): Promise<void> {
 }
 
 /**
- * Verify that the migrations folder exists before trying to run migrations.
+ * Verify that the migrations folder and journal file exist before running migrations.
  */
 function checkMigrationsFolder(folder: string): void {
-  if (!existsSync(folder)) {
-    console.error(`\nERROR: Migrations folder not found at:\n  ${folder}\n`);
+  const journalPath = resolve(folder, 'meta', '_journal.json');
+  if (!existsSync(folder) || !existsSync(journalPath)) {
+    console.error(`\nERROR: Migration files not found at:\n  ${folder}\n`);
+    console.error(`Expected journal file at:\n  ${journalPath}\n`);
     console.error(`This usually means @wollycms/server wasn't installed correctly.`);
-    console.error(`Try: npm install @wollycms/server\n`);
+    console.error(`Fix:\n`);
+    console.error(`  rm -rf node_modules package-lock.json`);
+    console.error(`  npm install\n`);
+    console.error(`If the problem persists, check that this file exists:`);
+    console.error(`  node_modules/@wollycms/server/drizzle/meta/_journal.json\n`);
     process.exit(1);
   }
 }
