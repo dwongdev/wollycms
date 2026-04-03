@@ -405,6 +405,10 @@
           {#if editItem.width && editItem.height}<span>{editItem.width} &times; {editItem.height}</span>{/if}
           <span>{editItem.mimeType}</span>
         </div>
+        <div class="edit-url">
+          <span class="edit-url__label">URL</span>
+          <code class="edit-url__value">/api/content/media/{editItem.id}/original</code>
+        </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-outline" onclick={() => editItem = null}>Cancel</button>
           <button type="submit" class="btn btn-primary">Save</button>
@@ -746,6 +750,28 @@
   .edit-meta span:not(:last-child)::after {
     content: '\00B7';
     margin-left: 0.5rem;
+  }
+
+  .edit-url {
+    font-size: 0.75rem;
+    color: var(--c-text-light);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .edit-url__label {
+    flex-shrink: 0;
+    font-weight: 500;
+  }
+  .edit-url__value {
+    font-family: monospace;
+    font-size: 0.7rem;
+    user-select: all;
+    word-break: break-all;
+    background: var(--c-bg-subtle, #f1f5f9);
+    padding: 0.15rem 0.4rem;
+    border-radius: 3px;
   }
 
   @media (max-width: 768px) {
