@@ -407,7 +407,7 @@
         </div>
         <div class="edit-url">
           <span class="edit-url__label">URL</span>
-          <code class="edit-url__value">/api/content/media/{editItem.id}/original</code>
+          <code class="edit-url__value">{window.location.origin}/api/content/media/{editItem.id}/original</code>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-outline" onclick={() => editItem = null}>Cancel</button>
