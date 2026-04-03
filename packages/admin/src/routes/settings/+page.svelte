@@ -4,18 +4,27 @@
   import { toast } from '$lib/toast.svelte.js';
 
   let config = $state<any>(null);
+  let savedSnapshot = $state('');
   let error = $state('');
   let saving = $state(false);
   let importing = $state(false);
+
+  let dirty = $derived(config ? JSON.stringify(config) !== savedSnapshot : false);
+
+  function initDefaults(c: any) {
+    if (!c.ai) c.ai = { provider: '', apiKey: '', model: '', baseUrl: '' };
+    if (!c.workflow) c.workflow = { stages: [] };
+    if (!c.footer) c.footer = { text: '' };
+    if (!c.social) c.social = { facebook: null, twitter: null, instagram: null };
+    if (!c.session) c.session = { duration: '24h' };
+  }
 
   onMount(async () => {
     try {
       const res = await api.get<{ data: any }>('/config');
       config = res.data;
-      if (!config.ai) config.ai = { provider: '', apiKey: '', model: '', baseUrl: '' };
-      if (!config.workflow) config.workflow = { stages: [] };
-      if (!config.footer) config.footer = { text: '' };
-      if (!config.social) config.social = { facebook: null, twitter: null, instagram: null };
+      initDefaults(config);
+      savedSnapshot = JSON.stringify(config);
     } catch (err: any) { error = err.message; }
   });
 
@@ -25,8 +34,8 @@
     try {
       const res = await api.put<{ data: any }>('/config', config);
       config = res.data;
-      if (!config.ai) config.ai = { provider: '', apiKey: '', model: '', baseUrl: '' };
-      if (!config.workflow) config.workflow = { stages: [] };
+      initDefaults(config);
+      savedSnapshot = JSON.stringify(config);
       toast.success('Settings saved.');
     } catch (err: any) { error = err.message; }
     finally { saving = false; }
@@ -35,9 +44,6 @@
 
 <div class="page-header">
   <h1>Settings</h1>
-  <button class="btn btn-primary" onclick={save} disabled={saving}>
-    {saving ? 'Saving...' : 'Save Settings'}
-  </button>
 </div>
 
 {#if error}<div class="alert alert-error">{error}</div>{/if}
@@ -174,6 +180,22 @@
     </div>
   </div>
 
+  <!-- Security -->
+  <div class="card settings-card">
+    <h2>Security</h2>
+    <p class="section-hint">Controls how long users stay signed in before needing to log in again.</p>
+    <div class="form-group">
+      <label>Session Duration</label>
+      <select class="form-control" style="max-width: 220px;" bind:value={config.session.duration}>
+        <option value="24h">24 hours</option>
+        <option value="7d">1 week</option>
+        <option value="14d">2 weeks</option>
+        <option value="30d">30 days</option>
+      </select>
+      <p class="field-hint">Applies to all users on next login. Does not end active sessions.</p>
+    </div>
+  </div>
+
   <!-- Workflow -->
   <div class="card settings-card">
     <h2>Workflow</h2>
@@ -251,6 +273,15 @@
       Import skips existing records — no duplicates.
     </p>
   </div>
+
+  {#if dirty}
+    <div class="save-bar">
+      <span class="save-bar-label">You have unsaved changes</span>
+      <button class="btn btn-primary" onclick={save} disabled={saving}>
+        {saving ? 'Saving...' : 'Save Settings'}
+      </button>
+    </div>
+  {/if}
 {/if}
 
 <style>
@@ -332,5 +363,32 @@
     cursor: pointer;
     border-radius: 4px;
     padding: 0;
+  }
+
+  .save-bar {
+    position: fixed;
+    bottom: 0;
+    left: var(--sidebar-w, 240px);
+    right: 0;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 1rem;
+    padding: 0.75rem 1.5rem;
+    background: var(--c-surface, #fff);
+    border-top: 1px solid var(--c-border, #e2e8f0);
+    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.06);
+    z-index: 100;
+    animation: slideUp 0.15s ease-out;
+  }
+
+  .save-bar-label {
+    font-size: 0.85rem;
+    color: var(--c-text-light);
+  }
+
+  @keyframes slideUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
   }
 </style>

@@ -34,9 +34,11 @@ app.use('/setup/*', rateLimiter());
 app.use('/setup', rateLimiter());
 app.route('/setup', setupRouter);
 
-// Auth routes with rate limiting (login and 2FA verification are public)
+// Auth routes with rate limiting (login, 2FA, refresh, logout are public)
 app.use('/auth/login', rateLimiter());
 app.use('/auth/verify-2fa', rateLimiter());
+app.use('/auth/refresh', rateLimiter());
+app.use('/auth/logout', rateLimiter());
 app.route('/auth', authRouter);
 
 // 2FA management routes (authenticated, mounted under /auth/2fa)

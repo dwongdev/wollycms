@@ -17,6 +17,33 @@ export function isAuthenticated(): boolean {
   return !!getToken();
 }
 
+// Coalesced refresh: only one refresh request at a time
+let refreshPromise: Promise<boolean> | null = null;
+
+async function tryRefresh(): Promise<boolean> {
+  if (refreshPromise) return refreshPromise;
+  refreshPromise = (async () => {
+    try {
+      const res = await fetch(`${API_BASE}/auth/refresh`, {
+        method: 'POST',
+        credentials: 'same-origin',
+      });
+      if (!res.ok) return false;
+      const json = await res.json();
+      if (json.data?.token) {
+        setToken(json.data.token);
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
+    } finally {
+      refreshPromise = null;
+    }
+  })();
+  return refreshPromise;
+}
+
 async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
   const headers: Record<string, string> = {};
   const token = getToken();
@@ -34,6 +61,43 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
   const res = await fetch(`${API_BASE}${path}`, opts);
 
   if (res.status === 401) {
+    // Don't try to refresh if this IS the refresh request
+    if (path === '/auth/refresh') {
+      clearToken();
+      window.location.href = '/admin/login';
+      throw new Error('Unauthorized');
+    }
+
+    // Try silent refresh
+    const refreshed = await tryRefresh();
+    if (refreshed) {
+      // Retry the original request with the new token
+      const retryHeaders: Record<string, string> = {};
+      const newToken = getToken();
+      if (newToken) retryHeaders['Authorization'] = `Bearer ${newToken}`;
+
+      const retryOpts: RequestInit = { method, headers: retryHeaders };
+      if (body instanceof FormData) {
+        retryOpts.body = body;
+      } else if (body !== undefined) {
+        retryHeaders['Content-Type'] = 'application/json';
+        retryOpts.body = JSON.stringify(body);
+      }
+
+      const retryRes = await fetch(`${API_BASE}${path}`, retryOpts);
+      if (retryRes.status === 401) {
+        clearToken();
+        window.location.href = '/admin/login';
+        throw new Error('Unauthorized');
+      }
+      const retryJson = await retryRes.json();
+      if (!retryRes.ok) {
+        const msg = retryJson.errors?.[0]?.message || `API error ${retryRes.status}`;
+        throw new Error(msg);
+      }
+      return retryJson;
+    }
+
     clearToken();
     window.location.href = '/admin/login';
     throw new Error('Unauthorized');
@@ -146,6 +210,15 @@ export const api = {
     });
     setToken(res.data.token);
     return res.data;
+  },
+
+  logout: async () => {
+    try {
+      await fetch(`${API_BASE}/auth/logout`, { method: 'POST', credentials: 'same-origin' });
+    } catch {
+      // Best-effort — clear local state regardless
+    }
+    clearToken();
   },
 
   upload: async (file: File, title?: string, altText?: string, folder?: string) => {

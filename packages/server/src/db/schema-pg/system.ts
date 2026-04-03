@@ -64,3 +64,13 @@ export const userOauth = pgTable('user_oauth', {
   uniqueIndex('user_oauth_provider_unique').on(table.provider, table.providerId),
   uniqueIndex('user_oauth_user_provider_unique').on(table.userId, table.provider),
 ]);
+
+export const refreshTokens = pgTable('refresh_tokens', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  tokenHash: text('token_hash').notNull().unique(),
+  familyId: text('family_id').notNull(),
+  expiresAt: text('expires_at').notNull(),
+  rotatedAt: text('rotated_at'),
+  createdAt: text('created_at').notNull(),
+});

@@ -1,12 +1,12 @@
 import { Hono } from 'hono';
 import { setCookie, getCookie } from 'hono/cookie';
-import { sign } from 'hono/jwt';
 import { eq, and } from 'drizzle-orm';
 import { getDb } from '../../db/index.js';
 import { users, userOauth } from '../../db/schema/index.js';
 import { env } from '../../env.js';
 import { authMiddleware } from '../../auth/middleware.js';
 import { logAudit } from '../../audit.js';
+import { issueSession } from '../../auth/session.js';
 import {
   providers,
   getProvider,
@@ -22,20 +22,6 @@ import {
 const app = new Hono();
 
 const OAUTH_STATE_COOKIE = 'wolly_oauth_state';
-
-/** Issue a full 24h session JWT. */
-async function issueSessionToken(user: {
-  id: number;
-  email: string;
-  role: string;
-}) {
-  const now = Math.floor(Date.now() / 1000);
-  return sign(
-    { sub: user.id, email: user.email, role: user.role, exp: now + 86400 },
-    env.JWT_SECRET,
-    'HS256',
-  );
-}
 
 /** GET /providers — Public: which OAuth providers are configured. */
 app.get('/providers', (c) => {
@@ -295,7 +281,7 @@ app.get('/:provider/callback', async (c) => {
   }
 
   // OAuth login skips 2FA (identity proven by provider)
-  const token = await issueSessionToken(user);
+  const token = await issueSession(c, user);
 
   // Set jwtPayload so logAudit can read it
   c.set('jwtPayload', { sub: user.id, email: user.email, role: user.role, exp: 0 });
