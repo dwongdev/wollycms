@@ -35,10 +35,10 @@ app.use('/setup', rateLimiter());
 app.route('/setup', setupRouter);
 
 // Auth routes with rate limiting (login, 2FA, refresh, logout are public)
-app.use('/auth/login', rateLimiter());
-app.use('/auth/verify-2fa', rateLimiter());
-app.use('/auth/refresh', rateLimiter());
-app.use('/auth/logout', rateLimiter());
+app.use('/auth/login', rateLimiter({ prefix: 'login' }));
+app.use('/auth/verify-2fa', rateLimiter({ prefix: '2fa' }));
+app.use('/auth/refresh', rateLimiter({ prefix: 'refresh', max: 60 }));
+app.use('/auth/logout', rateLimiter({ prefix: 'logout' }));
 app.route('/auth', authRouter);
 
 // 2FA management routes (authenticated, mounted under /auth/2fa)
@@ -46,7 +46,7 @@ app.route('/auth/2fa', twoFactorRouter);
 
 // OAuth routes (login flow is public, connection management is authenticated)
 // Rate limit all provider redirects and callbacks
-const oauthLimiter = rateLimiter();
+const oauthLimiter = rateLimiter({ prefix: 'oauth' });
 for (const name of ['google', 'github', 'microsoft']) {
   app.use(`/auth/oauth/${name}`, oauthLimiter);
   app.use(`/auth/oauth/${name}/callback`, oauthLimiter);

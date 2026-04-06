@@ -26,12 +26,13 @@ function getClientIp(c: Context): string {
     || 'unknown';
 }
 
-export function rateLimiter(opts?: { max?: number; windowMs?: number }) {
+export function rateLimiter(opts?: { max?: number; windowMs?: number; prefix?: string }) {
   const max = opts?.max ?? env.RATE_LIMIT_AUTH;
   const windowMs = opts?.windowMs ?? env.RATE_LIMIT_WINDOW_MS;
+  const prefix = opts?.prefix ?? '';
 
   return async (c: Context, next: Next) => {
-    const key = getClientIp(c);
+    const key = prefix ? `${prefix}:${getClientIp(c)}` : getClientIp(c);
     const now = Date.now();
     let entry = store.get(key);
 
