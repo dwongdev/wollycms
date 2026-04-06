@@ -130,9 +130,9 @@ function renderNode(node: TipTapNode): string {
     case 'tableRow':
       return `<tr>${children}</tr>`;
     case 'tableHeader':
-      return `<th>${children}</th>`;
+      return `<th style="vertical-align:top">${children}</th>`;
     case 'tableCell':
-      return `<td>${children}</td>`;
+      return `<td style="vertical-align:top">${children}</td>`;
     default:
       return children;
   }
