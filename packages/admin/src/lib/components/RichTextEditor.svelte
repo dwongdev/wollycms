@@ -37,6 +37,8 @@
   let linkUrl = $state('');
   let linkText = $state('');
   let linkNewTab = $state(false);
+  let linkCssClass = $state('');
+  let linkRel = $state('');
   let linkTab = $state<'url' | 'media'>('url');
   let textColor = $state('#000000');
 
@@ -349,9 +351,13 @@
       const attrs = editor.getAttributes('link');
       linkUrl = attrs.href || '';
       linkNewTab = attrs.target === '_blank';
+      linkCssClass = attrs.class || '';
+      linkRel = attrs.rel || '';
     } else {
       linkUrl = '';
       linkNewTab = false;
+      linkCssClass = '';
+      linkRel = '';
     }
     const { from, to } = editor.state.selection;
     if (!editor.isActive('image')) {
@@ -374,8 +380,15 @@
       return;
     }
     const linkAttrs: Record<string, any> = { href: linkUrl };
-    if (linkNewTab) linkAttrs.target = '_blank';
-    else linkAttrs.target = null;
+    if (linkNewTab) {
+      linkAttrs.target = '_blank';
+      if (!linkRel) linkAttrs.rel = 'noopener noreferrer';
+      else linkAttrs.rel = linkRel;
+    } else {
+      linkAttrs.target = null;
+      linkAttrs.rel = linkRel || null;
+    }
+    linkAttrs.class = linkCssClass || null;
     const { from, to } = editor.state.selection;
     if (from !== to) {
       editor.chain().focus().setLink(linkAttrs).run();
@@ -621,6 +634,15 @@
             <input type="checkbox" bind:checked={linkNewTab} />
             Open in new tab
           </label>
+          <details class="link-advanced">
+            <summary>Advanced</summary>
+            <label class="link-label link-label-spaced" for="link-class-input">CSS Class</label>
+            <input id="link-class-input" type="text" class="link-input" bind:value={linkCssClass} placeholder="e.g. btn btn-primary" />
+            <span class="link-hint">Add styling classes to this link. Your theme defines available classes.</span>
+            <label class="link-label link-label-spaced" for="link-rel-input">Rel Attribute</label>
+            <input id="link-rel-input" type="text" class="link-input" bind:value={linkRel} placeholder="e.g. nofollow sponsored" />
+            <span class="link-hint">Link relationship hints for search engines (auto-set for new-tab links).</span>
+          </details>
         </div>
       {:else}
         <MediaPicker inline allowUpload initialTypeFilter="document" value={null}
@@ -702,6 +724,11 @@
   .link-input:focus { outline: none; border-color: var(--c-accent, #3182ce); box-shadow: 0 0 0 2px var(--c-focus-ring); }
   .link-checkbox-label { display: flex; align-items: center; gap: 0.4rem; margin-top: 0.75rem; font-size: 0.82rem; color: var(--c-text, #1e293b); cursor: pointer; user-select: none; }
   .link-checkbox-label input[type="checkbox"] { accent-color: var(--c-accent, #3182ce); width: 15px; height: 15px; cursor: pointer; }
+  .link-advanced { margin-top: 0.75rem; border: 1px solid var(--c-border, #e2e8f0); border-radius: var(--radius, 6px); padding: 0; }
+  .link-advanced[open] { padding: 0 0.75rem 0.75rem; }
+  .link-advanced summary { font-size: 0.8rem; font-weight: 600; color: var(--c-text-light, #64748b); cursor: pointer; padding: 0.5rem 0.75rem; user-select: none; }
+  .link-advanced[open] summary { padding: 0.5rem 0; margin-bottom: 0.25rem; }
+  .link-hint { display: block; font-size: 0.72rem; color: var(--c-text-light, #94a3b8); margin-top: 0.25rem; }
   .link-footer { display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.25rem; border-top: 1px solid var(--c-border, #e2e8f0); }
 
   /* ProseMirror content styles */

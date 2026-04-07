@@ -63,9 +63,79 @@ Inline formatting is stored as marks on text nodes:
 | `underline` | `<u>` |
 | `strike` | `<s>` |
 | `code` | `<code>` |
-| `link` | `<a href="...">` |
+| `link` | `<a href="...">` (supports `class` and `rel` attributes) |
 | `subscript` | `<sub>` |
 | `superscript` | `<sup>` |
+
+## Link attributes
+
+Links in rich text support optional attributes beyond the URL, configured via the **Advanced** section of the link dialog in the admin UI.
+
+| Attribute | Type | Description |
+|---|---|---|
+| `href` | `string` | Link URL (required) |
+| `target` | `string` | Link target — set via the "Open in new tab" checkbox |
+| `class` | `string` | CSS class(es) for styling, e.g. `btn btn-primary` |
+| `rel` | `string` | Relationship attribute for SEO, e.g. `nofollow`, `sponsored` |
+
+When "Open in new tab" is checked and no `rel` value is provided, `noopener noreferrer` is added automatically for security.
+
+### Styling links as buttons
+
+The `class` attribute lets your theme style specific links differently. For example, to render a link as a button, an editor adds `btn btn-primary` in the CSS Class field, and the frontend theme provides the matching CSS:
+
+```css
+/* Example theme styles for rich text link classes */
+.prose a.btn {
+  display: inline-block;
+  padding: 0.6rem 1.5rem;
+  border-radius: 6px;
+  font-weight: 600;
+  text-decoration: none;
+  text-align: center;
+}
+.prose a.btn-primary {
+  background: var(--color-primary);
+  color: white;
+}
+.prose a.btn-outline {
+  border: 2px solid var(--color-primary);
+  color: var(--color-primary);
+}
+```
+
+The classes are stored in the TipTap JSON and rendered as a `class` attribute on the `<a>` tag:
+
+```json
+{
+  "type": "text",
+  "text": "Apply Now",
+  "marks": [
+    {
+      "type": "link",
+      "attrs": {
+        "href": "https://example.com/apply",
+        "class": "btn btn-primary",
+        "rel": null,
+        "target": null
+      }
+    }
+  ]
+}
+```
+
+### SEO link attributes
+
+The `rel` attribute controls how search engines treat the link:
+
+| Value | Use case |
+|---|---|
+| `nofollow` | Don't pass link equity (e.g. user-submitted or untrusted links) |
+| `sponsored` | Paid or sponsored links |
+| `ugc` | User-generated content |
+| `noopener noreferrer` | Security — auto-applied for new-tab links |
+
+Multiple values can be combined with spaces: `nofollow sponsored`.
 
 ## Image attributes
 

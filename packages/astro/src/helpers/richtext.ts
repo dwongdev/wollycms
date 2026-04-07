@@ -41,7 +41,9 @@ function renderMarks(text: string, marks?: TipTapNode['marks']): string {
       case 'link': {
         const href = escapeHtml(String(mark.attrs?.href ?? ''));
         const target = mark.attrs?.target ? ` target="${escapeHtml(String(mark.attrs.target))}"` : '';
-        result = `<a href="${href}"${target}>${result}</a>`;
+        const rel = mark.attrs?.rel ? ` rel="${escapeHtml(String(mark.attrs.rel))}"` : '';
+        const cssClass = mark.attrs?.class ? ` class="${escapeHtml(String(mark.attrs.class))}"` : '';
+        result = `<a href="${href}"${target}${rel}${cssClass}>${result}</a>`;
         break;
       }
       case 'subscript':
