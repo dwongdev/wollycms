@@ -34,6 +34,26 @@ const html = renderRichText(fields.body);
 <div class="prose" set:html={html} />
 ```
 
+### Split-origin deployments (Cloudflare Workers, etc.)
+
+If your CMS and Astro frontend run on different origins — common with Cloudflare Workers, where each is a separate Worker — inline images and media links in rich text will use relative paths like `/api/content/media/42/original` that won't resolve on the frontend origin.
+
+Pass a `baseUrl` prop to the RichText component so these paths get prefixed with your CMS domain:
+
+```astro
+<RichText content={fields.body} baseUrl="https://cms.example.com" />
+```
+
+Or when calling `renderRichText()` directly:
+
+```typescript
+const html = renderRichText(fields.body, 'https://cms.example.com');
+```
+
+:::caution
+Without `baseUrl`, inline images will return 404s on the frontend because `/api/content/media/...` only exists on the CMS origin. This applies to any deployment where the CMS API and frontend site are on different domains or Workers.
+:::
+
 ## Supported node types
 
 `renderRichText()` handles these TipTap node types out of the box:
