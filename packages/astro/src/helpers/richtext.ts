@@ -62,6 +62,13 @@ function renderMarks(text: string, marks?: TipTapNode['marks']): string {
   return result;
 }
 
+/** Build a style attribute for text alignment */
+function alignStyle(node: TipTapNode): string {
+  const align = node.attrs?.textAlign;
+  if (!align || align === 'left') return '';
+  return ` style="text-align: ${escapeHtml(String(align))}"`;
+}
+
 /** Render a TipTap JSON node to HTML */
 function renderNode(node: TipTapNode): string {
   if (node.type === 'text') {
@@ -74,19 +81,19 @@ function renderNode(node: TipTapNode): string {
     case 'doc':
       return children;
     case 'paragraph':
-      return `<p>${children}</p>`;
+      return `<p${alignStyle(node)}>${children}</p>`;
     case 'heading': {
       const level = Math.min(Math.max(Number(node.attrs?.level ?? 2), 1), 6);
-      return `<h${level}>${children}</h${level}>`;
+      return `<h${level}${alignStyle(node)}>${children}</h${level}>`;
     }
     case 'bulletList':
       return `<ul>${children}</ul>`;
     case 'orderedList':
       return `<ol>${children}</ol>`;
     case 'listItem':
-      return `<li>${children}</li>`;
+      return `<li${alignStyle(node)}>${children}</li>`;
     case 'blockquote':
-      return `<blockquote>${children}</blockquote>`;
+      return `<blockquote${alignStyle(node)}>${children}</blockquote>`;
     case 'codeBlock': {
       const lang = node.attrs?.language ? ` class="language-${escapeHtml(String(node.attrs.language))}"` : '';
       return `<pre><code${lang}>${children}</code></pre>`;
