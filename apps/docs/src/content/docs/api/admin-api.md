@@ -51,9 +51,9 @@ The key (`sk_...`) is returned once. Use via `X-API-Key` header or `Authorizatio
 |---|---|
 | `GET /pages` | List all pages (any status). Filters: `?type=`, `?status=`, `?search=`, `?sort=`, `?limit=`, `?offset=` |
 | `GET /pages/:id` | Get page by ID with resolved blocks |
-| `POST /pages` | Create page. Body: `{ title, slug?, typeId, status, fields, metaTitle?, metaDescription?, scheduledAt? }` |
+| `POST /pages` | Create page. Body: `{ title, slug?, slugOverride?, typeId, status, fields, metaTitle?, metaDescription?, scheduledAt? }`. If the content type has a `slugPrefix` configured, `slug` is auto-prefixed unless `slugOverride: true`. See [Slug prefixes](../../concepts/pages/#slug-prefix). |
 | `POST /pages/upsert` | Create or update by slug. Returns `{ data, created: bool }` |
-| `PUT /pages/:id` | Partial update. Auto-creates revision. Supports `revisionNote` |
+| `PUT /pages/:id` | Partial update. Auto-creates revision. Supports `revisionNote`. Setting `slugOverride` re-validates the slug against the content type's prefix. |
 | `DELETE /pages/:id` | Delete page |
 | `POST /pages/bulk` | Bulk action. Body: `{ ids: [1,2], action: "publish" }`. Actions: `publish`, `unpublish`, `archive`, `delete` |
 
@@ -98,8 +98,8 @@ The key (`sk_...`) is returned once. Use via `X-API-Key` header or `Authorizatio
 |---|---|
 | `GET /content-types` | List all |
 | `GET /content-types/:id` | Get one |
-| `POST /content-types` | Create. Body: `{ name, slug, fieldsSchema, regions, defaultBlocks?, description? }` |
-| `PUT /content-types/:id` | Update |
+| `POST /content-types` | Create. Body: `{ name, slug, fieldsSchema, regions, defaultBlocks?, settings?, description? }`. Use `settings.slugPrefix` to require a URL prefix on all pages of this type. |
+| `PUT /content-types/:id` | Update. Enabling `settings.slugPrefix` non-destructively marks any non-matching existing pages as `slugOverride=true`; the response includes `meta.sweptOverrides` with the count. |
 | `DELETE /content-types/:id` | Delete |
 
 The `defaultBlocks` field is an array of block definitions that are auto-created when a new page of this type is made:

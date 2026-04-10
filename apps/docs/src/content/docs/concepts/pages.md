@@ -44,6 +44,63 @@ curl -X POST http://localhost:4321/api/admin/content-types \
 
 Setting `allowed_types` to `null` means any block type can be placed in that region.
 
+### Slug prefix
+
+A content type can declare an optional **slug prefix** that every page of that type lives under. This is useful when you want all articles to share a `/article/` path, all products under `/products/`, all events under `/event/`, and so on.
+
+Slug prefixes are opt-in. Set one by adding `slugPrefix` to the content type's `settings`:
+
+```bash
+curl -X PUT http://localhost:4321/api/admin/content-types/$ID \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "settings": { "slugPrefix": "article/" }
+  }'
+```
+
+Once set, WollyCMS enforces the prefix on every page of that content type:
+
+- **New pages** — when an editor creates an article with title "My First Post", the auto-generated slug becomes `article/my-first-post` (not just `my-first-post`).
+- **Bare slugs sent via the API** — `POST /api/admin/pages` with `{ "slug": "my-first-post", "typeId": <article type id> }` stores it as `article/my-first-post`. Clients don't have to know the prefix, but they can include it explicitly if they do.
+- **Conflicting slugs sent via the API** — a slug like `blog/my-post` for an article type raises a 400 validation error, because the client is telling the server two different things about where the page lives.
+
+The prefix is normalized to always end with a slash (`article` becomes `article/`). Leading slashes on either the prefix or the slug are ignored.
+
+#### Overriding the prefix for a single page
+
+Any individual page can opt out of its content type's prefix by setting `slugOverride: true`. The page's slug is then honored verbatim:
+
+```bash
+curl -X POST http://localhost:4321/api/admin/pages \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "About Our Newsroom",
+    "slug": "about/newsroom",
+    "slugOverride": true,
+    "typeId": <article type id>,
+    "status": "published"
+  }'
+```
+
+In the admin UI, the page editor shows an "Override prefix" checkbox next to the slug field whenever the page's content type has a `slugPrefix` configured. Toggling it off on a bare slug auto-prepends the prefix; toggling it off on a slug that contains another path segment raises a validation error so you don't accidentally lose part of the URL.
+
+#### Enabling a prefix on an existing content type
+
+Turning a slug prefix on for a content type that already has pages is **strictly non-destructive**. WollyCMS will not rewrite any existing URLs. Instead, on the first save where the prefix becomes non-empty, every existing page of that type whose current slug doesn't already match the new prefix gets `slugOverride: true` automatically. Those pages keep their current URLs indefinitely, and new pages created afterward pick up the prefix.
+
+The content type PUT response includes a `meta.sweptOverrides` count so you know how many pages were grandfathered in:
+
+```json
+{
+  "data": { "id": 4, "slug": "article", "settings": { "slugPrefix": "article/" } },
+  "meta": { "sweptOverrides": 5 }
+}
+```
+
+If you later want to bring those pages under the new prefix, edit each page in the admin UI, untick "Override prefix", and save. If the page's current slug is bare (e.g. `grandfathered-post`), the prefix is prepended automatically. If the slug contains a path segment that would conflict (e.g. `legacy/grandfathered-post`), the save fails until you also rewrite the slug to match.
+
 ### Default blocks
 
 Content types can define **default blocks** that are automatically populated when a new page is created. This saves editors from building the same layout from scratch every time.
@@ -114,7 +171,7 @@ curl -X POST http://localhost:4321/api/admin/pages \
   }'
 ```
 
-If you omit `slug`, WollyCMS auto-generates one from the title.
+If you omit `slug`, WollyCMS auto-generates one from the title. If the content type has a [slug prefix](#slug-prefix) configured, it is applied automatically.
 
 ### Page statuses
 

@@ -948,3 +948,220 @@ describe('Admin OG Images', () => {
     expect(body.data).toHaveProperty('errors');
   });
 });
+
+// --- Content Type Slug Prefix ---
+// Feature: a content type can declare an optional slugPrefix in its settings.
+// Pages of that type are required to live under the prefix unless they
+// opt out via slugOverride=true. Enabling the prefix on an existing content
+// type must be strictly non-destructive — existing non-matching pages get
+// slug_override=true automatically so their URLs don't change.
+describe('Admin Content Type Slug Prefix', () => {
+  let articleTypeId: number;
+  let blankTypeId: number;
+  let grandfatheredPageId: number;
+
+  it('setup: create an "article" content type with slugPrefix=article/', async () => {
+    const res = await json('/content-types', 'POST', {
+      name: 'Article',
+      slug: 'article_test',
+      description: 'News articles under /article',
+      fieldsSchema: [],
+      regions: [{ name: 'content', label: 'Content' }],
+      defaultBlocks: null,
+      settings: { slugPrefix: 'article/' },
+    });
+    expect(res.status).toBe(201);
+    const body = await res.json();
+    articleTypeId = body.data.id;
+    expect(body.data.settings.slugPrefix).toBe('article/');
+  });
+
+  it('POST /pages auto-prepends the prefix when slug is bare', async () => {
+    const res = await json('/pages', 'POST', {
+      title: 'First Article',
+      slug: 'first-article',
+      typeId: articleTypeId,
+      status: 'draft',
+    });
+    expect(res.status).toBe(201);
+    const body = await res.json();
+    expect(body.data.slug).toBe('article/first-article');
+    expect(body.data.slugOverride).toBe(false);
+  });
+
+  it('POST /pages accepts a slug that already starts with the prefix', async () => {
+    const res = await json('/pages', 'POST', {
+      title: 'Second Article',
+      slug: 'article/second-article',
+      typeId: articleTypeId,
+      status: 'draft',
+    });
+    expect(res.status).toBe(201);
+    const body = await res.json();
+    expect(body.data.slug).toBe('article/second-article');
+  });
+
+  it('POST /pages rejects a slug under a conflicting path', async () => {
+    const res = await json('/pages', 'POST', {
+      title: 'Misplaced',
+      slug: 'blog/misplaced',
+      typeId: articleTypeId,
+      status: 'draft',
+    });
+    expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(body.errors[0].message).toContain('article/');
+  });
+
+  it('POST /pages with slugOverride=true bypasses the prefix', async () => {
+    const res = await json('/pages', 'POST', {
+      title: 'Legacy Article',
+      slug: 'legacy/important',
+      slugOverride: true,
+      typeId: articleTypeId,
+      status: 'draft',
+    });
+    expect(res.status).toBe(201);
+    const body = await res.json();
+    expect(body.data.slug).toBe('legacy/important');
+    expect(body.data.slugOverride).toBe(true);
+  });
+
+  it('PUT /:id enforces the prefix when slug is changed', async () => {
+    // Create a page, then try to rename it outside the prefix without override
+    const createRes = await json('/pages', 'POST', {
+      title: 'Rename Test',
+      slug: 'rename-test',
+      typeId: articleTypeId,
+      status: 'draft',
+    });
+    const pageId = (await createRes.json()).data.id;
+
+    const badRes = await json(`/pages/${pageId}`, 'PUT', {
+      slug: 'somewhere-else/rename-test',
+    });
+    expect(badRes.status).toBe(400);
+
+    // Setting slugOverride=true at the same time makes it pass
+    const goodRes = await json(`/pages/${pageId}`, 'PUT', {
+      slug: 'somewhere-else/rename-test',
+      slugOverride: true,
+    });
+    expect(goodRes.status).toBe(200);
+    const updated = (await goodRes.json()).data;
+    expect(updated.slug).toBe('somewhere-else/rename-test');
+    expect(updated.slugOverride).toBe(true);
+  });
+
+  it('PUT /:id without slug touch leaves slug alone even if it violates the prefix', async () => {
+    // Create a CT with no prefix, a page, then turn on the prefix. The
+    // sweep covers that case — but we also want to verify that once a
+    // page is marked slug_override=true, editing its title doesn't
+    // accidentally re-enforce the prefix.
+    const ctRes = await json('/content-types', 'POST', {
+      name: 'Blank',
+      slug: 'blank_test',
+      fieldsSchema: [],
+      regions: [{ name: 'content', label: 'Content' }],
+      defaultBlocks: null,
+      settings: null,
+    });
+    blankTypeId = (await ctRes.json()).data.id;
+
+    const pageRes = await json('/pages', 'POST', {
+      title: 'Grandfathered',
+      slug: 'grandfathered',
+      typeId: blankTypeId,
+      status: 'draft',
+    });
+    grandfatheredPageId = (await pageRes.json()).data.id;
+    expect((await (await authed(`/pages/${grandfatheredPageId}`)).json()).data.slugOverride).toBe(false);
+
+    // Now enable slugPrefix on the blank content type — the sweep should
+    // mark the grandfathered page as override=true
+    const sweepRes = await json(`/content-types/${blankTypeId}`, 'PUT', {
+      settings: { slugPrefix: 'blank/' },
+    });
+    expect(sweepRes.status).toBe(200);
+    const sweepBody = await sweepRes.json();
+    expect(sweepBody.meta.sweptOverrides).toBeGreaterThanOrEqual(1);
+
+    // Re-fetch the page — slug should be unchanged, override should be true
+    const refetched = await authed(`/pages/${grandfatheredPageId}`);
+    const refetchedBody = await refetched.json();
+    expect(refetchedBody.data.slug).toBe('grandfathered');
+    expect(refetchedBody.data.slugOverride).toBe(true);
+
+    // Editing just the title should not re-enforce the prefix
+    const titleOnly = await json(`/pages/${grandfatheredPageId}`, 'PUT', {
+      title: 'Grandfathered (renamed)',
+    });
+    expect(titleOnly.status).toBe(200);
+    const titleBody = await titleOnly.json();
+    expect(titleBody.data.slug).toBe('grandfathered');
+    expect(titleBody.data.slugOverride).toBe(true);
+  });
+
+  it('Enabling slugPrefix on a content type with no non-matching pages sweeps zero rows', async () => {
+    // Create a fresh CT with a single page that already has the prefix
+    const ctRes = await json('/content-types', 'POST', {
+      name: 'Already Prefixed',
+      slug: 'already_test',
+      fieldsSchema: [],
+      regions: [{ name: 'content', label: 'Content' }],
+      defaultBlocks: null,
+      settings: null,
+    });
+    const ctId = (await ctRes.json()).data.id;
+
+    // No slugPrefix yet, so this page can have any slug
+    await json('/pages', 'POST', {
+      title: 'Preloaded',
+      slug: 'products/preloaded',
+      typeId: ctId,
+      status: 'draft',
+    });
+
+    const res = await json(`/content-types/${ctId}`, 'PUT', {
+      settings: { slugPrefix: 'products/' },
+    });
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    // The preloaded page already matches — sweep should touch 0 rows.
+    expect(body.meta.sweptOverrides).toBe(0);
+  });
+
+  it('Turning slug_override OFF on a bare grandfathered slug auto-prepends the prefix', async () => {
+    // The grandfathered page has slug "grandfathered" (no path segments) and
+    // the content type prefix is "blank/". Turning override off without
+    // supplying a new slug should auto-prepend the prefix, producing
+    // "blank/grandfathered". This matches the same rule used for POST /pages
+    // with a bare slug.
+    const res = await json(`/pages/${grandfatheredPageId}`, 'PUT', {
+      slugOverride: false,
+    });
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.data.slug).toBe('blank/grandfathered');
+    expect(body.data.slugOverride).toBe(false);
+  });
+
+  it('Turning slug_override OFF on a slug under a conflicting path errors', async () => {
+    // Create an override page under a conflicting path, then try to turn
+    // override off without rewriting the slug. The server should reject
+    // this rather than silently losing the path segment.
+    const createRes = await json('/pages', 'POST', {
+      title: 'Conflicting Override',
+      slug: 'legacy-space/conflicting',
+      slugOverride: true,
+      typeId: articleTypeId,
+      status: 'draft',
+    });
+    const pageId = (await createRes.json()).data.id;
+
+    const res = await json(`/pages/${pageId}`, 'PUT', {
+      slugOverride: false,
+    });
+    expect(res.status).toBe(400);
+  });
+});

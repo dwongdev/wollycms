@@ -60,6 +60,7 @@ app.delete('/*', requireRole('editor'));
 const pageSchema = z.object({
   title: z.string().min(1),
   slug: z.string().min(1).optional(),
+  slugOverride: z.boolean().optional(),
   typeId: z.number().int().positive(),
   status: z.string().min(1).default('draft'),
   fields: z.record(z.unknown()).default({}),
@@ -82,6 +83,48 @@ function slugify(text: string): string {
   return text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 }
 
+/**
+ * Extract the configured slug prefix from a content type's settings.
+ * Returns the normalized prefix (trailing slash enforced) or null if none is configured.
+ * An empty string / whitespace-only value counts as "not configured".
+ */
+function getSlugPrefix(settings: Record<string, unknown> | null | undefined): string | null {
+  if (!settings) return null;
+  const raw = settings.slugPrefix;
+  if (typeof raw !== 'string') return null;
+  const trimmed = raw.trim().replace(/^\/+/, '');
+  if (!trimmed) return null;
+  return trimmed.endsWith('/') ? trimmed : `${trimmed}/`;
+}
+
+/**
+ * Apply a content type's slug prefix to an incoming slug.
+ *
+ * Rules:
+ *  - If the content type has no prefix configured, the slug is returned as-is.
+ *  - If slugOverride=true, the slug bypasses the prefix and is used verbatim.
+ *  - If the slug already starts with the prefix, it's left alone.
+ *  - If the slug is bare (no prefix), the prefix is prepended — this is the
+ *    "auto-prefix" case. A client sending just `my-article` for a content type
+ *    with prefix `article/` gets stored as `article/my-article`.
+ *  - If the slug starts with a different non-empty path segment, that's a
+ *    validation error — the client most likely meant to set slugOverride.
+ */
+function applySlugPrefix(
+  incomingSlug: string,
+  prefix: string | null,
+  slugOverride: boolean,
+): { ok: true; slug: string } | { ok: false; error: string } {
+  const slug = incomingSlug.replace(/^\/+/, '');
+  if (!prefix || slugOverride) return { ok: true, slug };
+  if (slug.startsWith(prefix)) return { ok: true, slug };
+  if (!slug.includes('/')) return { ok: true, slug: `${prefix}${slug}` };
+  return {
+    ok: false,
+    error: `Slug must start with "${prefix}" for this content type, or set slugOverride=true to bypass the prefix.`,
+  };
+}
+
 /** GET / - List all pages (any status) with filtering and pagination */
 app.get('/', async (c) => {
   const db = getDb();
@@ -100,6 +143,7 @@ app.get('/', async (c) => {
       typeName: contentTypes.name,
       title: pages.title,
       slug: pages.slug,
+      slugOverride: pages.slugOverride,
       status: pages.status,
       fields: pages.fields,
       createdAt: pages.createdAt,
@@ -143,6 +187,7 @@ app.get('/', async (c) => {
   return c.json({
     data: rows.map((r: typeof rows[0]) => ({
       id: r.id, type: r.typeSlug, typeName: r.typeName, title: r.title, slug: r.slug,
+      slugOverride: r.slugOverride,
       status: r.status, fields: r.fields,
       scheduledAt: r.scheduledAt,
       unpublishAt: r.unpublishAt,
@@ -191,7 +236,8 @@ app.get('/:id', async (c) => {
   const [page] = await db
     .select({
       id: pages.id, typeId: pages.typeId, typeSlug: contentTypes.slug,
-      title: pages.title, slug: pages.slug, status: pages.status, fields: pages.fields,
+      title: pages.title, slug: pages.slug, slugOverride: pages.slugOverride,
+      status: pages.status, fields: pages.fields,
       scheduledAt: pages.scheduledAt,
       metaTitle: pages.metaTitle, metaDescription: pages.metaDescription,
       ogImage: pages.ogImage, canonicalUrl: pages.canonicalUrl, robots: pages.robots,
@@ -234,7 +280,8 @@ app.get('/:id', async (c) => {
   return c.json({
     data: {
       id: page.id, typeId: page.typeId, type: page.typeSlug,
-      title: page.title, slug: page.slug, status: page.status, fields: page.fields,
+      title: page.title, slug: page.slug, slugOverride: page.slugOverride,
+      status: page.status, fields: page.fields,
       scheduledAt: page.scheduledAt,
       unpublishAt: page.unpublishAt,
       metaTitle: page.metaTitle, metaDescription: page.metaDescription,
@@ -256,8 +303,19 @@ app.post('/', async (c) => {
   const config = await loadConfig();
   const payload = c.get('jwtPayload');
   const now = new Date().toISOString();
-  const slug = parsed.data.slug || slugify(parsed.data.title);
   const pageLocale = parsed.data.locale || config.defaultLocale;
+  const slugOverride = parsed.data.slugOverride ?? false;
+
+  // Load the content type's slug prefix setting so we can enforce it.
+  const [ctForSlug] = await db.select({ settings: contentTypes.settings })
+    .from(contentTypes).where(eq(contentTypes.id, parsed.data.typeId)).limit(1);
+  if (!ctForSlug) return c.json({ errors: [{ code: 'VALIDATION', message: 'Unknown content type' }] }, 400);
+
+  const prefix = getSlugPrefix(ctForSlug.settings);
+  const baseSlug = parsed.data.slug || slugify(parsed.data.title);
+  const applied = applySlugPrefix(baseSlug, prefix, slugOverride);
+  if (!applied.ok) return c.json({ errors: [{ code: 'VALIDATION', message: applied.error, path: ['slug'] }] }, 400);
+  const slug = applied.slug;
 
   const existing = await db.select({ id: pages.id }).from(pages).where(and(eq(pages.slug, slug), eq(pages.locale, pageLocale))).limit(1);
   if (existing.length > 0) return c.json({ errors: [{ code: 'CONFLICT', message: 'Slug already exists' }] }, 409);
@@ -272,6 +330,7 @@ app.post('/', async (c) => {
     typeId: parsed.data.typeId,
     title: parsed.data.title,
     slug,
+    slugOverride,
     status: parsed.data.status,
     locale: pageLocale,
     translationGroupId: parsed.data.translationGroupId || null,
@@ -344,8 +403,17 @@ app.post('/upsert', async (c) => {
   const config = await loadConfig();
   const payload = c.get('jwtPayload');
   const now = new Date().toISOString();
-  const slug = parsed.data.slug || slugify(parsed.data.title);
   const pageLocale = parsed.data.locale || config.defaultLocale;
+  const slugOverride = parsed.data.slugOverride ?? false;
+
+  const [ctForSlug] = await db.select({ settings: contentTypes.settings })
+    .from(contentTypes).where(eq(contentTypes.id, parsed.data.typeId)).limit(1);
+  if (!ctForSlug) return c.json({ errors: [{ code: 'VALIDATION', message: 'Unknown content type' }] }, 400);
+  const prefix = getSlugPrefix(ctForSlug.settings);
+  const baseSlug = parsed.data.slug || slugify(parsed.data.title);
+  const applied = applySlugPrefix(baseSlug, prefix, slugOverride);
+  if (!applied.ok) return c.json({ errors: [{ code: 'VALIDATION', message: applied.error, path: ['slug'] }] }, 400);
+  const slug = applied.slug;
 
   const [existing] = await db.select().from(pages).where(and(eq(pages.slug, slug), eq(pages.locale, pageLocale))).limit(1);
 
@@ -355,6 +423,7 @@ app.post('/upsert', async (c) => {
       typeId: parsed.data.typeId,
       title: parsed.data.title,
       slug,
+      slugOverride,
       status: parsed.data.status,
       locale: pageLocale,
       translationGroupId: parsed.data.translationGroupId || null,
@@ -446,6 +515,7 @@ app.post('/upsert', async (c) => {
     typeId: parsed.data.typeId,
     title: parsed.data.title,
     slug,
+    slugOverride,
     status: parsed.data.status,
     fields: parsed.data.fields,
     scheduledAt: parsed.data.scheduledAt ?? null,
@@ -503,9 +573,36 @@ app.put('/:id', async (c) => {
   const [existing] = await db.select().from(pages).where(eq(pages.id, id)).limit(1);
   if (!existing) return c.json({ errors: [{ code: 'NOT_FOUND', message: 'Page not found' }] }, 404);
 
-  if (parsed.data.slug && parsed.data.slug !== existing.slug) {
+  // Resolve the effective slug and slug_override for this update.
+  // The slug must be re-validated against the content type's prefix whenever
+  // the client sends either a new slug, a new slugOverride flag, or a new
+  // typeId (since the prefix comes from the content type).
+  const effectiveTypeId = parsed.data.typeId ?? existing.typeId;
+  const effectiveSlugOverride = parsed.data.slugOverride ?? existing.slugOverride;
+  const slugTouched = parsed.data.slug !== undefined
+    || parsed.data.slugOverride !== undefined
+    || (parsed.data.typeId !== undefined && parsed.data.typeId !== existing.typeId);
+
+  let effectiveSlug = existing.slug;
+  if (slugTouched) {
+    const [ctForSlug] = await db.select({ settings: contentTypes.settings })
+      .from(contentTypes).where(eq(contentTypes.id, effectiveTypeId)).limit(1);
+    if (!ctForSlug) return c.json({ errors: [{ code: 'VALIDATION', message: 'Unknown content type' }] }, 400);
+    const prefix = getSlugPrefix(ctForSlug.settings);
+    const candidate = (parsed.data.slug ?? existing.slug).trim();
+    if (!candidate) return c.json({ errors: [{ code: 'VALIDATION', message: 'Slug cannot be empty', path: ['slug'] }] }, 400);
+    const applied = applySlugPrefix(candidate, prefix, effectiveSlugOverride);
+    if (!applied.ok) return c.json({ errors: [{ code: 'VALIDATION', message: applied.error, path: ['slug'] }] }, 400);
+    effectiveSlug = applied.slug;
+    // Write the resolved slug back into parsed.data so the downstream
+    // update merge picks it up and doesn't clobber it with the raw value.
+    parsed.data.slug = effectiveSlug;
+    parsed.data.slugOverride = effectiveSlugOverride;
+  }
+
+  if (effectiveSlug !== existing.slug) {
     const checkLocale = parsed.data.locale || existing.locale;
-    const dup = await db.select({ id: pages.id }).from(pages).where(and(eq(pages.slug, parsed.data.slug), eq(pages.locale, checkLocale))).limit(1);
+    const dup = await db.select({ id: pages.id }).from(pages).where(and(eq(pages.slug, effectiveSlug), eq(pages.locale, checkLocale))).limit(1);
     if (dup.length > 0) return c.json({ errors: [{ code: 'CONFLICT', message: 'Slug already exists' }] }, 409);
   }
 

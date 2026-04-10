@@ -32,8 +32,20 @@
   let sortBy = $state('updated_at:desc');
   let showCreate = $state(false);
   let contentTypes = $state<any[]>([]);
-  let newPage = $state({ title: '', slug: '', typeId: 0, status: 'draft' as string, locale: '' });
+  let newPage = $state({ title: '', slug: '', typeId: 0, status: 'draft' as string, locale: '', slugOverride: false });
   let slugManuallyEdited = $state(false);
+
+  // The content type currently selected in the create modal. Used to look
+  // up the slugPrefix so the UI can show it as a read-only label and
+  // auto-apply it when slugifying the title.
+  const selectedCt = $derived(contentTypes.find((t) => t.id === newPage.typeId));
+  const selectedCtPrefix = $derived.by(() => {
+    const raw = selectedCt?.settings?.slugPrefix;
+    if (typeof raw !== 'string') return '';
+    const trimmed = raw.trim().replace(/^\/+/, '');
+    if (!trimmed) return '';
+    return trimmed.endsWith('/') ? trimmed : `${trimmed}/`;
+  });
   let selected = $state<Set<number>>(new Set());
   let pageSize = 20;
   let offset = $state(0);
@@ -91,6 +103,8 @@
 
   function handleNewTitleInput() {
     if (!slugManuallyEdited) {
+      // The prefix lives in a separate label next to the input, so the
+      // editable slug value is just the tail piece.
       newPage.slug = slugify(newPage.title);
     }
   }
@@ -105,11 +119,20 @@
         typeId: newPage.typeId,
         status: newPage.status,
       };
-      if (newPage.slug.trim()) payload.slug = newPage.slug.trim();
+      const trimmedSlug = newPage.slug.trim();
+      if (trimmedSlug) {
+        // If the user is overriding, send the slug exactly as typed. Otherwise
+        // combine the content type's prefix with the editable tail so the
+        // server sees the full path.
+        payload.slug = newPage.slugOverride || !selectedCtPrefix
+          ? trimmedSlug
+          : `${selectedCtPrefix}${trimmedSlug.replace(/^\/+/, '')}`;
+      }
+      if (newPage.slugOverride) payload.slugOverride = true;
       if (newPage.locale) payload.locale = newPage.locale;
       const res = await api.post<{ data: { id: number } }>('/pages', payload);
       showCreate = false;
-      newPage = { title: '', slug: '', typeId: contentTypes[0]?.id || 0, status: 'draft', locale: '' };
+      newPage = { title: '', slug: '', typeId: contentTypes[0]?.id || 0, status: 'draft', locale: '', slugOverride: false };
       slugManuallyEdited = false;
       goto(`${base}/pages/${res.data.id}`);
     } catch (err: any) {
@@ -270,7 +293,7 @@
       ><GitBranch size={16} /></button>
     </div>
   </div>
-  <button class="btn btn-primary" onclick={() => { createError = ''; slugManuallyEdited = false; newPage.slug = ''; showCreate = true; }}>+ New Page</button>
+  <button class="btn btn-primary" onclick={() => { createError = ''; slugManuallyEdited = false; newPage.slug = ''; newPage.slugOverride = false; showCreate = true; }}>+ New Page</button>
 </div>
 
 {#if error}
@@ -453,9 +476,17 @@
         <div class="form-group">
           <label for="np-slug">Slug</label>
           <div style="display: flex; align-items: center; gap: 0;">
-            <span style="padding: 0.4rem 0.5rem; background: var(--c-bg-alt, #f1f5f9); border: 1px solid var(--c-border); border-right: none; border-radius: var(--radius, 6px) 0 0 var(--radius, 6px); font-size: 0.85rem; color: var(--c-text-light);">/</span>
+            <span style="padding: 0.4rem 0.5rem; background: var(--c-bg-alt, #f1f5f9); border: 1px solid var(--c-border); border-right: none; border-radius: var(--radius, 6px) 0 0 var(--radius, 6px); font-size: 0.85rem; color: var(--c-text-light); white-space: nowrap;">
+              /{#if selectedCtPrefix && !newPage.slugOverride}{selectedCtPrefix}{/if}
+            </span>
             <input id="np-slug" class="form-control mono" style="border-radius: 0 var(--radius, 6px) var(--radius, 6px) 0; font-size: 0.85rem;" bind:value={newPage.slug} oninput={() => slugManuallyEdited = true} placeholder="auto-generated from title" />
           </div>
+          {#if selectedCtPrefix}
+            <label style="display: flex; align-items: center; gap: 0.4rem; margin-top: 0.4rem; font-size: 0.8rem; color: var(--c-text-light); cursor: pointer;">
+              <input type="checkbox" bind:checked={newPage.slugOverride} />
+              Override slug prefix (this page will not live under <span class="mono">/{selectedCtPrefix}</span>)
+            </label>
+          {/if}
         </div>
         <div class="form-group">
           <label for="np-type">Content Type</label>

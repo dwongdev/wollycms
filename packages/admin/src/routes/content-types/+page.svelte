@@ -7,8 +7,24 @@
   let error = $state('');
   let showCreate = $state(false);
   let editType = $state<any>(null);
-  let newType = $state({ name: '', slug: '', description: '', fieldsSchema: '[]', regions: '[]', defaultBlocks: '[]' });
+  let newType = $state({ name: '', slug: '', description: '', fieldsSchema: '[]', regions: '[]', defaultBlocks: '[]', slugPrefix: '' });
   let blockTypesList = $state<any[]>([]);
+
+  /**
+   * Merge an updated slugPrefix into an existing content type settings object.
+   * Empty / whitespace-only input removes the key so "unset" stays distinct
+   * from "set to empty string" on the server.
+   */
+  function mergeSettings(existing: Record<string, unknown> | null | undefined, slugPrefix: string): Record<string, unknown> | null {
+    const next = { ...(existing || {}) };
+    const trimmed = slugPrefix.trim();
+    if (trimmed) {
+      next.slugPrefix = trimmed;
+    } else {
+      delete next.slugPrefix;
+    }
+    return Object.keys(next).length > 0 ? next : null;
+  }
 
   async function loadBlockTypes() {
     try {
@@ -28,38 +44,48 @@
 
   async function createType() {
     try {
+      const { slugPrefix, ...rest } = newType;
       await api.post('/content-types', {
-        ...newType,
+        ...rest,
         fieldsSchema: JSON.parse(newType.fieldsSchema),
         regions: JSON.parse(newType.regions),
         defaultBlocks: JSON.parse(newType.defaultBlocks),
+        settings: mergeSettings(null, slugPrefix),
       });
       showCreate = false;
-      newType = { name: '', slug: '', description: '', fieldsSchema: '[]', regions: '[]', defaultBlocks: '[]' };
+      newType = { name: '', slug: '', description: '', fieldsSchema: '[]', regions: '[]', defaultBlocks: '[]', slugPrefix: '' };
       load();
     } catch (err: any) { error = err.message; }
   }
 
   function startEdit(t: any) {
+    const currentPrefix = typeof t.settings?.slugPrefix === 'string' ? t.settings.slugPrefix : '';
     editType = {
       ...t,
       fieldsSchema: JSON.stringify(t.fieldsSchema || [], null, 2),
       regions: JSON.stringify(t.regions || [], null, 2),
       defaultBlocks: JSON.stringify(t.defaultBlocks || [], null, 2),
+      slugPrefix: currentPrefix,
+      _originalSettings: t.settings || null,
     };
   }
 
   async function saveEdit() {
     if (!editType) return;
     try {
-      await api.put(`/content-types/${editType.id}`, {
+      const res = await api.put<{ data: any; meta?: { sweptOverrides: number } }>(`/content-types/${editType.id}`, {
         name: editType.name,
         slug: editType.slug,
         description: editType.description,
         fieldsSchema: JSON.parse(editType.fieldsSchema),
         regions: JSON.parse(editType.regions),
         defaultBlocks: JSON.parse(editType.defaultBlocks),
+        settings: mergeSettings(editType._originalSettings, editType.slugPrefix),
       });
+      if (res?.meta?.sweptOverrides && res.meta.sweptOverrides > 0) {
+        const n = res.meta.sweptOverrides;
+        error = `Saved. ${n} existing page${n === 1 ? '' : 's'} kept their current slug via override — enable the prefix on each one individually when ready.`;
+      }
       editType = null;
       load();
     } catch (err: any) { error = err.message; }
@@ -144,6 +170,22 @@
           <div class="form-group"><label>Slug</label><input class="form-control" bind:value={item.slug} required /></div>
         </div>
         <div class="form-group"><label>Description</label><input class="form-control" bind:value={item.description} /></div>
+        <div class="form-group">
+          <label for="ct-slug-prefix">Slug prefix</label>
+          <div style="display: flex; align-items: center; gap: 0;">
+            <span style="padding: 0.4rem 0.5rem; background: var(--c-bg-alt, #f1f5f9); border: 1px solid var(--c-border); border-right: none; border-radius: var(--radius, 6px) 0 0 var(--radius, 6px); font-size: 0.85rem; color: var(--c-text-light);">/</span>
+            <input
+              id="ct-slug-prefix"
+              class="form-control mono"
+              style="border-radius: 0 var(--radius, 6px) var(--radius, 6px) 0; font-size: 0.85rem;"
+              bind:value={item.slugPrefix}
+              placeholder="e.g. article/ or products/"
+            />
+          </div>
+          <p style="font-size: 0.8rem; color: var(--c-text-light); margin: 0.35rem 0 0;">
+            Pages of this content type will be stored and served under this prefix. New pages get it applied automatically. Leave empty for no prefix. Individual pages can opt out by turning on "Override slug prefix" in the page editor.
+          </p>
+        </div>
         <div class="form-group">
           <label>Fields Schema (JSON)</label>
           <textarea class="form-control" bind:value={item.fieldsSchema} style="min-height: 120px; font-family: monospace; font-size: 0.8rem;"></textarea>

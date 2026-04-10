@@ -83,10 +83,26 @@
       .filter(Boolean) as typeof workflowStages;
   });
 
+  // The slug prefix configured on this page's content type, normalized with
+  // a trailing slash. Empty string when unset. Reactive so it picks up after
+  // the content type is loaded.
+  const ctSlugPrefix = $derived.by(() => {
+    const raw = contentType?.settings?.slugPrefix;
+    if (typeof raw !== 'string') return '';
+    const trimmed = raw.trim().replace(/^\/+/, '');
+    if (!trimmed) return '';
+    return trimmed.endsWith('/') ? trimmed : `${trimmed}/`;
+  });
+
+  // True when the prefix is configured on this type AND this page is not
+  // opting out via slugOverride. In that case the editable part of the slug
+  // is the tail after the prefix, shown next to a read-only prefix label.
+  const prefixActive = $derived(!!ctSlugPrefix && !pageData?.slugOverride);
+
   function takeSnapshot() {
     if (!pageData) return;
     cleanSnapshot = JSON.stringify({
-      title: pageData.title, slug: pageData.slug,
+      title: pageData.title, slug: pageData.slug, slugOverride: !!pageData.slugOverride,
       status: pageData.status, fields: pageData.fields,
       metaTitle: pageData.metaTitle, metaDescription: pageData.metaDescription,
       ogImage: pageData.ogImage, canonicalUrl: pageData.canonicalUrl, robots: pageData.robots,
@@ -96,7 +112,7 @@
   function checkDirty() {
     if (!pageData || !cleanSnapshot) return;
     const current = JSON.stringify({
-      title: pageData.title, slug: pageData.slug,
+      title: pageData.title, slug: pageData.slug, slugOverride: !!pageData.slugOverride,
       status: pageData.status, fields: pageData.fields,
       metaTitle: pageData.metaTitle, metaDescription: pageData.metaDescription,
       ogImage: pageData.ogImage, canonicalUrl: pageData.canonicalUrl, robots: pageData.robots,
@@ -108,6 +124,7 @@
     if (pageData) {
       void pageData.title;
       void pageData.slug;
+      void pageData.slugOverride;
       void pageData.status;
       void JSON.stringify(pageData.fields);
       checkDirty();
@@ -141,15 +158,53 @@
     return text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
   }
 
+  /**
+   * Return the editable portion of the slug — the tail after the content
+   * type's prefix when one is active, or the full slug otherwise.
+   */
+  function slugTail(full: string): string {
+    if (prefixActive && full.startsWith(ctSlugPrefix)) {
+      return full.slice(ctSlugPrefix.length);
+    }
+    return full;
+  }
+
+  /**
+   * Rebuild the full slug from a user-edited tail, applying the prefix
+   * only if it's active for this content type and page.
+   */
+  function composeSlug(tail: string): string {
+    const cleaned = tail.replace(/^\/+/, '');
+    if (prefixActive) return `${ctSlugPrefix}${cleaned}`;
+    return cleaned;
+  }
+
   function handleTitleInput() {
     if (!slugManuallyEdited) {
-      pageData.slug = slugify(pageData.title);
+      pageData.slug = composeSlug(slugify(pageData.title));
     }
     checkDirty();
   }
 
   function handleSlugInput(e: Event) {
-    pageData.slug = (e.target as HTMLInputElement).value;
+    pageData.slug = composeSlug((e.target as HTMLInputElement).value);
+    slugManuallyEdited = true;
+    checkDirty();
+  }
+
+  /**
+   * Toggle slug_override on a page. Turning override ON leaves the current
+   * slug as-is (now editable in full). Turning it OFF re-applies the
+   * prefix: if the current slug already starts with the prefix we're done;
+   * otherwise we prepend it.
+   */
+  function toggleSlugOverride() {
+    if (!pageData) return;
+    const next = !pageData.slugOverride;
+    pageData.slugOverride = next;
+    if (!next && ctSlugPrefix && !pageData.slug.startsWith(ctSlugPrefix)) {
+      pageData.slug = `${ctSlugPrefix}${pageData.slug.replace(/^\/+/, '')}`;
+    }
     slugManuallyEdited = true;
     checkDirty();
   }
@@ -255,7 +310,8 @@
     if (!pageData.slug?.trim()) { error = 'Slug cannot be empty.'; saving = false; return; }
     try {
       await api.put(`/pages/${id}`, {
-        title: pageData.title, slug: pageData.slug, status: pageData.status,
+        title: pageData.title, slug: pageData.slug, slugOverride: !!pageData.slugOverride,
+        status: pageData.status,
         fields: pageData.fields || {}, scheduledAt: pageData.scheduledAt || null,
         metaTitle: pageData.metaTitle || null,
         metaDescription: pageData.metaDescription || null,
@@ -346,10 +402,10 @@
       </div>
       <div class="slug-row">
         {#if editingSlug}
-          <span class="slug-prefix">/</span>
+          <span class="slug-prefix">/{#if prefixActive}{ctSlugPrefix}{/if}</span>
           <input
             class="slug-input mono"
-            value={pageData.slug}
+            value={slugTail(pageData.slug)}
             oninput={handleSlugInput}
             onblur={() => editingSlug = false}
             onkeydown={(e) => { if (e.key === 'Enter') { e.preventDefault(); editingSlug = false; } }}
@@ -358,6 +414,12 @@
           <button class="slug-display mono" onclick={() => editingSlug = true} title="Click to edit slug">
             /{pageData.slug}
           </button>
+        {/if}
+        {#if ctSlugPrefix}
+          <label class="slug-override-toggle" title="Let this page live outside the content type's slug prefix.">
+            <input type="checkbox" checked={!!pageData.slugOverride} onchange={toggleSlugOverride} />
+            Override prefix
+          </label>
         {/if}
       </div>
     </div>
@@ -538,6 +600,23 @@
     margin-top: 0.35rem;
     display: flex;
     align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+
+  .slug-override-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.75rem;
+    color: var(--c-text-light);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .slug-override-toggle input[type="checkbox"] {
+    margin: 0;
+    cursor: pointer;
   }
 
   .slug-display {

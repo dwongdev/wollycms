@@ -1,9 +1,52 @@
 import { Hono } from 'hono';
-import { eq, asc } from 'drizzle-orm';
+import { eq, and, asc, like, not } from 'drizzle-orm';
 import { z } from 'zod';
 import { getDb } from '../../db/index.js';
-import { contentTypes } from '../../db/schema/index.js';
+import { contentTypes, pages } from '../../db/schema/index.js';
 import { requireRole } from '../../auth/rbac.js';
+
+/**
+ * Read a slug prefix from a content type settings object.
+ * Returns the normalized prefix with trailing slash, or null if unset.
+ */
+function readSlugPrefix(settings: Record<string, unknown> | null | undefined): string | null {
+  if (!settings) return null;
+  const raw = settings.slugPrefix;
+  if (typeof raw !== 'string') return null;
+  const trimmed = raw.trim().replace(/^\/+/, '');
+  if (!trimmed) return null;
+  return trimmed.endsWith('/') ? trimmed : `${trimmed}/`;
+}
+
+/**
+ * When a content type's slug prefix is newly enabled or changed, mark all
+ * existing pages of that type whose slug does not start with the new prefix
+ * as slug_override=true. This makes enabling the feature strictly
+ * non-destructive: no URLs change, and future page edits on old pages
+ * continue to work without violating the new rule. New pages created after
+ * this point will get the prefix applied automatically.
+ */
+async function sweepSlugOverrideForPrefix(
+  db: ReturnType<typeof getDb>,
+  typeId: number,
+  newPrefix: string | null,
+): Promise<number> {
+  if (!newPrefix) return 0;
+  // Pages of this content type whose slug doesn't start with the new prefix
+  // get grandfathered in via slug_override=true so enabling the feature
+  // can't break an existing URL. Rows that are already overridden are left
+  // alone so the audit trail stays meaningful. Using .returning() for the
+  // affected rows so the count is portable across sqlite/pg drivers.
+  const affected = await db.update(pages)
+    .set({ slugOverride: true })
+    .where(and(
+      eq(pages.typeId, typeId),
+      eq(pages.slugOverride, false),
+      not(like(pages.slug, `${newPrefix}%`)),
+    ))
+    .returning({ id: pages.id });
+  return affected.length;
+}
 
 const app = new Hono();
 
@@ -85,9 +128,24 @@ app.put('/:id', async (c) => {
   const parsed = contentTypeSchema.partial().safeParse(body);
   if (!parsed.success) return c.json({ errors: parsed.error.issues.map((i) => ({ code: 'VALIDATION', message: i.message })) }, 400);
 
+  // Capture the old slug prefix before the update so we can detect when it
+  // changes and sweep existing pages below.
+  const [priorRow] = await db.select({ settings: contentTypes.settings })
+    .from(contentTypes).where(eq(contentTypes.id, id)).limit(1);
+  const priorPrefix = readSlugPrefix(priorRow?.settings);
+
   await db.update(contentTypes).set(parsed.data as Partial<typeof contentTypes.$inferInsert>).where(eq(contentTypes.id, id));
   const [updated] = await db.select().from(contentTypes).where(eq(contentTypes.id, id)).limit(1);
-  return c.json({ data: updated });
+
+  // If the slug prefix was newly set or changed, non-destructively
+  // grandfather in existing pages whose slugs don't match.
+  const newPrefix = readSlugPrefix(updated?.settings);
+  let sweptOverrides = 0;
+  if (newPrefix && newPrefix !== priorPrefix) {
+    sweptOverrides = await sweepSlugOverrideForPrefix(db, id, newPrefix);
+  }
+
+  return c.json({ data: updated, meta: { sweptOverrides } });
 });
 
 /** DELETE /:id - Delete content type */

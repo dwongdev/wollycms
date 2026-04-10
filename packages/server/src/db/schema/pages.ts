@@ -7,6 +7,7 @@ export const pages = sqliteTable('pages', {
   typeId: integer('type_id').notNull().references(() => contentTypes.id),
   title: text('title').notNull(),
   slug: text('slug').notNull(),
+  slugOverride: integer('slug_override', { mode: 'boolean' }).notNull().default(false),
   status: text('status', { enum: ['draft', 'published', 'archived'] })
     .notNull()
     .default('draft'),

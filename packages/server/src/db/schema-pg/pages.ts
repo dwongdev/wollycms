@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, index, jsonb, uniqueIndex } from 'drizzle-orm/pg-core';
+import { pgTable, text, serial, integer, index, jsonb, uniqueIndex, boolean } from 'drizzle-orm/pg-core';
 import { contentTypes } from './content-types.ts';
 import { users } from './system.ts';
 
@@ -7,6 +7,7 @@ export const pages = pgTable('pages', {
   typeId: integer('type_id').notNull().references(() => contentTypes.id),
   title: text('title').notNull(),
   slug: text('slug').notNull(),
+  slugOverride: boolean('slug_override').notNull().default(false),
   status: text('status', { enum: ['draft', 'published', 'archived'] })
     .notNull()
     .default('draft'),

@@ -1,0 +1,1 @@
+ALTER TABLE `pages` ADD `slug_override` integer DEFAULT false NOT NULL;
