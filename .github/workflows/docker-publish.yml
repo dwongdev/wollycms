@@ -24,6 +24,10 @@ jobs:
       - run: npm ci
       - run: npx --workspace=packages/admin svelte-kit sync
       - run: npm test
+      - name: Build admin UI
+        run: npm run build --workspace=packages/admin
+      - name: Check admin CSP (issue #65 regression guard)
+        run: node scripts/check-admin-csp.mjs
 
   build-and-push:
     needs: test
