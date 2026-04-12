@@ -23,6 +23,7 @@ const config = {
         'img-src': ['self'],
         'font-src': ['self'],
         'connect-src': ['self'],
+        'frame-src': ['https:', 'http://localhost:*'],
         'frame-ancestors': ['self'],
         'base-uri': ['self'],
         'form-action': ['self'],
