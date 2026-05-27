@@ -104,6 +104,7 @@
     cleanSnapshot = JSON.stringify({
       title: pageData.title, slug: pageData.slug, slugOverride: !!pageData.slugOverride,
       status: pageData.status, fields: pageData.fields,
+      scheduledAt: pageData.scheduledAt, unpublishAt: pageData.unpublishAt,
       metaTitle: pageData.metaTitle, metaDescription: pageData.metaDescription,
       ogImage: pageData.ogImage, canonicalUrl: pageData.canonicalUrl, robots: pageData.robots,
     });
@@ -114,6 +115,7 @@
     const current = JSON.stringify({
       title: pageData.title, slug: pageData.slug, slugOverride: !!pageData.slugOverride,
       status: pageData.status, fields: pageData.fields,
+      scheduledAt: pageData.scheduledAt, unpublishAt: pageData.unpublishAt,
       metaTitle: pageData.metaTitle, metaDescription: pageData.metaDescription,
       ogImage: pageData.ogImage, canonicalUrl: pageData.canonicalUrl, robots: pageData.robots,
     });
@@ -126,6 +128,8 @@
       void pageData.slug;
       void pageData.slugOverride;
       void pageData.status;
+      void pageData.scheduledAt;
+      void pageData.unpublishAt;
       void JSON.stringify(pageData.fields);
       checkDirty();
     }
@@ -312,7 +316,9 @@
       await api.put(`/pages/${id}`, {
         title: pageData.title, slug: pageData.slug, slugOverride: !!pageData.slugOverride,
         status: pageData.status,
-        fields: pageData.fields || {}, scheduledAt: pageData.scheduledAt || null,
+        fields: pageData.fields || {},
+        scheduledAt: pageData.scheduledAt || null,
+        unpublishAt: pageData.unpublishAt || null,
         metaTitle: pageData.metaTitle || null,
         metaDescription: pageData.metaDescription || null,
         ogImage: pageData.ogImage || null,

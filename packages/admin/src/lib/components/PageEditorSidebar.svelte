@@ -10,6 +10,7 @@
   import SocialPreview from './SocialPreview.svelte';
   import SeoScorePanel from './SeoScorePanel.svelte';
   import { focusTrap } from '$lib/focusTrap.js';
+  import { fromDateTimeLocalValue, toDateTimeLocalValue } from '$lib/datetime.js';
 
   let ogGenerating = $state(false);
 
@@ -199,10 +200,10 @@
   <div class="form-group" style="margin-bottom: 0;">
     <label style="font-size: 0.8rem; font-weight: 600;">Schedule Publish</label>
     <input type="datetime-local" class="form-control" style="font-size: 0.85rem;"
-      value={pageData.scheduledAt ? pageData.scheduledAt.slice(0, 16) : ''}
+      value={toDateTimeLocalValue(pageData.scheduledAt)}
       onchange={(e) => {
         const val = (e.target as HTMLInputElement).value;
-        pageData.scheduledAt = val ? new Date(val).toISOString() : null;
+        pageData.scheduledAt = fromDateTimeLocalValue(val);
       }}
     />
     {#if pageData.scheduledAt}
@@ -216,10 +217,10 @@
   <div class="form-group" style="margin-bottom: 0;">
     <label style="font-size: 0.8rem; font-weight: 600;">Schedule Unpublish</label>
     <input type="datetime-local" class="form-control" style="font-size: 0.85rem;"
-      value={pageData.unpublishAt ? pageData.unpublishAt.slice(0, 16) : ''}
+      value={toDateTimeLocalValue(pageData.unpublishAt)}
       onchange={(e) => {
         const val = (e.target as HTMLInputElement).value;
-        pageData.unpublishAt = val ? new Date(val).toISOString() : null;
+        pageData.unpublishAt = fromDateTimeLocalValue(val);
       }}
     />
     {#if pageData.unpublishAt}
