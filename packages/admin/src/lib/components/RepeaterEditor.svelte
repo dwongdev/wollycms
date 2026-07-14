@@ -159,7 +159,7 @@
     border: 1px solid var(--c-border, #e2e8f0);
     border-radius: var(--radius, 6px);
     background: var(--c-surface);
-    overflow: hidden;
+    overflow: clip;
   }
 
   .repeater-item-header {
