@@ -5,7 +5,6 @@
   import StarterKit from '@tiptap/starter-kit';
   import Link from '@tiptap/extension-link';
   import Underline from '@tiptap/extension-underline';
-  import Image from '@tiptap/extension-image';
   import Subscript from '@tiptap/extension-subscript';
   import Superscript from '@tiptap/extension-superscript';
   import TextAlign from '@tiptap/extension-text-align';
@@ -14,6 +13,7 @@
   import Placeholder from '@tiptap/extension-placeholder';
   import { TextStyle, Color } from '@tiptap/extension-text-style';
   import MediaPicker from './MediaPicker.svelte';
+  import { CustomImage } from '$lib/editor/customImage.js';
 
   let { content, onUpdate }: { content: any; onUpdate: (json: any) => void } = $props();
 
@@ -102,9 +102,9 @@
 
   let imageAttrs = $derived.by(() => {
     void txCount;
-    if (!isImageSelected || !editor) return { width: '50%', float: 'none', caption: '' };
+    if (!isImageSelected || !editor) return { width: null, float: 'none', caption: '' };
     const attrs = editor.getAttributes('image');
-    return { width: attrs.width || '50%', float: attrs.float || 'none', caption: attrs.caption || '' };
+    return { width: attrs.width || null, float: attrs.float || 'none', caption: attrs.caption || '' };
   });
 
   function setBlockFormat(format: string) {
@@ -115,46 +115,6 @@
     else if (format === 'h4') editor.chain().focus().toggleHeading({ level: 4 }).run();
     else if (format === 'h5') editor.chain().focus().toggleHeading({ level: 5 }).run();
   }
-
-  // --- Custom Image with width, float (incl. center), caption, link ---
-  const CustomImage = Image.extend({
-    addAttributes() {
-      return {
-        ...this.parent?.(),
-        width: { default: '50%', parseHTML: (el: HTMLElement) => el.style.width || null },
-        float: {
-          default: 'none',
-          parseHTML: (el: HTMLElement) => {
-            if (el.style.marginLeft === 'auto' && el.style.marginRight === 'auto') return 'center';
-            return el.style.float || el.getAttribute('data-float') || null;
-          },
-        },
-        caption: { default: '', parseHTML: (el: HTMLElement) => el.getAttribute('data-caption') || null },
-        href: { default: null, parseHTML: (el: HTMLElement) => el.getAttribute('data-href') || null },
-        linkTarget: { default: null, parseHTML: (el: HTMLElement) => el.getAttribute('data-link-target') || null },
-      };
-    },
-    renderHTML({ node }) {
-      const { src, alt, title, width, float: f, caption, href, linkTarget } = node.attrs;
-      const st: string[] = [];
-      if (width) st.push(`width: ${width}`);
-      if (f === 'center') {
-        st.push('display: block', 'margin-left: auto', 'margin-right: auto');
-      } else if (f && f !== 'none') {
-        st.push(`float: ${f}`);
-        st.push(f === 'left' ? 'margin: 0 1rem 0.5rem 0' : 'margin: 0 0 0.5rem 1rem');
-      }
-      const a: Record<string, any> = {};
-      if (src) a.src = src;
-      if (alt) a.alt = alt;
-      if (title) a.title = title;
-      if (st.length) a.style = st.join('; ');
-      if (caption) a['data-caption'] = caption;
-      if (href) a['data-href'] = href;
-      if (linkTarget) a['data-link-target'] = linkTarget;
-      return ['img', a];
-    },
-  });
 
   const slashCommands = [
     { label: 'Heading 2', description: 'Large section heading', command: 'h2' },
@@ -428,7 +388,10 @@
   }
   function confirmImageInsert() {
     if (!editor || !pendingImage) return;
-    editor.chain().focus().setImage({ src: pendingImage.src, alt: pendingImage.alt }).run();
+    editor.chain().focus()
+      .setImage({ src: pendingImage.src, alt: pendingImage.alt })
+      .updateAttributes('image', { width: '50%' })
+      .run();
     pendingImage = null; showImagePicker = false;
   }
   function backToImagePick() { pendingImage = null; }
@@ -523,6 +486,7 @@
   {#if isImageSelected && !showSource}
     <div class="rte-image-toolbar">
       <span class="rte-image-label">Size:</span>
+      <button type="button" class="rte-btn-sm" class:active={imageAttrs.width === null} onclick={() => setImageAttr('width', null)}>Auto</button>
       <button type="button" class="rte-btn-sm" class:active={imageAttrs.width === '25%'} onclick={() => setImageAttr('width', '25%')}>S</button>
       <button type="button" class="rte-btn-sm" class:active={imageAttrs.width === '50%'} onclick={() => setImageAttr('width', '50%')}>M</button>
       <button type="button" class="rte-btn-sm" class:active={imageAttrs.width === '75%'} onclick={() => setImageAttr('width', '75%')}>L</button>

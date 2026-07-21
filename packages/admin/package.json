@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "vite dev --port 4323",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@fontsource/inter": "^5.2.8",
@@ -34,6 +36,7 @@
     "vite": "^6.0.0"
   },
   "devDependencies": {
-    "typescript": "^5.7.0"
+    "typescript": "^5.7.0",
+    "vitest": "^4.1.2"
   }
 }
