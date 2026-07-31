@@ -7,4 +7,9 @@ export default defineConfig({
   server: {
     port: 4322,
   },
+  vite: {
+    build: {
+      cssMinify: 'esbuild',
+    },
+  },
 });
