@@ -13,7 +13,7 @@ Run WollyCMS directly on a Node.js server for maximum control and simplicity.
 ## Installation
 
 ```bash
-npx create-wolly my-cms
+npx create-wolly@latest my-cms
 cd my-cms
 npm install
 ```

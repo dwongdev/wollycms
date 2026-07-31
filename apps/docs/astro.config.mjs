@@ -2,13 +2,23 @@
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
 import cloudflare from '@astrojs/cloudflare';
+import { existsSync } from 'node:fs';
 
 const gaId = process.env.GA_MEASUREMENT_ID;
+const wranglerConfigPath = process.env.WRANGLER_CONFIG_PATH
+	?? (existsSync(new URL('./wrangler.toml', import.meta.url))
+		? './wrangler.toml'
+		: './wrangler.example.toml');
 
 export default defineConfig({
 	site: 'https://docs.wollycms.com',
 	output: 'server',
-	adapter: cloudflare(),
+	adapter: cloudflare({ configPath: wranglerConfigPath }),
+	vite: {
+		build: {
+			cssMinify: 'esbuild',
+		},
+	},
 	integrations: [
 		starlight({
 			title: 'WollyCMS Docs',
@@ -35,6 +45,8 @@ export default defineConfig({
 					items: [
 						{ label: 'Introduction', slug: 'getting-started/introduction' },
 						{ label: 'Quick Start', slug: 'getting-started/quick-start' },
+						{ label: 'Compatibility', slug: 'getting-started/compatibility' },
+						{ label: 'Upgrade to 0.3', slug: 'getting-started/upgrading-to-0-3' },
 						{ label: 'Starter Templates', slug: 'getting-started/templates' },
 						{ label: 'Project Structure', slug: 'getting-started/project-structure' },
 					],
@@ -93,7 +105,7 @@ export default defineConfig({
 				},
 				{
 					label: 'API Reference',
-					autogenerate: { directory: 'api' },
+					items: [{ autogenerate: { directory: 'api' } }],
 				},
 			],
 		}),

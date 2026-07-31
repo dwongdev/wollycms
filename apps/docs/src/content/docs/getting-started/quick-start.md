@@ -10,7 +10,7 @@ description: Get WollyCMS running in under 5 minutes.
 ## Create a new project
 
 ```bash
-npx create-wolly my-site
+npx create-wolly@latest my-site
 cd my-site
 ```
 
@@ -201,5 +201,7 @@ Clear your browser cache or try an incognito window. The admin UI is a SvelteKit
 ## Next steps
 
 - [Core Concepts](/concepts/pages/) — Learn about pages, blocks, and regions
+- [Compatibility](/getting-started/compatibility/) — Supported Node.js and Astro versions
+- [Upgrade to 0.3](/getting-started/upgrading-to-0-3/) — Upgrade an existing installation
 - [Astro Integration](/astro/setup/) — Full setup guide for the `@wollycms/astro` package
 - [Deployment](/deployment/cloudflare/) — Deploy to Cloudflare Workers, Docker, or Node.js

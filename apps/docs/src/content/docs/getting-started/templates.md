@@ -20,10 +20,10 @@ WollyCMS includes starter templates with ready-to-import seed data. Each templat
 ### With create-wolly (recommended)
 
 ```bash
-npx create-wolly my-site --template blog
+npx create-wolly@latest my-site --template blog
 cd my-site
 npm run migrate
-wolly import seed.json
+npm run import -- seed.json
 npm run dev
 ```
 
@@ -34,7 +34,7 @@ The `--template` flag copies the seed file into your project. If you skip it, yo
 If you already have a WollyCMS instance running, download the seed file and import it:
 
 ```bash
-wolly import templates/blog/seed.json
+npx wolly import templates/blog/seed.json
 ```
 
 Or from the admin UI: **Settings → Data Management → Import Content** and upload the seed.json file.

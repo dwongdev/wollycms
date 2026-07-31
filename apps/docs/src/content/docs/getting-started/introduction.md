@@ -25,7 +25,7 @@ WollyCMS runs as a standalone server (Hono + Drizzle ORM) with a SvelteKit admin
 │                  │               │                   │
 │  • SvelteKit UI  │               │  • BlockRenderer  │
 │  • Hono API      │               │  • Menu helpers   │
-│  • SQLite/PG     │               │  • WollyImage     │
+│  • SQLite/PG     │               │  • SpacelyImage   │
 │  • S3/R2 media   │               │  • SEO utilities  │
 └─────────────────┘               └─────────────────┘
 ```

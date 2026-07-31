@@ -6,10 +6,43 @@ WollyCMS is pre-1.0. The API surface may change between releases.
 
 ## Unreleased
 
+## 0.3.0 - 2026-07-31
+
+### Added
+- Astro 7 support in `@wollycms/astro`, while retaining Astro 5 and 6 compatibility.
+- Scheduled publish and unpublish processing on Cloudflare Workers.
+- Block category metadata in the content schema and Astro types.
+- A staging deployment workflow for validating CMS releases before production.
+- Published package READMEs, licenses, bundled starter templates, and package-entry validation.
+
+### Changed
+- Node.js 22 LTS is now the supported server, CLI, CI, and Docker runtime.
+- Updated Hono, the Hono Node adapter, Drizzle, Sharp, SvelteKit tooling, Vitest, and other runtime dependencies.
+- `create-wolly` now scaffolds `@wollycms/server ^0.3.0` and the versioned GHCR image.
+- The example college site now uses Astro 7.
+
+### Fixed
+- Rich-text image sizes are preserved when editing legacy content.
+- Rich-text image and table toolbars remain sticky inside repeaters and long editors.
+- Rich-text links preserve CSS class and `rel` attributes, table cells align to the top, and text alignment renders correctly.
+- Content API schema fields are normalized consistently across SQLite, PostgreSQL, and D1.
+- Worker globals are included in server TypeScript builds.
+- External preview iframes are permitted by the admin CSP.
+- The published Astro image component now exports `SpacelyImage.astro`; the former `WollyImage.astro` entry remains as a compatibility alias.
+- Starter templates are included in the `create-wolly` npm tarball.
+
 ### Security
-- **API key permissions enforced** — Keys now map to roles based on stored permissions (`content:read` → viewer, `content:write` → editor, `*` → admin). Previously all keys received blanket admin access.
-- **JWT secret enforcement** — Node.js production startup fails if `JWT_SECRET` is missing or uses the dev default.
-- **Webhook SSRF hardening** — DNS resolution check blocks private-IP rebinding. Redirects are rejected. CGNAT range added to blocklist.
+- Dependency updates remove all known critical and high-severity findings from the root production package audit at release preparation time.
+
+## 0.2.5 - 2026-04-11
+
+### Fixed
+- Admin CSP handling for Node-mode npm installations.
+
+### Security
+- **API key permissions enforced** — Keys map to roles based on stored permissions (`content:read` → viewer, `content:write` → editor, `*` → admin).
+- **JWT secret enforcement** — Node.js production startup fails if `JWT_SECRET` is missing or uses the development default.
+- **Webhook SSRF hardening** — DNS resolution checks block private-IP rebinding, redirects are rejected, and the CGNAT range is blocked.
 - **Rate limiter** — Prefers `CF-Connecting-IP` over spoofable `X-Forwarded-For`.
 
 ## 2026-03-11

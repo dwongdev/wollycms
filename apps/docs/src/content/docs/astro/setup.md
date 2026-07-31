@@ -5,6 +5,9 @@ description: Install and configure the @wollycms/astro package for your Astro si
 
 The `@wollycms/astro` package provides a typed client, components, and helpers for building Astro sites powered by WollyCMS.
 
+Version 0.3 supports Astro 5, 6, and 7. New projects should use Astro 7 and
+Node.js 22 LTS.
+
 ## Installation
 
 ```bash
@@ -31,7 +34,9 @@ CMS_API_URL=http://localhost:4321/api/content
 
 ## Cloudflare Workers configuration
 
-When deploying your Astro frontend to Cloudflare Workers, the `import.meta.env` approach works for build-time values. For runtime configuration (where the CMS URL might differ per environment), use middleware to read from `cloudflare:workers` env bindings.
+When deploying your Astro frontend to Cloudflare Workers, use runtime bindings
+from `cloudflare:workers`. Keep `import.meta.env` only as a build-time or local
+development fallback.
 
 ### Set up the Astro adapter
 
@@ -50,49 +55,32 @@ export default defineConfig({
 });
 ```
 
-### Create middleware for runtime env
+### Create a runtime-aware client
 
-Create `src/middleware.ts`:
+Update `src/lib/wolly.ts`:
 
 ```typescript
-import { defineMiddleware } from 'astro:middleware';
 import { createClient } from '@wollycms/astro';
+import { env } from 'cloudflare:workers';
 
-export const onRequest = defineMiddleware(async (context, next) => {
-  // On Cloudflare Workers, read the binding
-  const runtime = context.locals.runtime;
-  const cmsBaseUrl = runtime?.env?.CMS_API_URL
-    || import.meta.env.CMS_API_URL
+const buildTimeUrl = import.meta.env.CMS_API_URL || '';
+
+export function getWolly() {
+  const apiUrl = env?.CMS_API_URL
+    || buildTimeUrl
     || 'http://localhost:4321/api/content';
 
-  context.locals.wolly = createClient({ apiUrl: cmsBaseUrl });
-
-  return next();
-});
-```
-
-Add the type declaration in `src/env.d.ts`:
-
-```typescript
-/// <reference types="astro/client" />
-
-declare namespace App {
-  interface Locals {
-    wolly: import('@wollycms/astro').WollyClient;
-    runtime?: {
-      env: {
-        CMS_API_URL?: string;
-      };
-    };
-  }
+  return createClient({ apiUrl });
 }
 ```
 
-Then use `Astro.locals.wolly` in your pages instead of the static import:
+Then use the runtime client in pages and layouts:
 
 ```astro
 ---
-const wolly = Astro.locals.wolly;
+import { getWolly } from '../lib/wolly';
+
+const wolly = getWolly();
 const page = await wolly.pages.getBySlug('home');
 ---
 ```
@@ -103,6 +91,9 @@ const page = await wolly.pages.getBySlug('home');
 [vars]
 CMS_API_URL = "https://cms.example.com/api/content"
 ```
+
+For local Wrangler development, put the same binding in `.dev.vars`. Do not
+commit `.dev.vars` when it contains secrets.
 
 ## Create the block mapping
 

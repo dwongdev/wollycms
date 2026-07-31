@@ -8,7 +8,7 @@ This guide covers migrating content from WordPress to WollyCMS. WordPress stores
 ## Prerequisites
 
 - Access to your WordPress site (admin dashboard or database dump)
-- Node.js 20+ installed
+- Node.js 22 LTS installed
 - A running WollyCMS instance with an admin API key
 
 ## Choose your data source

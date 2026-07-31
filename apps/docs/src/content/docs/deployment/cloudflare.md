@@ -8,7 +8,8 @@ WollyCMS runs on Cloudflare Workers with D1 (SQLite) for the database and R2 for
 ## Prerequisites
 
 - A Cloudflare account
-- [Wrangler CLI](https://developers.cloudflare.com/workers/wrangler/) installed (`npm install -g wrangler`)
+- Node.js 22 LTS
+- [Wrangler CLI](https://developers.cloudflare.com/workers/wrangler/) available in the project (`npx wrangler --version`)
 - The WollyCMS repository cloned locally
 
 ## Create cloud resources
@@ -34,7 +35,7 @@ cp wrangler.toml.example wrangler.toml
 ```toml
 name = "wollycms"
 main = "packages/server/dist-worker/worker.js"
-compatibility_date = "2024-12-01"
+compatibility_date = "2026-07-31"
 compatibility_flags = ["nodejs_compat"]
 
 # Serve the admin UI as static assets
@@ -48,6 +49,7 @@ run_worker_first = ["/", "/sitemap.xml", "/api/*", "/media/*"]
 binding = "DB"
 database_name = "wollycms-db"
 database_id = "<your-d1-database-id>"
+migrations_dir = "packages/server/drizzle"
 
 # R2 object storage for media
 [[r2_buckets]]
@@ -61,6 +63,9 @@ DATABASE_URL = "d1:DB"
 MEDIA_STORAGE = "r2"
 CORS_ORIGINS = "https://your-site.example.com"
 SITE_URL = "https://your-site.example.com"
+
+[triggers]
+crons = ["* * * * *"]
 ```
 
 ## Set secrets
@@ -77,14 +82,20 @@ The JWT secret must be a strong random string. Generate one with `openssl rand -
 ## Build and deploy
 
 ```bash
-# Build the Worker bundle and admin assets
+# Build the admin UI
+npm run build:admin
+mkdir -p packages/admin/build-assets/admin
+cp -r packages/admin/build/* packages/admin/build-assets/admin/
+cp packages/admin/build/index.html packages/admin/build-assets/index.html
+
+# Build the Worker bundle
 npm run build:worker
 
-# Run database migrations on D1
-wrangler d1 execute wollycms-db --file=packages/server/drizzle/0000_init.sql
+# Apply every pending D1 migration
+npx wrangler d1 migrations apply wollycms-db --remote
 
 # Deploy to Cloudflare
-wrangler deploy
+npx wrangler deploy
 ```
 
 ## Custom domain
@@ -110,7 +121,7 @@ Make sure the domain's DNS is managed by Cloudflare.
 
 ## Limitations on Workers
 
-- **No Sharp image processing**: Workers does not support Sharp's native binaries. Uploaded images are stored as originals without automatic variant generation. Use an external image transformation service or pre-process images before upload.
+- **No server-side Sharp processing**: Workers does not support Sharp's native binaries. The admin UI generates normal image variants in the browser before upload. API uploads that omit variants retain the original; pre-process those images or use an external transformation service.
 - **D1 size limits**: D1 databases have row and database size limits. Check [Cloudflare's D1 limits](https://developers.cloudflare.com/d1/platform/limits/) for current numbers.
 - **R2 egress**: R2 has free egress, making it cost-effective for media serving.
 
@@ -137,12 +148,8 @@ export default defineConfig({
 ```toml
 # wrangler.toml for the Astro frontend
 name = "my-site"
-main = "dist/_worker.js"
-compatibility_date = "2024-12-01"
+compatibility_date = "2026-07-31"
 compatibility_flags = ["nodejs_compat"]
-
-[assets]
-directory = "dist"
 
 [vars]
 CMS_API_URL = "https://cms.example.com/api/content"
@@ -150,5 +157,5 @@ CMS_API_URL = "https://cms.example.com/api/content"
 
 ```bash
 npm run build
-wrangler deploy
+npx wrangler deploy dist/server/entry.mjs --assets dist/client
 ```

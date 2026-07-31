@@ -62,7 +62,7 @@ WollyCMS fills the gap between simple headless CMS tools that lack page composit
 - **OG Image Generation** — Auto-generated Open Graph images via Satori
 
 ### Integrations
-- **Astro-Native** — First-class `@wollycms/astro` integration with BlockRenderer, RichText, WollyImage, route generation, menu helpers, SEO helpers, and image optimization
+- **Astro-Native** — First-class `@wollycms/astro` integration with BlockRenderer, RichText, SpacelyImage, route generation, menu helpers, SEO helpers, and image optimization
 - **AI Helpers** — Multi-provider AI content assistance (OpenAI, Anthropic, Vertex AI)
 - **Tracking Scripts** — Manage analytics and tracking scripts from the admin UI
 - **Redirects** — URL redirect management with pattern matching
@@ -80,7 +80,7 @@ WollyCMS fills the gap between simple headless CMS tools that lack page composit
 Create a new project with a single command:
 
 ```bash
-npm create wolly my-site
+npx create-wolly@latest my-site
 cd my-site
 npm run migrate
 npm run seed
@@ -93,11 +93,11 @@ Default login: `admin@wollycms.local` / `admin123`.
 Choose a starter template:
 
 ```bash
-npm create wolly my-site --template=blog       # Blog
-npm create wolly my-site --template=marketing   # Marketing site
-npm create wolly my-site --template=wordpress   # WordPress migration
-npm create wolly my-site --template=drupal      # Drupal migration
-npm create wolly my-site --template=college     # College/university site
+npx create-wolly@latest my-site --template=blog       # Blog
+npx create-wolly@latest my-site --template=marketing   # Marketing site
+npx create-wolly@latest my-site --template=wordpress   # WordPress migration
+npx create-wolly@latest my-site --template=drupal      # Drupal migration
+npx create-wolly@latest my-site --template=college     # College/university site
 ```
 
 ### Docker
@@ -112,7 +112,7 @@ docker run -d -p 4321:4321 \
 Or with Docker Compose:
 
 ```bash
-npm create wolly my-site && cd my-site
+npx create-wolly@latest my-site && cd my-site
 # Edit .env — set JWT_SECRET to a secure random value
 docker compose up -d
 ```
@@ -137,6 +137,9 @@ export default defineConfig({
 ```
 
 See the [Astro integration docs](https://docs.wollycms.com/astro/setup/) for BlockRenderer, route generation, menu helpers, and image optimization.
+
+`@wollycms/astro` 0.3 supports Astro 5, 6, and 7. Node.js 22 LTS is the
+tested runtime for WollyCMS development and self-hosted deployments.
 
 ## Content API
 
@@ -183,7 +186,7 @@ wollycms/
 │   ├── server/        # Hono API server + Drizzle schema + media processing
 │   ├── admin/         # SvelteKit admin SPA
 │   ├── astro/         # @wollycms/astro integration package
-│   └── create-wolly/  # CLI scaffolding tool (npm create wolly)
+│   └── create-wolly/  # CLI scaffolding tool (npx create-wolly@latest)
 ├── apps/
 │   └── docs/          # Documentation site (Astro Starlight) → docs.wollycms.com
 ├── templates/         # Starter templates (blog, marketing, wordpress, drupal, college)

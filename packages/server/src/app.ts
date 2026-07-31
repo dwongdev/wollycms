@@ -8,6 +8,7 @@ import { cacheSize } from './cache.js';
 import { bodyLimit } from 'hono/body-limit';
 import { HTTPException } from 'hono/http-exception';
 import { getStorage } from './media/storage.js';
+import packageJson from '../package.json' with { type: 'json' };
 
 /** Map common file extensions to MIME types for static serving. */
 const MIME_TYPES: Record<string, string> = {
@@ -109,7 +110,7 @@ app.get('/api/health', (c) => {
     ? Math.floor(process.uptime()) : 0;
   return c.json({
     status: 'ok',
-    version: '0.1.0',
+    version: packageJson.version,
     uptime,
     timestamp: new Date().toISOString(),
     cache: { entries: cacheSize() },

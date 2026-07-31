@@ -1,14 +1,28 @@
 {
   "name": "create-wolly",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "Create a new WollyCMS project",
   "type": "module",
   "bin": {
     "create-wolly": "src/index.js"
   },
   "files": [
-    "src"
+    "src",
+    "templates"
   ],
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "author": "Chad Wollenberg",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/WollyCMS/wollycms.git",
+    "directory": "packages/create-wolly"
+  },
+  "homepage": "https://wollycms.com",
+  "bugs": {
+    "url": "https://github.com/WollyCMS/wollycms/issues"
+  },
   "keywords": [
     "wollycms",
     "cms",

@@ -147,7 +147,7 @@ for step-by-step setup.
 ### Why Hono?
 
 - Runs on Node.js for self-hosting
-- Can also run on Cloudflare Workers, Deno, Bun — future deployment flexibility
+- Runs on Cloudflare Workers in production and can also target Node.js, Deno, and Bun
 - Tiny footprint (~14KB), fast routing
 - First-class TypeScript support
 - Middleware pattern familiar to Express users

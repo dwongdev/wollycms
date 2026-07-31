@@ -3,14 +3,16 @@ title: Docker
 description: Deploy WollyCMS with Docker and docker-compose.
 ---
 
-WollyCMS ships with a multi-stage Dockerfile and a ready-to-use `docker-compose.yml`. This is the recommended deployment method for self-hosted environments.
+WollyCMS publishes a multi-architecture image to GitHub Container Registry and
+also ships with a multi-stage Dockerfile. Docker is the recommended deployment
+method for self-hosted environments.
 
 ## Quick start
 
 ```bash
-# Clone the repository
-git clone https://github.com/wollycms/wollycms.git
-cd wollycms
+# Create a project and enter it
+npx create-wolly@latest my-cms
+cd my-cms
 
 # Create your .env file
 cp .env.example .env
@@ -44,7 +46,7 @@ WollyCMS is now running at `http://localhost:4321`.
 ```yaml
 services:
   wollycms:
-    build: .
+    image: ghcr.io/wollycms/wollycms:0.3.0
     ports:
       - "4321:4321"
     environment:
@@ -166,7 +168,7 @@ The health endpoint is available at `/api/health`:
 ```json
 {
   "status": "ok",
-  "version": "0.1.0",
+  "version": "0.3.0",
   "uptime": 3600,
   "timestamp": "2025-01-15T12:00:00.000Z",
   "cache": { "entries": 42 }
@@ -176,8 +178,7 @@ The health endpoint is available at `/api/health`:
 ## Updating
 
 ```bash
-git pull
-docker compose build
+docker compose pull
 docker compose up -d
 ```
 

@@ -293,13 +293,20 @@ const isActive = menuHelpers.isActive(menu, '/admissions', currentPath);
 
 ```astro
 ---
-import { WollyImage } from '@wollycms/astro';
+import SpacelyImage from '@wollycms/astro/components/SpacelyImage.astro';
+
+const mediaId = page.fields.hero_image_id;
+const media = await wolly.media.getInfo(mediaId);
 ---
 
 <!-- Responsive image with srcset -->
-<WollyImage
-  media={page.fields.hero_image}
+<SpacelyImage
+  src={wolly.media.url(mediaId, 'large')}
+  srcset={`${wolly.media.url(mediaId, 'medium')} 800w, ${wolly.media.url(mediaId, 'large')} 1200w`}
   sizes="(max-width: 768px) 100vw, 1200px"
+  alt={media.altText ?? ''}
+  width={media.width ?? undefined}
+  height={media.height ?? undefined}
   loading="lazy"
   class="hero-image"
 />
@@ -324,17 +331,10 @@ Converts TipTap JSON to HTML, with support for custom node types:
 
 ```astro
 ---
-import { RichText } from '@wollycms/astro';
+import RichText from '@wollycms/astro/components/RichText.astro';
 ---
 
-<RichText
-  content={block.fields.body}
-  components={{
-    // Override rendering for specific node types
-    image: (node) => `<WollyImage media={node.attrs.media} />`,
-    link: (node) => `<a href="${node.attrs.href}" class="styled-link">`,
-  }}
-/>
+<RichText content={block.fields.body} class="prose" />
 ```
 
 ---
@@ -453,6 +453,9 @@ The integration works with all Astro output modes:
 
 Note: Astro 5 removed `output: 'hybrid'`. The default `static` output now
 supports per-page SSR opt-in, which is used for the preview route.
+
+`@wollycms/astro` 0.3 supports Astro 5, 6, and 7. The integration package is
+validated against Astro 7 while retaining peer compatibility with Astro 5 and 6.
 
 Compatible with all Astro adapters:
 - `@astrojs/cloudflare`

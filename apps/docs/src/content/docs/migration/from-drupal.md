@@ -8,7 +8,7 @@ This guide covers migrating content from Drupal to WollyCMS. It's based on real 
 ## Prerequisites
 
 - A Drupal database dump (MySQL/MariaDB `.sql` file)
-- Node.js 20+ installed
+- Node.js 22 LTS installed
 - A running WollyCMS instance with an admin API key
 - Docker (for running the MySQL container locally)
 

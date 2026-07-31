@@ -442,7 +442,7 @@ Returns:
 ```json
 {
   "status": "ok",
-  "version": "0.1.0",
+  "version": "0.3.0",
   "uptime": 3600,
   "timestamp": "2026-03-06T12:00:00.000Z",
   "cache": { "entries": 5 }

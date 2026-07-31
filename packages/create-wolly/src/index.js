@@ -15,12 +15,21 @@ function parseArgs() {
   const args = process.argv.slice(2);
   let name = '';
   let template = '';
-  for (const arg of args) {
+  let siteName = '';
+  let port = '';
+  let skipInstall = false;
+  for (let index = 0; index < args.length; index += 1) {
+    const arg = args[index];
     if (arg.startsWith('--template=')) template = arg.split('=')[1];
-    else if (arg.startsWith('--template')) template = args[args.indexOf(arg) + 1] || '';
+    else if (arg === '--template') template = args[++index] || '';
+    else if (arg.startsWith('--site-name=')) siteName = arg.split('=')[1];
+    else if (arg === '--site-name') siteName = args[++index] || '';
+    else if (arg.startsWith('--port=')) port = arg.split('=')[1];
+    else if (arg === '--port') port = args[++index] || '';
+    else if (arg === '--skip-install') skipInstall = true;
     else if (!arg.startsWith('-')) name = name || arg;
   }
-  return { name, template };
+  return { name, template, siteName, port, skipInstall };
 }
 
 async function main() {
@@ -40,8 +49,13 @@ async function main() {
     process.exit(1);
   }
 
-  const siteName = await ask(`  Site name [${projectName}]: `) || projectName;
-  const port = await ask('  API port [4321]: ') || '4321';
+  const siteName = parsed.siteName || await ask(`  Site name [${projectName}]: `) || projectName;
+  const port = parsed.port || await ask('  API port [4321]: ') || '4321';
+  const numericPort = Number(port);
+  if (!Number.isInteger(numericPort) || numericPort < 1 || numericPort > 65535) {
+    console.error(`  Invalid API port: "${port}".`);
+    process.exit(1);
+  }
 
   let template = parsed.template;
   if (!template) {
@@ -71,13 +85,15 @@ async function main() {
     type: 'module',
     scripts: {
       dev: 'wolly start',
+      start: 'wolly start',
       migrate: 'wolly migrate',
       seed: 'wolly seed',
+      import: 'wolly import',
       export: 'wolly export',
       'types:generate': 'wolly types generate',
     },
     dependencies: {
-      '@wollycms/server': '^0.2.0',
+      '@wollycms/server': '^0.3.0',
     },
   }, null, 2) + '\n');
 
@@ -120,7 +136,7 @@ wolly-types.d.ts
   // docker-compose.yml
   writeFileSync(join(projectDir, 'docker-compose.yml'), `services:
   wollycms:
-    image: wollycms/server:latest
+    image: ghcr.io/wollycms/wollycms:0.3.0
     ports:
       - "\${PORT:-4321}:4321"
     environment:
@@ -160,8 +176,10 @@ Default login: \`admin@wollycms.local\` / \`admin123\`
 | Command | Description |
 |---|---|
 | \`npm run dev\` | Start development server |
+| \`npm start\` | Start the server |
 | \`npm run migrate\` | Run database migrations |
 | \`npm run seed\` | Seed sample data |
+| \`npm run import -- seed.json\` | Import a starter template |
 | \`npm run export\` | Export all data as JSON |
 | \`npm run types:generate\` | Generate TypeScript types from schemas |
 
@@ -216,14 +234,18 @@ Edit \`.env\` to configure. See \`.env.example\` for all options.
   console.log('');
 
   // Install dependencies
-  console.log('  Installing dependencies...\n');
-  try {
-    execSync('npm install', { cwd: projectDir, stdio: 'inherit' });
-  } catch {
-    console.log('\n  npm install failed — run it manually after setup.');
+  if (parsed.skipInstall) {
+    console.log('  Skipping dependency installation (--skip-install).\n');
+  } else {
+    console.log('  Installing dependencies...\n');
+    try {
+      execSync('npm install', { cwd: projectDir, stdio: 'inherit' });
+    } catch {
+      console.log('\n  npm install failed — run it manually after setup.');
+    }
   }
 
-  const seedStep = template ? `    wolly import seed.json    # Import ${template} template content` : '    npm run seed              # Sample content';
+  const seedStep = template ? `    npm run import -- seed.json    # Import ${template} template content` : '    npm run seed                   # Sample content';
   console.log(`
   ✅ Project created!${template ? ` (${template} template)` : ''}
 
