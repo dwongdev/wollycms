@@ -3,6 +3,7 @@
   "compilerOptions": {
     "outDir": "dist",
     "rootDir": "src",
+    "types": ["@cloudflare/workers-types"],
     "rewriteRelativeImportExtensions": true
   },
   "include": ["src/**/*"],
