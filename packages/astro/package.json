@@ -35,6 +35,9 @@
     "block-editor"
   ],
   "peerDependencies": {
-    "astro": "^5.0.0 || ^6.0.0"
+    "astro": "^5.0.0 || ^6.0.0 || ^7.0.0"
+  },
+  "devDependencies": {
+    "astro": "^7.1.6"
   }
 }
