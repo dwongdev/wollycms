@@ -1,5 +1,18 @@
 # Changelog
 
+## 2026-08-13
+
+### Accessible heading anchors
+
+- Added editor-managed anchors to TipTap headings.
+- Added same-page fragment support to rich-text links and block URL fields.
+- Added accessibility warnings for invalid or duplicate anchors and links with
+  missing targets.
+- Updated the Astro rich-text renderer with focusable heading targets, visible
+  focus styling, and configurable sticky-header clearance.
+- Documented the editor workflow, frontend integration, WCAG considerations,
+  and optional nature of “Back to top” links.
+
 ## 2026-03-07
 
 ### Security hardening sprint (batch 1)
