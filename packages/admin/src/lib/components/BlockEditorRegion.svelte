@@ -643,7 +643,7 @@
                             <input type="date" class="form-control" value={f(block)[field.name] || ''}
                               oninput={(e) => updateBlockField(block.pb_id, block.block_id || block.pb_id, field.name, (e.target as HTMLInputElement).value)} />
                           {:else if field.type === 'url'}
-                            <input type="url" class="form-control" value={f(block)[field.name] || ''} placeholder="https://..."
+                            <input type="text" inputmode="url" autocomplete="url" class="form-control" value={f(block)[field.name] || ''} placeholder="https://..., /page, or #section"
                               oninput={(e) => updateBlockField(block.pb_id, block.block_id || block.pb_id, field.name, (e.target as HTMLInputElement).value)} />
                           {:else if field.type === 'textarea'}
                             <textarea class="form-control" rows="4"
